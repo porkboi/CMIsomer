@@ -27,6 +27,14 @@ import {
   verifyQRCode,
 } from "@/lib/actions"
 
+interface DashboardProps {
+  partySlug: string
+  organizations: string[]
+  maxCapacity: number
+  tier1Capacity: number
+  tier2Capacity: number
+}
+
 interface Registration {
   id: string
   name: string
@@ -37,7 +45,7 @@ interface Registration {
   paymentMethod: string
 }
 
-export function Dashboard() {
+export function Dashboard({ partySlug, organizations, maxCapacity, tier1Capacity, tier2Capacity }: DashboardProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredOrgs, setFilteredOrgs] = useState<string[]>([])
   const [registrations, setRegistrations] = useState<Registration[]>([])
@@ -46,43 +54,51 @@ export function Dashboard() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [showScanner, setShowScanner] = useState(false)
   const { toast } = useToast()
-  const videoRef = useRef(null);
-  const qrScannerRef = useRef(null);
+  const videoRef = useRef(null)
+  const qrScannerRef = useRef(null)
 
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true)
       try {
-        const [registrationsData, orgAllocationData] = await Promise.all([getRegistrations(), getOrgAllocation()])
+        const [registrationsData, orgAllocationData] = await Promise.all([
+          getRegistrations(partySlug),
+          getOrgAllocation(partySlug),
+        ])
         setRegistrations(registrationsData)
         setOrgAllocation(orgAllocationData)
       } catch (error) {
         console.error("Error fetching data:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load dashboard data",
+          variant: "destructive",
+        })
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchData()
-  }, [])
+  }, [partySlug, toast]) // Added toast to dependencies
 
   useEffect(() => {
     if (showScanner && videoRef.current) {
       qrScannerRef.current = new QrScanner(
         videoRef.current,
         async (result) => {
-          handleScan(result.data);
+          handleScan(result.data)
         },
-        { returnDetailedScanResult: true }
-      );
+        { returnDetailedScanResult: true },
+      )
 
-      qrScannerRef.current.start();
+      qrScannerRef.current.start()
     }
 
     return () => {
-      qrScannerRef.current?.stop();
-    };
-  }, [showScanner]);
+      qrScannerRef.current?.stop()
+    }
+  }, [showScanner])
 
   const handleRefresh = () => {
     setRefreshKey((prev) => prev + 1)
@@ -90,7 +106,7 @@ export function Dashboard() {
 
   const handleScan = async (data: string) => {
     try {
-      const result = await verifyQRCode(data)
+      const result = await verifyQRCode(partySlug, data)
       if (result.success) {
         toast({
           title: "Valid Registration",
@@ -104,7 +120,7 @@ export function Dashboard() {
           variant: "destructive",
         })
       }
-      setShowScanner(false);
+      setShowScanner(false)
     } catch (error) {
       toast({
         title: "Error",
@@ -115,14 +131,13 @@ export function Dashboard() {
   }
 
   const handleRemoveFromList = async (id: number) => {
-    const result = await removeFromList(id)
+    const result = await removeFromList(partySlug, id)
     if (result.success) {
       toast({
         title: "Success",
         description: "Registration removed from list",
         variant: "default",
       })
-      // Refresh the data
       handleRefresh()
     } else {
       toast({
@@ -134,7 +149,7 @@ export function Dashboard() {
   }
 
   const handleRemoveFromWaitlist = async (andrewID: string) => {
-    const result = await removeFromWaitlist(andrewID)
+    const result = await removeFromWaitlist(partySlug, andrewID)
     if (result.success) {
       toast({
         title: "Success",
@@ -152,14 +167,13 @@ export function Dashboard() {
   }
 
   const handlePromoteFromWaitlist = async (andrewID: string) => {
-    const result = await promoteFromWaitlist(andrewID)
+    const result = await promoteFromWaitlist(partySlug, andrewID)
     if (result.success) {
       toast({
         title: "Success",
         description: "Registration promoted to confirmed",
         variant: "default",
       })
-      // Refresh the data
       handleRefresh()
     } else {
       toast({
@@ -188,6 +202,19 @@ export function Dashboard() {
     const matchesOrg = filteredOrgs.length === 0 || filteredOrgs.includes(reg.organization)
     return matchesSearch && matchesOrg
   })
+
+  // Calculate tier progress
+  const tier1Count = confirmedRegistrations.length <= tier1Capacity ? confirmedRegistrations.length : tier1Capacity
+  const tier2Count =
+    confirmedRegistrations.length <= tier1Capacity
+      ? 0
+      : confirmedRegistrations.length <= tier1Capacity + tier2Capacity
+        ? confirmedRegistrations.length - tier1Capacity
+        : tier2Capacity
+  const tier3Count =
+    confirmedRegistrations.length <= tier1Capacity + tier2Capacity
+      ? 0
+      : confirmedRegistrations.length - (tier1Capacity + tier2Capacity)
 
   if (isLoading) {
     return (
@@ -233,7 +260,7 @@ export function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold text-white">{confirmedRegistrations.length}</div>
             <p className="text-xs text-zinc-400">
-              {Math.round((confirmedRegistrations.length / 300) * 100)}% of capacity
+              {Math.round((confirmedRegistrations.length / maxCapacity) * 100)}% of capacity
             </p>
           </CardContent>
         </Card>
@@ -255,42 +282,94 @@ export function Dashboard() {
             <Users className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{300 - confirmedRegistrations.length}</div>
-            <p className="text-xs text-zinc-400">Out of 300 total capacity</p>
+            <div className="text-2xl font-bold text-white">{maxCapacity - confirmedRegistrations.length}</div>
+            <p className="text-xs text-zinc-400">Out of {maxCapacity} total capacity</p>
           </CardContent>
         </Card>
       </div>
 
       <Card className="bg-zinc-950 border-zinc-800">
         <CardHeader>
-          <CardTitle className="text-white">Organization Allocation</CardTitle>
-          <CardDescription className="text-white">Spots allocated and used by each organization</CardDescription>
+          <CardTitle className="text-white">Tier Progress</CardTitle>
+          <CardDescription className="text-white">Distribution of registrations across tiers</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-112">
             <ChartContainer
               config={{
-                total: {
-                  label: "Total Slots",
+                tier1: {
+                  label: "Tier 1",
                   color: "hsl(var(--chart-1))",
                 },
-                used: {
-                  label: "Used Slots",
+                tier2: {
+                  label: "Tier 2",
                   color: "hsl(var(--chart-2))",
                 },
-                available: {
-                  label: "Available Slots",
+                tier3: {
+                  label: "Tier 3",
                   color: "hsl(var(--chart-3))",
                 },
               }}
             >
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={orgAllocation} layout="vertical">
+              <ResponsiveContainer width="100%" height={100}>
+                <BarChart
+                  data={[
+                    {
+                      name: "Tiers",
+                      tier1: tier1Count,
+                      tier2: tier2Count,
+                      tier3: tier3Count,
+                    },
+                  ]}
+                  layout="vertical"
+                  stackOffset="expand"
+                >
+                  <XAxis type="number" domain={[0, maxCapacity]} />
+                  <YAxis type="category" dataKey="name" hide />
+                  <Tooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="tier1" stackId="a" fill="hsl(var(--chart-1))" />
+                  <Bar dataKey="tier2" stackId="a" fill="hsl(var(--chart-2))" />
+                  <Bar dataKey="tier3" stackId="a" fill="hsl(var(--chart-3))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-zinc-950 border-zinc-800">
+        <CardHeader>
+          <CardTitle className="text-white">Organization Allocation</CardTitle>
+          <CardDescription className="text-white">Distribution of registrations by organization</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-112">
+            <ChartContainer
+              config={{
+                confirmed: {
+                  label: "Confirmed",
+                  color: "hsl(var(--chart-1))",
+                },
+                waitlisted: {
+                  label: "Waitlisted",
+                  color: "hsl(var(--chart-2))",
+                },
+              }}
+            >
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={organizations.map((org) => ({
+                    name: org,
+                    confirmed: confirmedRegistrations.filter((reg) => reg.organization === org).length,
+                    waitlisted: waitlistedRegistrations.filter((reg) => reg.organization === org).length,
+                  }))}
+                  layout="vertical"
+                >
                   <XAxis type="number" />
                   <YAxis dataKey="name" type="category" width={50} />
                   <Tooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="used" stackId="a" fill="hsl(var(--chart-2))" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="available" stackId="a" fill="hsl(var(--chart-3))" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="confirmed" stackId="a" fill="hsl(var(--chart-1))" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="waitlisted" stackId="a" fill="hsl(var(--chart-2))" radius={[0, 0, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartContainer>
@@ -314,7 +393,7 @@ export function Dashboard() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56 bg-zinc-900 border-zinc-800">
-            {["SSA", "HKSA", "SIAM", "KSA", "CSA", "TSA", "ASA"].map((org) => (
+            {organizations.map((org) => (
               <DropdownMenuCheckboxItem
                 key={org}
                 checked={filteredOrgs.includes(org)}
@@ -341,17 +420,18 @@ export function Dashboard() {
 
         <TabsContent value="confirmed" className="mt-4">
           <div className="rounded-md border border-zinc-800 bg-zinc-950">
-            <div className="grid grid-cols-5 gap-4 p-4 font-medium text-zinc-400 border-b border-zinc-800">
+            <div className="grid grid-cols-6 gap-4 p-4 font-medium text-zinc-400 border-b border-zinc-800">
               <div>Name</div>
               <div>Andrew ID</div>
               <div>Age</div>
               <div>Organization</div>
               <div>Payment</div>
+              <div>Actions</div>
             </div>
             <div className="divide-y divide-zinc-800">
               {filteredConfirmed.length > 0 ? (
                 filteredConfirmed.map((reg) => (
-                  <div key={reg.id} className="grid grid-cols-5 gap-4 p-4 text-white bg-red-950/20">
+                  <div key={reg.id} className="grid grid-cols-6 gap-4 p-4 text-white bg-red-950/20">
                     <div>{reg.name}</div>
                     <div>{reg.andrewID}</div>
                     <div>{reg.age}</div>
@@ -365,7 +445,7 @@ export function Dashboard() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleRemoveFromList(parseInt(reg.id))}
+                        onClick={() => handleRemoveFromList(Number.parseInt(reg.id))}
                         className="bg-red-900/20 hover:bg-red-900/40"
                       >
                         Remove

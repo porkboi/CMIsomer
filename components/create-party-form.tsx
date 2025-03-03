@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useForm } from "react-hook-form"
-import { Sparkles } from "lucide-react"
+import { Check, Copy, Sparkles } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,6 +28,8 @@ interface FormData {
 
 export function CreatePartyForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [successData, setSuccessData] = useState<{ slug: string; url: string } | null>(null)
+  const [copied, setCopied] = useState(false)
   const { toast } = useToast()
 
   const form = useForm<FormData>({
@@ -69,7 +71,6 @@ export function CreatePartyForm() {
   }
 
   const onSubmit = async (formData: FormData) => {
-    console.log("run")
     if (!validateCapacity(formData)) return
 
     try {
@@ -93,11 +94,8 @@ export function CreatePartyForm() {
       const result = await createParty(partyData)
 
       if (result.success) {
-        toast({
-          title: "Party created!",
-          description: "Your party registration page has been created.",
-        })
-        alert(`Your party URL is: ${window.location.origin}/party/${result.slug}`)
+        const url = `${window.location.origin}/party/${result.slug}`
+        setSuccessData({ slug: result.slug, url })
         form.reset()
       } else {
         toast({
@@ -116,6 +114,54 @@ export function CreatePartyForm() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const copyToClipboard = async () => {
+    if (successData) {
+      await navigator.clipboard.writeText(successData.url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  if (successData) {
+    return (
+      <Card className="animate-in slide-in-from-bottom-4 duration-700">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-green-500">
+            <Check className="h-6 w-6" />
+            Party Created Successfully!
+          </CardTitle>
+          <CardDescription>Your party registration page is ready.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg border bg-muted/50 p-4">
+            <p className="text-sm font-medium">Your unique party URL:</p>
+            <div className="mt-2 flex items-center gap-2">
+              <code className="rounded bg-muted px-2 py-1 flex-1">{successData.url}</code>
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={copyToClipboard}
+                className={copied ? "text-green-500" : ""}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <Button onClick={() => setSuccessData(null)} variant="outline" className="flex-1">
+              Create Another Party
+            </Button>
+            <Button asChild className="flex-1">
+              <a href={`/party/${successData.slug}`} target="_blank" rel="noopener noreferrer">
+                View Party Page
+              </a>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (

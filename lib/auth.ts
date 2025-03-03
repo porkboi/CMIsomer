@@ -1,29 +1,31 @@
 "use server"
 
 import { cookies } from "next/headers"
+import { verifyPartyAdmin } from "./actions"
+import { revalidatePath } from "next/cache"
 
-const ADMIN_USERNAME = "porkboi"
-const ADMIN_PASSWORD = "stevenshi"
-const AUTH_COOKIE = "party_auth"
+export async function login(partySlug: string, username: string, password: string) {
+  const isValid = await verifyPartyAdmin(partySlug, username, password)
 
-export async function login(username: string, password: string) {
-  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    cookies().set(AUTH_COOKIE, "authenticated", {
+  if (isValid) {
+    cookies().set(`party_auth_${partySlug}`, "authenticated", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 60 * 60 * 24, // 24 hours
     })
+    revalidatePath(`/party/${partySlug}`)
     return true
   }
   return false
 }
 
-export async function logout() {
-  cookies().delete(AUTH_COOKIE)
+export async function logout(partySlug: string) {
+  cookies().delete(`party_auth_${partySlug}`)
 }
 
-export async function isAuthenticated() {
-  return cookies().get(AUTH_COOKIE)?.value === "authenticated"
+export async function isAuthenticated(partySlug?: string) {
+  console.log(partySlug)
+  return cookies().get(`party_auth_${partySlug}`)?.value === "authenticated"
 }
 

@@ -3,11 +3,11 @@
 import { z } from "zod"
 import QRCode from "qrcode"
 import {
-  getAllRegistrations,
-  addRegistration,
+  // getAllRegistrations,
+  // addRegistration,
   getRegistrationByAndrewID,
-  removeRegistration,
-  updateRegistrationStatus,
+  // removeRegistration,
+  // updateRegistrationStatus,
 } from "./db-client"
 import { isAuthenticated } from "./auth"
 import { createSlug } from "@/lib/utils"
@@ -50,13 +50,27 @@ const orgLimits = {
 }
 
 // Get all registrations
-export async function getRegistrations(): Promise<Registration[]> {
-  return getAllRegistrations()
+export async function getRegistrations(partySlug: string): Promise<Registration[]> {
+  const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+
+  try {
+    const { data, error } = await supabase.from(tableName).select("*").order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching registrations:", error)
+      return []
+    }
+
+    return data || []
+  } catch (error) {
+    console.error("Error fetching registrations:", error)
+    return []
+  }
 }
 
 // Get organization allocation data
-export async function getOrgAllocation() {
-  const registrations = await getRegistrations()
+export async function getOrgAllocation(partySlug: string) {
+  const registrations = await getRegistrations(partySlug)
   const confirmed = registrations.filter((reg) => reg.status === "confirmed")
 
   const orgCounts = confirmed.reduce(
@@ -87,37 +101,62 @@ export async function getOrgAllocation() {
 // }
 
 // Get current ticket tier information
-export async function getTicketTierInfo() {
+export async function getTicketTierInfo(partySlug: string) {
   try {
-    const registrations = await getAllRegistrations()
-    const confirmedCount = registrations.filter((r) => r.status === "confirmed").length
-    const currentPrice = confirmedCount < 100 ? 15 : confirmedCount < 200 ? 18 : 22
+    // First get the party details
+    const { data: party, error: partyError } = await supabase.from("parties").select("*").eq("slug", partySlug).single()
+
+    if (partyError) {
+      throw new Error("Failed to fetch party details")
+    }
+
+    // Get registrations for this party
+    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const { data: registrations, error: regError } = await supabase
+      .from(tableName)
+      .select("*")
+      .eq("status", "confirmed")
+
+    if (regError) {
+      throw new Error("Failed to fetch registrations")
+    }
+
+    const confirmedCount = registrations?.length || 0
+    let currentTier = "Tier 1"
+    let currentPrice = party.tier1_price
+    let remainingInTier = party.tier1_capacity
+
+    if (confirmedCount >= party.tier1_capacity) {
+      currentTier = "Tier 2"
+      currentPrice = party.tier2_price
+      remainingInTier = party.tier1_capacity + party.tier2_capacity - confirmedCount
+    }
+
+    if (confirmedCount >= party.tier1_capacity + party.tier2_capacity) {
+      currentTier = "Last Call"
+      currentPrice = party.tier3_price
+      remainingInTier = party.max_capacity - confirmedCount
+    }
 
     return {
-      currentTier: confirmedCount < 100 ? "Tier 1" : confirmedCount < 200 ? "Tier 2" : "Last Call",
+      currentTier,
       currentPrice,
-      remainingInTier:
-        confirmedCount < 100
-          ? 100 - confirmedCount
-          : confirmedCount < 200
-            ? 200 - confirmedCount
-            : 240 - confirmedCount,
+      remainingInTier,
       totalRegistered: confirmedCount,
     }
   } catch (error) {
     console.error("Error getting ticket tier info:", error)
-    // Return default values if there's an error
     return {
       currentTier: "Tier 1",
-      currentPrice: 15,
-      remainingInTier: 100,
+      currentPrice: null, // Will fall back to default price in component
+      remainingInTier: null,
       totalRegistered: 0,
     }
   }
 }
 
 // Submit a new registration with QR code
-export async function submitRegistration(formData: z.infer<typeof registrationSchema>) {
+export async function submitRegistration(partySlug: string, formData: z.infer<typeof registrationSchema>) {
   try {
     const validatedData = registrationSchema.parse(formData)
     const existingUser = await getRegistrationByAndrewID(validatedData.andrewID)
@@ -126,7 +165,7 @@ export async function submitRegistration(formData: z.infer<typeof registrationSc
       return { success: false, message: "A registration with this Andrew ID already exists." }
     }
 
-    const registrations = await getAllRegistrations()
+    const registrations = await getRegistrations(partySlug)
     const confirmedCount = registrations.filter((r) => r.status === "confirmed").length
     const price = formData.promoCode === "TCLISCOOL" ? 15 : confirmedCount < 100 ? 15 : confirmedCount < 200 ? 18 : 22
 
@@ -139,7 +178,7 @@ export async function submitRegistration(formData: z.infer<typeof registrationSc
     const qrCode = await QRCode.toDataURL(JSON.stringify(qrData))
 
     // Add the registration
-    const registration = await addRegistration({
+    const registration = await addRegistration(partySlug, {
       ...validatedData,
       age: Number.parseInt(validatedData.age),
       price,
@@ -167,13 +206,14 @@ export async function submitRegistration(formData: z.infer<typeof registrationSc
   }
 }
 
-export async function removeFromList(id: number) {
+export async function removeFromList(partySlug: string, id: number) {
   if (!(await isAuthenticated())) {
     return { success: false, message: "Unauthorized" }
   }
 
   try {
-    await removeRegistration(id)
+    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    await supabase.from(tableName).delete().eq("id", id)
     return { success: true, message: "Registration removed successfully" }
   } catch (error) {
     return { success: false, message: "Failed to remove registration" }
@@ -181,42 +221,49 @@ export async function removeFromList(id: number) {
 }
 
 // Admin functions (protected)
-export async function removeFromWaitlist(andrewID: string) {
+export async function removeFromWaitlist(partySlug: string, andrewID: string) {
   if (!(await isAuthenticated())) {
     return { success: false, message: "Unauthorized" }
   }
 
   try {
-    await removeRegistration(andrewID)
+    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    await supabase.from(tableName).delete().eq("andrewID", andrewID)
     return { success: true, message: "Registration removed successfully" }
   } catch (error) {
     return { success: false, message: "Failed to remove registration" }
   }
 }
 
-export async function promoteFromWaitlist(andrewID: string) {
+export async function promoteFromWaitlist(partySlug: string, andrewID: string) {
   if (!(await isAuthenticated())) {
     return { success: false, message: "Unauthorized" }
   }
 
   try {
-    await updateRegistrationStatus(andrewID, "confirmed")
+    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    await supabase.from(tableName).update({ status: "confirmed" }).eq("andrewID", andrewID)
     return { success: true, message: "Registration confirmed successfully" }
   } catch (error) {
     return { success: false, message: "Failed to update registration" }
   }
 }
 
-export async function verifyQRCode(qrData: string) {
+export async function verifyQRCode(partySlug: string, qrData: string) {
   if (!(await isAuthenticated())) {
     return { success: false, message: "Unauthorized" }
   }
 
   try {
     const data = JSON.parse(qrData)
-    const registration = await getRegistrationByAndrewID(data.andrewID)
+    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const { data: registration, error } = await supabase
+      .from(tableName)
+      .select("*")
+      .eq("andrewID", data.andrewID)
+      .single()
 
-    if (!registration) {
+    if (error || !registration) {
       return { success: false, message: "Registration not found" }
     }
 
@@ -253,7 +300,19 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
     const slug = createSlug(validatedData.name)
 
     // Check if party with this slug already exists
-    const { data: existingParty } = await supabase.from("parties").select("slug").eq("slug", slug).single()
+    const { data: existingParty, error: checkError } = await supabase
+      .from("parties")
+      .select("slug")
+      .eq("slug", slug)
+      .single()
+
+    if (checkError && checkError.code !== "PGRST116") {
+      console.error("Error checking existing party:", checkError)
+      return {
+        success: false,
+        message: "Failed to check if party exists. Please try again.",
+      }
+    }
 
     if (existingParty) {
       return {
@@ -278,7 +337,7 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
     }
 
     // Insert the party into the database
-    const { data, error: insertError } = await supabase
+    const { data: party, error: insertError } = await supabase
       .from("parties")
       .insert({
         slug,
@@ -300,17 +359,26 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
 
     if (insertError) {
       console.error("Database insert error:", insertError)
-      throw new Error(`Failed to insert party: ${insertError.message}`)
+      await supabase.from("parties").delete().eq("slug", slug) // Cleanup if exists
+      return {
+        success: false,
+        message: "Failed to create party. Please try again.",
+      }
     }
 
     // Create the registration table for this party
-    const { error: fnError } = await supabase.rpc("create_party_registration_table", { party_slug: slug })
+    const { error: fnError } = await supabase.rpc("create_party_registration_table", {
+      party_slug: slug.replace(/-/g, "_"), // Replace hyphens with underscores for valid table names
+    })
 
     if (fnError) {
       console.error("Function call error:", fnError)
       // Cleanup the party if table creation fails
       await supabase.from("parties").delete().eq("slug", slug)
-      throw new Error(`Failed to create registration table: ${fnError.message}`)
+      return {
+        success: false,
+        message: "Failed to set up registration system. Please try again.",
+      }
     }
 
     return {
@@ -324,6 +392,57 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
       success: false,
       message: error instanceof Error ? error.message : "Failed to create party",
     }
+  }
+}
+
+export async function getPartyBySlug(slug: string) {
+  try {
+    const { data, error } = await supabase.from("parties").select("*").eq("slug", slug).single()
+
+    if (error) {
+      console.error("Error fetching party:", error)
+      return null
+    }
+
+    return data
+  } catch (error) {
+    console.error("Error fetching party:", error)
+    return null
+  }
+}
+
+export async function addRegistration(
+  partySlug: string,
+  registration: Omit<Registration, "id" | "createdAt">,
+): Promise<Registration> {
+  const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+
+  const { data, error } = await supabase.from(tableName).insert([registration]).select().single()
+
+  if (error) {
+    console.error("Error adding registration:", error)
+    throw error
+  }
+
+  return data
+}
+
+export async function verifyPartyAdmin(partySlug: string, username: string, password: string) {
+  try {
+    const { data: party, error } = await supabase
+      .from("parties")
+      .select("admin_username, admin_password")
+      .eq("slug", partySlug)
+      .single()
+
+    if (error || !party) {
+      return false
+    }
+
+    return party.admin_username === username && party.admin_password === password
+  } catch (error) {
+    console.error("Error verifying admin:", error)
+    return false
   }
 }
 
