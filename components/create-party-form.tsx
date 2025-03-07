@@ -16,11 +16,7 @@ interface FormData {
   organizations: string
   maxCapacity: string
   allowWaitlist: boolean
-  tier1Price: string
-  tier2Price: string
-  tier3Price: string
-  tier1Capacity: string
-  tier2Capacity: string
+  ticketPrice: string
   venmoUsername: string
   adminUsername: string
   adminPassword: string
@@ -38,11 +34,7 @@ export function CreatePartyForm() {
       organizations: "",
       maxCapacity: "",
       allowWaitlist: true,
-      tier1Price: "",
-      tier2Price: "",
-      tier3Price: "",
-      tier1Capacity: "",
-      tier2Capacity: "",
+      ticketPrice: "",
       venmoUsername: "",
       adminUsername: "",
       adminPassword: "",
@@ -57,22 +49,7 @@ export function CreatePartyForm() {
     formState: { errors },
   } = form
 
-  const validateCapacity = (formData: FormData) => {
-    const totalCapacity = Number(formData.tier1Capacity) + Number(formData.tier2Capacity)
-    if (totalCapacity !== Number(formData.maxCapacity)) {
-      toast({
-        title: "Validation Error",
-        description: "Total tier capacity must equal maximum capacity.",
-        variant: "destructive",
-      })
-      return false
-    }
-    return true
-  }
-
   const onSubmit = async (formData: FormData) => {
-    if (!validateCapacity(formData)) return
-
     try {
       setIsSubmitting(true)
 
@@ -81,11 +58,7 @@ export function CreatePartyForm() {
         organizations: formData.organizations,
         maxCapacity: Number(formData.maxCapacity),
         allowWaitlist: formData.allowWaitlist,
-        tier1Price: Number(formData.tier1Price),
-        tier2Price: Number(formData.tier2Price),
-        tier3Price: Number(formData.tier3Price),
-        tier1Capacity: Number(formData.tier1Capacity),
-        tier2Capacity: Number(formData.tier2Capacity),
+        ticketPrice: Number(formData.ticketPrice),
         venmoUsername: formData.venmoUsername,
         adminUsername: formData.adminUsername,
         adminPassword: formData.adminPassword,
@@ -226,73 +199,17 @@ export function CreatePartyForm() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <div>
-              <label className="text-sm font-medium">Tier 1 Price ($)</label>
-              <Input
-                type="number"
-                {...register("tier1Price", {
-                  required: "Tier 1 price is required",
-                  min: { value: 0, message: "Price must be at least 0" },
-                })}
-                placeholder="15"
-              />
-              {errors.tier1Price && <p className="text-sm text-red-500 mt-1">{errors.tier1Price.message}</p>}
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Tier 2 Price ($)</label>
-              <Input
-                type="number"
-                {...register("tier2Price", {
-                  required: "Tier 2 price is required",
-                  min: { value: 0, message: "Price must be at least 0" },
-                })}
-                placeholder="18"
-              />
-              {errors.tier2Price && <p className="text-sm text-red-500 mt-1">{errors.tier2Price.message}</p>}
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Tier 3 Price ($)</label>
-              <Input
-                type="number"
-                {...register("tier3Price", {
-                  required: "Tier 3 price is required",
-                  min: { value: 0, message: "Price must be at least 0" },
-                })}
-                placeholder="22"
-              />
-              {errors.tier3Price && <p className="text-sm text-red-500 mt-1">{errors.tier3Price.message}</p>}
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="text-sm font-medium">Tier 1 Capacity</label>
-              <Input
-                type="number"
-                {...register("tier1Capacity", {
-                  required: "Tier 1 capacity is required",
-                  min: { value: 1, message: "Capacity must be at least 1" },
-                })}
-                placeholder="100"
-              />
-              {errors.tier1Capacity && <p className="text-sm text-red-500 mt-1">{errors.tier1Capacity.message}</p>}
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Tier 2 Capacity</label>
-              <Input
-                type="number"
-                {...register("tier2Capacity", {
-                  required: "Tier 2 capacity is required",
-                  min: { value: 1, message: "Capacity must be at least 1" },
-                })}
-                placeholder="100"
-              />
-              {errors.tier2Capacity && <p className="text-sm text-red-500 mt-1">{errors.tier2Capacity.message}</p>}
-            </div>
+          <div>
+            <label className="text-sm font-medium">Ticket Price ($)</label>
+            <Input
+              type="number"
+              {...register("ticketPrice", {
+                required: "Ticket price is required",
+                min: { value: 0, message: "Price must be at least 0" },
+              })}
+              placeholder="15"
+            />
+            {errors.ticketPrice && <p className="text-sm text-red-500 mt-1">{errors.ticketPrice.message}</p>}
           </div>
 
           <div>

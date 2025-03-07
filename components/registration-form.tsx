@@ -1,11 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Music, PartyPopper, Send, Ticket } from "lucide-react"
-import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -14,17 +13,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { submitRegistration, getTicketTierInfo } from "@/lib/actions"
+import { submitRegistration, getPriceTiers } from "@/lib/actions"
 
 interface RegistrationFormProps {
   partySlug: string
   maxCapacity: number
   allowWaitlist: boolean
-  tier1Price: number
-  tier2Price: number
-  tier3Price: number
-  tier1Capacity: number
-  tier2Capacity: number
+  ticketPrice: number
   venmoUsername: string
   organizations: string[]
 }
@@ -33,11 +28,7 @@ export function RegistrationForm({
   partySlug,
   maxCapacity,
   allowWaitlist,
-  tier1Price,
-  tier2Price,
-  tier3Price,
-  tier1Capacity,
-  tier2Capacity,
+  ticketPrice,
   venmoUsername,
   organizations,
 }: RegistrationFormProps) {
@@ -64,11 +55,10 @@ export function RegistrationForm({
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [qrCode, setQrCode] = useState<string>()
-  const [tierInfo, setTierInfo] = useState<any>()
+  const [registrationCount, setRegistrationCount] = useState(0)
+  const [priceTiers, setPriceTiers] = useState<any[]>([])
+  const [currentTierIndex, setCurrentTierIndex] = useState(0)
   const { toast } = useToast()
-
-  const qrRef = useRef(null)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -81,15 +71,50 @@ export function RegistrationForm({
   })
 
   useEffect(() => {
-    const fetchTierInfo = async () => {
-      const info = await getTicketTierInfo(partySlug)
-      setTierInfo(info)
+    // Fetch registration count
+    const fetchRegistrationCount = async () => {
+      try {
+        const response = await fetch(`/api/registrations/count?partySlug=${partySlug}`)
+        if (response.ok) {
+          const data = await response.json()
+          setRegistrationCount(data.count)
+        }
+      } catch (error) {
+        console.error("Error fetching registration count:", error)
+      }
     }
-    fetchTierInfo()
-  }, [partySlug])
 
-  const amount = tierInfo?.currentPrice || tier2Price // Default to tier2Price if tierInfo not loaded
-  const venmoPaymentLink = `venmo://paycharge?txn=pay&recipients=${venmoUsername}&amount=${amount}&note=Party%20Registration`
+    // Fetch price tiers
+    const fetchPriceTiers = async () => {
+      try {
+        const tiers = await getPriceTiers(partySlug)
+        setPriceTiers(tiers)
+
+        // Determine current tier based on registration count
+        let cumulativeCapacity = 0
+        let currentIndex = 0
+
+        for (let i = 0; i < tiers.length; i++) {
+          cumulativeCapacity += tiers[i].capacity
+          if (registrationCount < cumulativeCapacity) {
+            currentIndex = i
+            break
+          }
+        }
+
+        setCurrentTierIndex(currentIndex)
+      } catch (error) {
+        console.error("Error fetching price tiers:", error)
+      }
+    }
+
+    fetchRegistrationCount()
+    fetchPriceTiers()
+  }, [partySlug, registrationCount])
+
+  const venmoPaymentLink = `venmo://paycharge?txn=pay&recipients=${venmoUsername}&amount=${
+    priceTiers.length > 0 ? priceTiers[currentTierIndex].price : ticketPrice
+  }&note=Party%20Registration`
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
@@ -100,15 +125,9 @@ export function RegistrationForm({
       if (result.success) {
         toast({
           title: "Registration submitted!",
-          description: result.message,
+          description: "We are confirming your attendance. Please check your CMU email inbox for more details.",
           variant: "default",
         })
-        if (result.qrCode) {
-          setQrCode(result.qrCode)
-          setTimeout(() => {
-            qrRef.current?.scrollIntoView({ behavior: "smooth" })
-          }, 300)
-        }
         form.reset()
       } else {
         toast({
@@ -128,60 +147,113 @@ export function RegistrationForm({
     }
   }
 
+  const spotsRemaining = maxCapacity - registrationCount
+  const isSoldOut = spotsRemaining <= 0
+  const currentTierPrice = priceTiers.length > 0 ? priceTiers[currentTierIndex].price : ticketPrice
+
   return (
     <div className="space-y-6">
+      {/* Price Tiers Display */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card
-          className={`bg-zinc-950 border-zinc-800 ${tierInfo?.currentTier === "Tier 1" ? "ring-2 ring-purple-500" : ""}`}
-        >
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Ticket className="h-4 w-4" />
-              Tier 1
-            </CardTitle>
-            <CardDescription className="text-zinc-400">Early Bird Special</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-white">${tier1Price}</p>
-            <p className="text-xs text-zinc-400">First {tier1Capacity} registrations</p>
-          </CardContent>
-        </Card>
+        {priceTiers.length > 0 ? (
+          priceTiers.map((tier, index) => {
+            const isCurrent = index === currentTierIndex
+            const isPast = index < currentTierIndex
+            const isFuture = index > currentTierIndex
 
-        <Card
-          className={`bg-zinc-950 border-zinc-800 ${tierInfo?.currentTier === "Tier 2" ? "ring-2 ring-purple-500" : ""}`}
-        >
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Ticket className="h-4 w-4" />
-              Tier 2
-            </CardTitle>
-            <CardDescription className="text-zinc-400">Regular Price</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-white">${tier2Price}</p>
-            <p className="text-xs text-zinc-400">
-              Registrations {tier1Capacity + 1}-{tier1Capacity + tier2Capacity}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card
-          className={`bg-zinc-950 border-zinc-800 ${tierInfo?.currentTier === "Last Call" ? "ring-2 ring-purple-500" : ""}`}
-        >
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Ticket className="h-4 w-4" />
-              Last Call
-            </CardTitle>
-            <CardDescription className="text-zinc-400">Final Tickets</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-white">${tier3Price}</p>
-            <p className="text-xs text-zinc-400">
-              Registrations {tier1Capacity + tier2Capacity + 1}-{maxCapacity}
-            </p>
-          </CardContent>
-        </Card>
+            return (
+              <Card
+                key={tier.id}
+                className={`bg-zinc-950 border-zinc-800 transition-all ${
+                  isCurrent ? "ring-2 ring-primary scale-105 z-10" : ""
+                } ${isPast ? "opacity-60" : ""}`}
+              >
+                <CardHeader className={`${isCurrent ? "bg-primary/10" : ""}`}>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Ticket className="h-4 w-4" />
+                    {tier.name}
+                    {isCurrent && (
+                      <span className="ml-auto text-xs bg-primary text-white px-2 py-1 rounded-full">Current</span>
+                    )}
+                    {isPast && (
+                      <span className="ml-auto text-xs bg-zinc-700 text-zinc-300 px-2 py-1 rounded-full">Sold Out</span>
+                    )}
+                  </CardTitle>
+                  <CardDescription className="text-zinc-400">
+                    {isPast
+                      ? "No longer available"
+                      : isCurrent
+                        ? `${spotsRemaining} spots remaining at this price`
+                        : "Available after current tier sells out"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-2xl font-bold text-white">${tier.price}</p>
+                      <p className="text-xs text-zinc-400">Capacity: {tier.capacity}</p>
+                    </div>
+                    <div
+                      className={`px-3 py-1 rounded-full text-sm ${
+                        isPast
+                          ? "bg-zinc-800 text-zinc-400"
+                          : isCurrent
+                            ? isSoldOut
+                              ? "bg-red-900/50 text-red-300"
+                              : spotsRemaining < 20
+                                ? "bg-yellow-900/50 text-yellow-300"
+                                : "bg-green-900/50 text-green-300"
+                            : "bg-zinc-800 text-zinc-400"
+                      }`}
+                    >
+                      {isPast
+                        ? "Closed"
+                        : isCurrent
+                          ? isSoldOut
+                            ? "Sold Out"
+                            : spotsRemaining < 20
+                              ? "Limited"
+                              : "Available"
+                          : "Coming Soon"}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })
+        ) : (
+          // Fallback to single tier if no price tiers are defined
+          <Card className="bg-zinc-950 border-zinc-800 md:col-span-3">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Ticket className="h-4 w-4" />
+                Ticket Information
+              </CardTitle>
+              <CardDescription className="text-zinc-400">
+                {isSoldOut ? "Sold out - join the waitlist" : `${spotsRemaining} spots remaining`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-2xl font-bold text-white">${ticketPrice}</p>
+                  <p className="text-xs text-zinc-400">Standard admission</p>
+                </div>
+                <div
+                  className={`px-3 py-1 rounded-full text-sm ${
+                    isSoldOut
+                      ? "bg-red-900/50 text-red-300"
+                      : spotsRemaining < 20
+                        ? "bg-yellow-900/50 text-yellow-300"
+                        : "bg-green-900/50 text-green-300"
+                  }`}
+                >
+                  {isSoldOut ? "Sold Out" : spotsRemaining < 20 ? "Limited Availability" : "Available"}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-lg">
@@ -315,7 +387,7 @@ export function RegistrationForm({
             <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center">
               <a href={venmoPaymentLink}>
                 <Send className="mr-2 h-4 w-4" />
-                Pay with Venmo - ${amount}
+                Pay with Venmo - ${currentTierPrice}
               </a>
             </Button>
 
@@ -352,22 +424,10 @@ export function RegistrationForm({
               className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700"
             >
               {isSubmitting ? <Music className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-              Submit Registration (Current Price: ${tierInfo?.currentPrice || tier2Price})
+              Submit Registration (${currentTierPrice})
             </Button>
           </form>
         </Form>
-
-        {qrCode && (
-          <div ref={qrRef} className="mt-6 text-center">
-            <h3 className="text-lg font-semibold mb-4">Your Registration QR Code</h3>
-            <div className="inline-block bg-white p-4 rounded-lg">
-              <Image src={qrCode || "/placeholder.svg"} alt="Registration QR Code" width={200} height={200} />
-            </div>
-            <p className="mt-4 text-sm text-zinc-400">
-              Please save this QR code. You'll need it for entry to the party.
-            </p>
-          </div>
-        )}
         <Toaster />
       </div>
     </div>

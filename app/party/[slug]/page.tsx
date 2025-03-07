@@ -42,11 +42,7 @@ export default async function PartyPage({ params }: PageProps) {
                 partySlug={params.slug}
                 maxCapacity={party.max_capacity}
                 allowWaitlist={party.allow_waitlist}
-                tier1Price={party.tier1_price}
-                tier2Price={party.tier2_price}
-                tier3Price={party.tier3_price}
-                tier1Capacity={party.tier1_capacity}
-                tier2Capacity={party.tier2_capacity}
+                ticketPrice={party.ticket_price}
                 venmoUsername={party.venmo_username}
                 organizations={party.organizations}
               />
@@ -59,8 +55,6 @@ export default async function PartyPage({ params }: PageProps) {
                   partySlug={params.slug}
                   organizations={party.organizations}
                   maxCapacity={party.max_capacity}
-                  tier1Capacity={party.tier1_capacity}
-                  tier2Capacity={party.tier2_capacity}
                 />
               </Suspense>
             ) : (

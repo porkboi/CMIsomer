@@ -30,25 +30,35 @@ function snakeToCamel(obj: any): any {
   return obj
 }
 
-async function checkTableExists(): Promise<boolean> {
+// Update the checkTableExists function to accept a partySlug parameter
+async function checkTableExists(partySlug?: string): Promise<boolean> {
   try {
-    const { error } = await supabase.from("registrations").select("id").limit(1)
+    // If partySlug is provided, check the party-specific table
+    if (partySlug) {
+      const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+      const { error } = await supabase.from(tableName).select("id").limit(1)
+      return !error
+    }
 
+    // Otherwise check the default registrations table
+    const { error } = await supabase.from("registrations").select("id").limit(1)
     return !error
   } catch {
     return false
   }
 }
 
-export async function getAllRegistrations(): Promise<Registration[]> {
-  const tableExists = await checkTableExists()
+// Update getAllRegistrations to use the party-specific table
+export async function getAllRegistrations(partySlug?: string): Promise<Registration[]> {
+  const tableExists = await checkTableExists(partySlug)
 
   if (!tableExists) {
     console.error("Table does not exist. Please run the setup SQL script in Supabase.")
     return []
   }
 
-  const { data, error } = await supabase.from("registrations").select("*").order("created_at", { ascending: false })
+  const tableName = partySlug ? `registrations_${partySlug.replace(/-/g, "_")}` : "registrations"
+  const { data, error } = await supabase.from(tableName).select("*").order("created_at", { ascending: false })
 
   if (error) {
     console.error("Error fetching registrations:", error)
@@ -58,17 +68,23 @@ export async function getAllRegistrations(): Promise<Registration[]> {
   return snakeToCamel(data || [])
 }
 
-export async function addRegistration(registration: Omit<Registration, "id" | "createdAt">): Promise<Registration> {
-  const tableExists = await checkTableExists()
+// Update addRegistration to use the party-specific table
+export async function addRegistration(
+  partySlug: string,
+  registration: Omit<Registration, "id" | "createdAt">,
+): Promise<Registration> {
+  const tableExists = await checkTableExists(partySlug)
 
   if (!tableExists) {
     throw new Error("Table does not exist. Please run the setup SQL script in Supabase.")
   }
 
+  const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+
   // Convert camelCase to snake_case for database
   const dbRegistration = {
     name: registration.name,
-    andrew_id: registration.andrewID,
+    andrewID: registration.andrewID,
     age: registration.age,
     organization: registration.organization,
     payment_method: registration.paymentMethod,
@@ -78,7 +94,7 @@ export async function addRegistration(registration: Omit<Registration, "id" | "c
     qr_code: registration.qrCode,
   }
 
-  const { data, error } = await supabase.from("registrations").insert([dbRegistration]).select().single()
+  const { data, error } = await supabase.from(tableName).insert([dbRegistration]).select().single()
 
   if (error) {
     console.error("Error adding registration:", error)
@@ -88,14 +104,16 @@ export async function addRegistration(registration: Omit<Registration, "id" | "c
   return snakeToCamel(data)
 }
 
-export async function getRegistrationByAndrewID(andrewID: string): Promise<Registration | null> {
-  const tableExists = await checkTableExists()
+// Update getRegistrationByAndrewID to use the party-specific table
+export async function getRegistrationByAndrewID(andrewID: string, partySlug?: string): Promise<Registration | null> {
+  const tableExists = await checkTableExists(partySlug)
 
   if (!tableExists) {
     throw new Error("Table does not exist. Please run the setup SQL script in Supabase.")
   }
 
-  const { data, error } = await supabase.from("registrations").select("*").eq("andrew_id", andrewID).single()
+  const tableName = partySlug ? `registrations_${partySlug.replace(/-/g, "_")}` : "registrations"
+  const { data, error } = await supabase.from(tableName).select("*").eq("andrew_id", andrewID).single()
 
   if (error) {
     if (error.code === "PGRST116") {
@@ -108,15 +126,17 @@ export async function getRegistrationByAndrewID(andrewID: string): Promise<Regis
   return data ? snakeToCamel(data) : null
 }
 
-export async function getRegistrationCountByOrg(organization: string): Promise<number> {
-  const tableExists = await checkTableExists()
+// Update getRegistrationCountByOrg to use the party-specific table
+export async function getRegistrationCountByOrg(organization: string, partySlug?: string): Promise<number> {
+  const tableExists = await checkTableExists(partySlug)
 
   if (!tableExists) {
     return 0
   }
 
+  const tableName = partySlug ? `registrations_${partySlug.replace(/-/g, "_")}` : "registrations"
   const { count, error } = await supabase
-    .from("registrations")
+    .from(tableName)
     .select("*", { count: "exact", head: true })
     .eq("organization", organization)
     .eq("status", "confirmed")
@@ -129,14 +149,16 @@ export async function getRegistrationCountByOrg(organization: string): Promise<n
   return count || 0
 }
 
-export async function removeRegistration(id: number) {
-  const tableExists = await checkTableExists()
+// Update removeRegistration to use the party-specific table
+export async function removeRegistration(id: number, partySlug?: string) {
+  const tableExists = await checkTableExists(partySlug)
 
   if (!tableExists) {
     throw new Error("Table does not exist. Please run the setup SQL script in Supabase.")
   }
 
-  const { error } = await supabase.from("registrations").delete().eq("id", id)
+  const tableName = partySlug ? `registrations_${partySlug.replace(/-/g, "_")}` : "registrations"
+  const { error } = await supabase.from(tableName).delete().eq("id", id)
 
   if (error) {
     console.error("Error removing registration:", error)
@@ -144,14 +166,16 @@ export async function removeRegistration(id: number) {
   }
 }
 
-export async function updateRegistrationStatus(andrewID: string, status: string) {
-  const tableExists = await checkTableExists()
+// Update updateRegistrationStatus to use the party-specific table
+export async function updateRegistrationStatus(andrewID: string, status: string, partySlug?: string) {
+  const tableExists = await checkTableExists(partySlug)
 
   if (!tableExists) {
     throw new Error("Table does not exist. Please run the setup SQL script in Supabase.")
   }
 
-  const { error } = await supabase.from("registrations").update({ status }).eq("andrew_id", andrewID)
+  const tableName = partySlug ? `registrations_${partySlug.replace(/-/g, "_")}` : "registrations"
+  const { error } = await supabase.from(tableName).update({ status }).eq("andrew_id", andrewID)
 
   if (error) {
     console.error("Error updating registration status:", error)

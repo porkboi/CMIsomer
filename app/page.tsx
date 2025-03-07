@@ -7,7 +7,7 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text">
-            CMIsomer: A Tartan Cultural League Creation
+            CMIsomer
           </h1>
           <ThemeToggle />
         </div>

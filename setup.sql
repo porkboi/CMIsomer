@@ -9,11 +9,7 @@ CREATE TABLE IF NOT EXISTS public.parties (
   organizations TEXT[] NOT NULL,
   max_capacity INTEGER NOT NULL,
   allow_waitlist BOOLEAN NOT NULL DEFAULT true,
-  tier1_price NUMERIC NOT NULL,
-  tier2_price NUMERIC NOT NULL,
-  tier3_price NUMERIC NOT NULL,
-  tier1_capacity INTEGER NOT NULL,
-  tier2_capacity INTEGER NOT NULL,
+  ticket_price NUMERIC NOT NULL,
   venmo_username TEXT NOT NULL,
   admin_username TEXT NOT NULL,
   admin_password TEXT NOT NULL,
@@ -25,10 +21,31 @@ ALTER TABLE public.parties ENABLE ROW LEVEL SECURITY;
 
 -- Create policies
 CREATE POLICY "Allow all operations" ON public.parties
-  FOR ALL
-  TO authenticated, anon
-  USING (true)
-  WITH CHECK (true);
+FOR ALL
+TO authenticated, anon
+USING (true)
+WITH CHECK (true);
+
+-- Create the price_tiers table
+CREATE TABLE IF NOT EXISTS public.price_tiers (
+  id SERIAL PRIMARY KEY,
+  party_slug TEXT NOT NULL,
+  name TEXT NOT NULL,
+  price NUMERIC NOT NULL,
+  capacity INTEGER NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  UNIQUE(party_slug, name)
+);
+
+-- Enable Row Level Security
+ALTER TABLE public.price_tiers ENABLE ROW LEVEL SECURITY;
+
+-- Create policies
+CREATE POLICY "Allow all operations" ON public.price_tiers
+FOR ALL
+TO authenticated, anon
+USING (true)
+WITH CHECK (true);
 
 -- Function to create a new party registration table
 CREATE OR REPLACE FUNCTION public.create_party_registration_table(party_slug TEXT)
@@ -51,7 +68,9 @@ BEGIN
       status TEXT NOT NULL,
       created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
       price NUMERIC,
-      qr_code TEXT
+      qr_code TEXT,
+      tier_name TEXT,
+      tier_price NUMERIC
     )', party_slug);
     
   -- Create indexes
@@ -65,6 +84,10 @@ BEGIN
     
   EXECUTE format('
     CREATE INDEX IF NOT EXISTS idx_registrations_%I_organization ON registrations_%I(organization)', 
+    party_slug, party_slug);
+    
+  EXECUTE format('
+    CREATE INDEX IF NOT EXISTS idx_registrations_%I_tier_name ON registrations_%I(tier_name)', 
     party_slug, party_slug);
     
   -- Enable RLS
@@ -109,4 +132,10 @@ GRANT ALL ON public.parties TO authenticated;
 GRANT ALL ON public.parties TO anon;
 GRANT USAGE, SELECT ON SEQUENCE parties_id_seq TO authenticated;
 GRANT USAGE, SELECT ON SEQUENCE parties_id_seq TO anon;
+
+-- Grant permissions
+GRANT ALL ON public.price_tiers TO authenticated;
+GRANT ALL ON public.price_tiers TO anon;
+GRANT USAGE, SELECT ON SEQUENCE price_tiers_id_seq TO authenticated;
+GRANT USAGE, SELECT ON SEQUENCE price_tiers_id_seq TO anon;
 
