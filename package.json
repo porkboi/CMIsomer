@@ -48,7 +48,7 @@
     "next": "15.1.0",
     "next-themes": "latest",
     "react": "^18.0",
-    "react-day-picker": "16.8.0",
+    "react-day-picker": "8.10.1",
     "react-dom": "^18.0",
     "react-hook-form": "latest",
     "react-resizable-panels": "^2.1.7",
