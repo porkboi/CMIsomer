@@ -1,24 +1,18 @@
-"use client";
-
 import { notFound, redirect } from "next/navigation"
 import { getPartyBySlug, getTicketByToken } from "@/lib/actions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
-import { Ticket, User, Calendar, MapPin, Apple, Smartphone } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Ticket, User, Calendar, MapPin } from "lucide-react"
+import { WalletButtons } from "@/components/wallet-buttons" 
 
 interface PageProps {
-  params: {
-    slug: string
-  }
-  searchParams: {
-    token?: string
-  }
+  params: { slug: string }
+  searchParams: { token?: string }
 }
 
 export default async function TicketPage({ params, searchParams }: PageProps) {
   const token = searchParams.token
-  
+
   if (!token) {
     redirect(`/party/${params.slug}`)
   }
@@ -60,23 +54,8 @@ export default async function TicketPage({ params, searchParams }: PageProps) {
                 />
               </div>
 
-              <div className="flex gap-4 mb-6 w-full">
-                <Button
-                  className="flex-1 bg-black hover:bg-gray-900 text-white"
-                  onClick={() => alert("Apple Wallet integration coming soon!")}
-                >
-                  <Apple className="mr-2 h-4 w-4" />
-                  Add to Apple Wallet
-                </Button>
-
-                <Button
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                  onClick={() => alert("Google Wallet integration coming soon!")}
-                >
-                  <Smartphone className="mr-2 h-4 w-4" />
-                  Add to Google Wallet
-                </Button>
-              </div>
+              {/* ✅ Use the new Client Component here */}
+              <WalletButtons />
 
               <div className="w-full space-y-4">
                 <div className="flex items-center gap-3">
@@ -127,4 +106,3 @@ export default async function TicketPage({ params, searchParams }: PageProps) {
     </div>
   )
 }
-
