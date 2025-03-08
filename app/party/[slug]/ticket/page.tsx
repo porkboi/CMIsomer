@@ -1,8 +1,11 @@
+"use client"
+
 import { notFound, redirect } from "next/navigation"
 import { getPartyBySlug, getTicketByToken } from "@/lib/actions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
-import { Ticket, User, Calendar, MapPin } from "lucide-react"
+import { Ticket, User, Calendar, MapPin, Apple, Smartphone } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface PageProps {
   params: {
