@@ -57,24 +57,6 @@ export default async function TicketPage({ params, searchParams }: PageProps) {
                 />
               </div>
 
-              <div className="flex gap-4 mb-6 w-full">
-                <Button
-                  className="flex-1 bg-black hover:bg-gray-900 text-white"
-                  onClick={() => alert("Apple Wallet integration coming soon!")}
-                >
-                  <Apple className="mr-2 h-4 w-4" />
-                  Add to Apple Wallet
-                </Button>
-
-                <Button
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                  onClick={() => alert("Google Wallet integration coming soon!")}
-                >
-                  <Smartphone className="mr-2 h-4 w-4" />
-                  Add to Google Wallet
-                </Button>
-              </div>
-
               <div className="w-full space-y-4">
                 <div className="flex items-center gap-3">
                   <User className="h-5 w-5 text-purple-500 shrink-0" />
