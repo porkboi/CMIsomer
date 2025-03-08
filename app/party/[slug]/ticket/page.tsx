@@ -18,8 +18,6 @@ interface PageProps {
 
 export default async function TicketPage({ params, searchParams }: PageProps) {
   const token = searchParams.token
-
-  console.log("ok")
   
   if (!token) {
     redirect(`/party/${params.slug}`)
@@ -29,7 +27,7 @@ export default async function TicketPage({ params, searchParams }: PageProps) {
   if (!party) {
     notFound()
   }
-
+  console.log(token)
   const ticket = await getTicketByToken(params.slug, token)
   if (!ticket) {
     redirect(`/party/${params.slug}?error=invalid_token`)
