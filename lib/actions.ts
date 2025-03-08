@@ -14,6 +14,7 @@ import { createSlug } from "@/lib/utils"
 import { supabase } from "@/lib/supabase"
 import type { PriceTier } from "@/components/price-tiers-modal"
 import { sendEmail } from "./email"
+import bcrypt from "bcrypt"
 
 // Define the registration schema
 const registrationSchema = z.object({
@@ -497,6 +498,7 @@ const partySchema = z.object({
   allowWaitlist: z.boolean(),
   ticketPrice: z.number().min(0),
   venmoUsername: z.string().min(1),
+  zelleInfo: z.string().min(1), // Added zelleInfo field
   adminUsername: z.string().min(1),
   adminPassword: z.string().min(6),
 })
@@ -542,13 +544,14 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
       .insert({
         slug,
         name: validatedData.name,
-        organizations,
+        organizations: organizations, //Store as comma separated string
         max_capacity: validatedData.maxCapacity,
         allow_waitlist: validatedData.allowWaitlist,
         ticket_price: validatedData.ticketPrice,
         venmo_username: validatedData.venmoUsername,
+        zelle_info: validatedData.zelleInfo, // Added zelleInfo field
         admin_username: validatedData.adminUsername,
-        admin_password: validatedData.adminPassword,
+        admin_password: await bcrypt.hash(validatedData.adminPassword, 10), //Hash the password
       })
       .select()
       .single()
@@ -617,18 +620,26 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
 }
 
 export async function getPartyBySlug(slug: string) {
-  try {
-    const { data, error } = await supabase.from("parties").select("*").eq("slug", slug).single()
+  const { data, error } = await supabase.from("parties").select("*").eq("slug", slug).single()
 
-    if (error) {
-      console.error("Error fetching party:", error)
-      return null
-    }
-
-    return data
-  } catch (error) {
+  if (error) {
     console.error("Error fetching party:", error)
     return null
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    slug: data.slug,
+    organizations: data.organizations,
+    max_capacity: data.max_capacity,
+    allow_waitlist: data.allow_waitlist,
+    ticket_price: data.ticket_price,
+    venmo_username: data.venmo_username,
+    zelle_info: data.zelle_info,
+    admin_username: data.admin_username,
+    // admin_password: data.admin_password, //Removed for security
+    created_at: data.created_at,
   }
 }
 
@@ -676,7 +687,7 @@ export async function verifyPartyAdmin(partySlug: string, username: string, pass
       return false
     }
 
-    return party.admin_username === username && party.admin_password === password
+    return party.admin_username === username && (await bcrypt.compare(password, party.admin_password))
   } catch (error) {
     console.error("Error verifying admin:", error)
     return false

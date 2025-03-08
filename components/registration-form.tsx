@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { submitRegistration, getPriceTiers } from "@/lib/actions"
 
 interface RegistrationFormProps {
@@ -21,6 +21,7 @@ interface RegistrationFormProps {
   allowWaitlist: boolean
   ticketPrice: number
   venmoUsername: string
+  zelleInfo: string
   organizations: string[]
 }
 
@@ -30,6 +31,7 @@ export function RegistrationForm({
   allowWaitlist,
   ticketPrice,
   venmoUsername,
+  zelleInfo,
   organizations,
 }: RegistrationFormProps) {
   const formSchema = z.object({
@@ -377,7 +379,11 @@ export function RegistrationForm({
                     </RadioGroup>
                   </FormControl>
                   <FormDescription>
-                    Please send the above quoted amount to Steven Shi before submitting this form.
+                    Please send the above quoted amount using one of these methods:
+                    <br />
+                    <span className="font-medium">Venmo:</span> {venmoUsername}
+                    <br />
+                    <span className="font-medium">Zelle:</span> {zelleInfo}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -396,7 +402,7 @@ export function RegistrationForm({
               name="paymentConfirmed"
               render={({ field }) => (
                 <FormItem className="space-y-3">
-                  <FormLabel>Have you Venmo/Zelle'd Steven Shi?</FormLabel>
+                  <FormLabel>Have you Venmo/Zelle'd?</FormLabel>
                   <FormControl>
                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
                       <FormItem className="flex items-center space-x-2 space-y-0">

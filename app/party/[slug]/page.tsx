@@ -44,6 +44,7 @@ export default async function PartyPage({ params }: PageProps) {
                 allowWaitlist={party.allow_waitlist}
                 ticketPrice={party.ticket_price}
                 venmoUsername={party.venmo_username}
+                zelleInfo={party.zelle_info}
                 organizations={party.organizations}
               />
             </Suspense>

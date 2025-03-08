@@ -18,6 +18,7 @@ interface FormData {
   allowWaitlist: boolean
   ticketPrice: string
   venmoUsername: string
+  zelleInfo: string
   adminUsername: string
   adminPassword: string
 }
@@ -36,6 +37,7 @@ export function CreatePartyForm() {
       allowWaitlist: true,
       ticketPrice: "",
       venmoUsername: "",
+      zelleInfo: "",
       adminUsername: "",
       adminPassword: "",
     },
@@ -60,6 +62,7 @@ export function CreatePartyForm() {
         allowWaitlist: formData.allowWaitlist,
         ticketPrice: Number(formData.ticketPrice),
         venmoUsername: formData.venmoUsername,
+        zelleInfo: formData.zelleInfo,
         adminUsername: formData.adminUsername,
         adminPassword: formData.adminPassword,
       }
@@ -217,6 +220,18 @@ export function CreatePartyForm() {
             <Input {...register("venmoUsername", { required: "Venmo username is required" })} placeholder="@username" />
             <p className="text-sm text-muted-foreground mt-1">Enter your Venmo username without the @ symbol</p>
             {errors.venmoUsername && <p className="text-sm text-red-500">{errors.venmoUsername.message}</p>}
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Zelle Information</label>
+            <Input
+              {...register("zelleInfo", { required: "Zelle information is required" })}
+              placeholder="Phone or email"
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              Enter the phone number or email associated with your Zelle account
+            </p>
+            {errors.zelleInfo && <p className="text-sm text-red-500">{errors.zelleInfo.message}</p>}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
