@@ -19,6 +19,8 @@ interface PageProps {
 export default async function TicketPage({ params, searchParams }: PageProps) {
   const token = searchParams.token
 
+  console.log("ok")
+  
   if (!token) {
     redirect(`/party/${params.slug}`)
   }
