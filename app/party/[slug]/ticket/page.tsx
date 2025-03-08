@@ -1,5 +1,3 @@
-"use client"
-
 import { notFound, redirect } from "next/navigation"
 import { getPartyBySlug, getTicketByToken } from "@/lib/actions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,7 +25,7 @@ export default async function TicketPage({ params, searchParams }: PageProps) {
   if (!party) {
     notFound()
   }
-  console.log(token)
+
   const ticket = await getTicketByToken(params.slug, token)
   if (!ticket) {
     redirect(`/party/${params.slug}?error=invalid_token`)
