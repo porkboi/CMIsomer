@@ -26,12 +26,12 @@ export default async function PartyPage({ params }: PageProps) {
     <div className="min-h-screen bg-black text-white">
       <div className="container mx-auto px-4 py-8">
         <PartyHeader
-            title={party.name}
-            organizations={party.organizations}
-            eventDate={party.event_date}
-            eventTime={party.event_time}
-            location={party.location}
-          />
+          title={party.name}
+          organizations={party.organizations}
+          eventDate={party.event_date}
+          eventTime={party.event_time}
+          location={party.location}
+        />
 
         <Tabs defaultValue="register" className="mt-8">
           <TabsList className="grid w-full grid-cols-2 bg-zinc-900">

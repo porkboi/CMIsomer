@@ -498,9 +498,12 @@ const partySchema = z.object({
   allowWaitlist: z.boolean(),
   ticketPrice: z.number().min(0),
   venmoUsername: z.string().min(1),
-  zelleInfo: z.string().min(1), // Added zelleInfo field
+  zelleInfo: z.string().min(1),
   adminUsername: z.string().min(1),
   adminPassword: z.string().min(6),
+  eventDate: z.string().min(1),
+  eventTime: z.string().min(1),
+  location: z.string().min(1),
 })
 
 export async function createParty(formData: z.infer<typeof partySchema>) {
@@ -552,9 +555,9 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
         zelle_info: validatedData.zelleInfo, // Added zelleInfo field
         admin_username: validatedData.adminUsername,
         admin_password: await bcrypt.hash(validatedData.adminPassword, 10), //Hash the password
-        eventDate: z.string().min(1),
-        eventTime: z.string().min(1),
-        location: z.string().min(1),
+        event_date: validatedData.eventDate,
+        event_time: validatedData.eventTime,
+        location: validatedData.location,
       })
       .select()
       .single()

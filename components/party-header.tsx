@@ -63,7 +63,7 @@ export function PartyHeader({ title, organizations, eventDate, eventTime, locati
       )}
 
       <p className="text-zinc-400 max-w-2xl mx-auto">
-        Powered by CMIsomer, made by the Tartan Cultural League
+        Join us for the coolest campus party of the year! Reserve your spot now before they're all gone.
       </p>
       <div className="flex flex-wrap justify-center gap-2 text-xs">
         {organizations.map((org) => {
