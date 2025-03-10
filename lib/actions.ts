@@ -474,7 +474,7 @@ export async function verifyQRCode(partySlug: string, qrData: string) {
     const { data: registration, error } = await supabase
       .from(tableName)
       .select("*")
-      .eq("andrewID", data.andrewID)
+      .eq("andrew_id", data.andrewID)
       .single()
 
     if (error || !registration) {
