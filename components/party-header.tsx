@@ -26,7 +26,7 @@ export function PartyHeader({ title, organizations }: PartyHeaderProps) {
         <Sparkles className="h-8 w-8 text-purple-500" />
       </div>
       <p className="text-zinc-400 max-w-2xl mx-auto">
-        Powered by the CMIsomer, made by the Tartan Cultural League
+        Powered by CMIsomer, made by the Tartan Cultural League
       </p>
       <div className="flex flex-wrap justify-center gap-2 text-xs">
         {organizations.map((org) => {
