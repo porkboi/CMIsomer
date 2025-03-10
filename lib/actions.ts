@@ -464,7 +464,7 @@ export async function promoteFromWaitlist(partySlug: string, andrewID: string) {
 }
 
 export async function verifyQRCode(partySlug: string, qrData: string) {
-  if (!(await isAuthenticated())) {
+  if (!(await isAuthenticated(partySlug))) {
     return { success: false, message: "Unauthorized" }
   }
 
