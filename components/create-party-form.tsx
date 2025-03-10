@@ -21,6 +21,9 @@ interface FormData {
   zelleInfo: string
   adminUsername: string
   adminPassword: string
+  eventDate: string
+  eventTime: string
+  location: string
 }
 
 export function CreatePartyForm() {
@@ -40,6 +43,9 @@ export function CreatePartyForm() {
       zelleInfo: "",
       adminUsername: "",
       adminPassword: "",
+      eventDate: "",
+      eventTime: "",
+      location: "",
     },
   })
 
@@ -65,6 +71,9 @@ export function CreatePartyForm() {
         zelleInfo: formData.zelleInfo,
         adminUsername: formData.adminUsername,
         adminPassword: formData.adminPassword,
+        eventDate: formData.eventDate,
+        eventTime: formData.eventTime,
+        location: formData.location,
       }
 
       const result = await createParty(partyData)
@@ -174,6 +183,44 @@ export function CreatePartyForm() {
             />
             <p className="text-sm text-muted-foreground mt-1">Enter organization names separated by commas.</p>
             {errors.organizations && <p className="text-sm text-red-500">{errors.organizations.message}</p>}
+          </div>
+
+          <div className="space-y-8">
+            <div>
+              <label className="text-sm font-medium">Event Date</label>
+              <Input
+                type="date"
+                {...register("eventDate", {
+                  required: "Event date is required",
+                })}
+                className="mt-1"
+              />
+              {errors.eventDate && <p className="text-sm text-red-500 mt-1">{errors.eventDate.message}</p>}
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Event Time</label>
+              <Input
+                type="time"
+                {...register("eventTime", {
+                  required: "Event time is required",
+                })}
+                className="mt-1"
+              />
+              {errors.eventTime && <p className="text-sm text-red-500 mt-1">{errors.eventTime.message}</p>}
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Location</label>
+              <Input
+                {...register("location", {
+                  required: "Location is required",
+                })}
+                placeholder="e.g., Cohon University Center, Rangos Ballroom"
+                className="mt-1"
+              />
+              {errors.location && <p className="text-sm text-red-500 mt-1">{errors.location.message}</p>}
+            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">

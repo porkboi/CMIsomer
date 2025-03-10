@@ -552,6 +552,9 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
         zelle_info: validatedData.zelleInfo, // Added zelleInfo field
         admin_username: validatedData.adminUsername,
         admin_password: await bcrypt.hash(validatedData.adminPassword, 10), //Hash the password
+        eventDate: z.string().min(1),
+        eventTime: z.string().min(1),
+        location: z.string().min(1),
       })
       .select()
       .single()
@@ -640,6 +643,9 @@ export async function getPartyBySlug(slug: string) {
     admin_username: data.admin_username,
     // admin_password: data.admin_password, //Removed for security
     created_at: data.created_at,
+    event_date: data.event_date,
+    event_time: data.event_time,
+    location: data.location,
   }
 }
 

@@ -1,8 +1,11 @@
-import { Sparkles } from "lucide-react"
+import { Sparkles, Calendar, Clock, MapPin } from "lucide-react"
 
 interface PartyHeaderProps {
   title: string
   organizations: string[]
+  eventDate?: string
+  eventTime?: string
+  location?: string
 }
 
 const orgColors = {
@@ -15,7 +18,7 @@ const orgColors = {
   ASA: "indigo",
 } as const
 
-export function PartyHeader({ title, organizations }: PartyHeaderProps) {
+export function PartyHeader({ title, organizations, eventDate, eventTime, location }: PartyHeaderProps) {
   return (
     <div className="text-center space-y-4">
       <div className="flex items-center justify-center gap-2">
@@ -25,6 +28,40 @@ export function PartyHeader({ title, organizations }: PartyHeaderProps) {
         </h1>
         <Sparkles className="h-8 w-8 text-purple-500" />
       </div>
+
+      {/* Add event details section */}
+      {(eventDate || eventTime || location) && (
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-sm">
+          {eventDate && (
+            <div className="flex items-center gap-1 text-zinc-300">
+              <Calendar className="h-4 w-4 text-purple-500" />
+              <span>
+                {new Date(eventDate).toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </span>
+            </div>
+          )}
+
+          {eventTime && (
+            <div className="flex items-center gap-1 text-zinc-300">
+              <Clock className="h-4 w-4 text-purple-500" />
+              <span>{eventTime}</span>
+            </div>
+          )}
+
+          {location && (
+            <div className="flex items-center gap-1 text-zinc-300">
+              <MapPin className="h-4 w-4 text-purple-500" />
+              <span>{location}</span>
+            </div>
+          )}
+        </div>
+      )}
+
       <p className="text-zinc-400 max-w-2xl mx-auto">
         Powered by CMIsomer, made by the Tartan Cultural League
       </p>
