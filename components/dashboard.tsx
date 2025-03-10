@@ -133,7 +133,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
       if (result.success) {
         toast({
           title: "Valid Registration",
-          description: `Verified: ${result.registration.name} (${result.registration.andrewID})`,
+          description: `Verified: ${result.registration.name} (${result.registration.andrew_id})`,
           variant: "default",
         })
       } else {
