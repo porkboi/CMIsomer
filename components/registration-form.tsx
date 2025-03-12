@@ -379,7 +379,7 @@ export function RegistrationForm({
                     </RadioGroup>
                   </FormControl>
                   <FormDescription>
-                    Please send the above quoted amount using one of these methods:
+                    Please send the above quoted amount using one of these methods, and include your andrewID in the description:
                     <br />
                     <span className="font-medium">Venmo:</span> {venmoUsername}
                     <br />
