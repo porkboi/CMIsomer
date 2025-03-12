@@ -496,15 +496,15 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
               config={{
                 confirmed: {
                   label: "Confirmed",
-                  color: "hsl(var(--chart-1))",
+                  color: "purple",
                 },
                 waitlisted: {
                   label: "Waitlisted",
-                  color: "hsl(var(--chart-2))",
+                  color: "blue",
                 },
                 limit: {
                   label: "Capacity Limit",
-                  color: "hsl(var(--chart-3))",
+                  color: "red",
                 },
               }}
             >
@@ -521,8 +521,8 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                   <XAxis type="number" />
                   <YAxis dataKey="name" type="category" width={50} />
                   <Tooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="confirmed" stackId="a" fill="hsl(var(--chart-1))" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="waitlisted" stackId="a" fill="hsl(var(--chart-2))" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="confirmed" stackId="a" fill="purple" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="waitlisted" stackId="a" fill="blue" radius={[0, 0, 0, 0]} />
                   {/* Render limit as a reference line or separate bar */}
                   <Bar dataKey="limit" fill="none" stroke="hsl(var(--chart-3))" strokeWidth={2} strokeDasharray="5 5" />
                 </BarChart>
