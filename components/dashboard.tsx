@@ -678,7 +678,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                 filteredPending.map((reg) => (
                   <div key={reg.id} className="grid grid-cols-8 gap-4 p-4 text-white bg-yellow-950/20">
                     <div>{reg.name}</div>
-                    <div>{reg.andrewID}</div>
+                    <div>{reg.andrew_id}</div>
                     <div>{reg.age}</div>
                     <div>
                       <Badge variant="outline" className="bg-zinc-900 border-zinc-700">
@@ -687,14 +687,14 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                     </div>
                     <div>
                       {reg.tierName ? (
-                        <Badge className="bg-purple-900/50 text-purple-300 border-purple-700">
+                        <Badge className="bg-purple-900/50 text-white-300 border-purple-700">
                           {reg.tierName} (${reg.tierPrice || reg.price})
                         </Badge>
                       ) : (
                         <span>${reg.price}</span>
                       )}
                     </div>
-                    <div className="capitalize">{reg.paymentMethod}</div>
+                    <div className="capitalize">{reg.payment_method}</div>
                     <div>
                       <Badge className="bg-yellow-900/50 text-yellow-300 border-yellow-700">{reg.status}</Badge>
                     </div>
