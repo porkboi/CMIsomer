@@ -18,6 +18,8 @@ const orgColors = {
   ASA: "indigo",
 } as const
 
+var link = <a href={'https://cm-isomer.vercel.app/'}>CMIsomer</a>;
+
 export function PartyHeader({ title, organizations, eventDate, eventTime, location }: PartyHeaderProps) {
   return (
     <div className="text-center space-y-4">
@@ -63,7 +65,7 @@ export function PartyHeader({ title, organizations, eventDate, eventTime, locati
       )}
 
       <p className="text-zinc-400 max-w-2xl mx-auto">
-        Powered by CMIsomer by the Tartan Cultural League.
+        Powered by {link} by the Tartan Cultural League.
       </p>
       <div className="flex flex-wrap justify-center gap-2 text-xs">
         {organizations.map((org) => {

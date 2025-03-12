@@ -49,6 +49,13 @@
   }
 }
 
+a {
+  color: #FFF;
+}
+a:hover {
+   color: #609
+}
+
 @layer base {
   * {
     @apply border-border;
