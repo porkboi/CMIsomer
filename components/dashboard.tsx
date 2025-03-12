@@ -587,7 +587,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                 filteredConfirmed.map((reg) => (
                   <div key={reg.id} className="grid grid-cols-8 gap-4 p-4 text-white bg-red-950/20">
                     <div>{reg.name}</div>
-                    <div>{reg.andrewID}</div>
+                    <div>{reg.andrew_id}</div>
                     <div>{reg.age}</div>
                     <div>
                       <Badge variant="outline" className="bg-zinc-900 border-zinc-700">
@@ -603,7 +603,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                         <span>${reg.price}</span>
                       )}
                     </div>
-                    <div className="capitalize">{reg.paymentMethod}</div>
+                    <div className="capitalize">{reg.payment_method}</div>
                     <div>
                       <Badge
                         className={
@@ -756,7 +756,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                 filteredWaitlist.map((reg) => (
                   <div key={reg.id} className="grid grid-cols-7 gap-4 p-4 text-zinc-400 bg-zinc-900/20">
                     <div>{reg.name}</div>
-                    <div>{reg.andrewID}</div>
+                    <div>{reg.andrew_id}</div>
                     <div>{reg.age}</div>
                     <div>
                       <Badge variant="outline" className="bg-zinc-900 border-zinc-700">
@@ -772,7 +772,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                         <span>${reg.price}</span>
                       )}
                     </div>
-                    <div className="capitalize">{reg.paymentMethod}</div>
+                    <div className="capitalize">{reg.payment_method}</div>
                     <div className="flex gap-2">
                       <Button
                         size="sm"
