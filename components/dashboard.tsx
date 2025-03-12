@@ -103,7 +103,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
     }
 
     fetchData()
-  }, [partySlug, toast]) // Removed refreshKey from dependencies
+  }, [partySlug, toast, refreshKey]) // Removed refreshKey from dependencies
 
   useEffect(() => {
     if (showScanner && videoRef.current) {
@@ -218,7 +218,10 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
           variant: "default",
         })
         setOrgLimits(limits)
-        handleRefresh()
+        const orgAllocationData = await getOrgAllocation(partySlug)
+        setOrgAllocation(orgAllocationData)
+
+        setShowOrgLimitsModal(false)
       } else {
         toast({
           title: "Error",
@@ -510,11 +513,11 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
             >
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart
-                  data={organizations.map((org) => ({
-                    name: org,
-                    confirmed: confirmedRegistrations.filter((reg) => reg.organization === org).length,
-                    waitlisted: waitlistedRegistrations.filter((reg) => reg.organization === org).length,
-                    limit: orgLimits[org] || 0,
+                  data={orgAllocation.map((item) => ({
+                    name: item.name,
+                    confirmed: item.used,
+                    waitlisted: waitlistedRegistrations.filter((reg) => reg.organization === item.name).length,
+                    limit: item.total,
                   }))}
                   layout="vertical"
                 >
@@ -681,7 +684,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                     <div>{reg.andrew_id}</div>
                     <div>{reg.age}</div>
                     <div>
-                      <Badge variant="outline" className="bg-zinc-900 border-zinc-700">
+                      <Badge variant="outline" className="bg-white-900 border-zinc-700">
                         {reg.organization}
                       </Badge>
                     </div>
