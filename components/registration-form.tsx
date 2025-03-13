@@ -149,7 +149,7 @@ export function RegistrationForm({
     }
   }
 
-  const spotsRemaining = 100 - registrationCount
+  const spotsRemaining = 280 - registrationCount - 100*(currentTierIndex+1)
   const isSoldOut = spotsRemaining <= 0
   const currentTierPrice = priceTiers.length > 0 ? priceTiers[currentTierIndex].price : ticketPrice
 
