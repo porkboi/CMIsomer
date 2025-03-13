@@ -193,7 +193,6 @@ export function RegistrationForm({
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-2xl font-bold text-white">${tier.price}</p>
-                      <p className="text-xs text-zinc-400">Capacity: {tier.capacity}</p>
                     </div>
                     <div
                       className={`px-3 py-1 rounded-full text-sm ${
