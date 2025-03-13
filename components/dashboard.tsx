@@ -44,7 +44,7 @@ interface DashboardProps {
 interface Registration {
   id: string
   name: string
-  andrewID: string
+  andrew_id: string
   age: number
   organization: string
   status: "confirmed" | "waitlist" | "pending"
@@ -172,8 +172,8 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
     }
   }
 
-  const handleRemoveFromWaitlist = async (andrewID: string) => {
-    const result = await removeFromWaitlist(partySlug, andrewID)
+  const handleRemoveFromWaitlist = async (andrew_id: string) => {
+    const result = await removeFromWaitlist(partySlug, andrew_id)
     if (result.success) {
       toast({
         title: "Success",
@@ -190,8 +190,8 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
     }
   }
 
-  const handlePromoteFromWaitlist = async (andrewID: string) => {
-    const result = await promoteFromWaitlist(partySlug, andrewID)
+  const handlePromoteFromWaitlist = async (andrew_id: string) => {
+    const result = await promoteFromWaitlist(partySlug, andrew_id)
     if (result.success) {
       toast({
         title: "Success",
@@ -626,7 +626,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                           size="sm"
                           variant="outline"
                           onClick={async () => {
-                            const result = await confirmAttendance(partySlug, reg.andrewID)
+                            const result = await confirmAttendance(partySlug, reg.andrew_id)
                             if (result.success) {
                               toast({
                                 title: "Success",
@@ -780,7 +780,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handlePromoteFromWaitlist(reg.andrewID)}
+                        onClick={() => handlePromoteFromWaitlist(reg.andrew_id)}
                         className="bg-green-900/20 hover:bg-green-900/40"
                       >
                         Promote
@@ -788,7 +788,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleRemoveFromWaitlist(reg.andrewID)}
+                        onClick={() => handleRemoveFromWaitlist(reg.andrew_id)}
                         className="bg-red-900/20 hover:bg-red-900/40"
                       >
                         Remove
