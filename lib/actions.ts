@@ -76,18 +76,13 @@ export async function getOrgAllocation(partySlug: string) {
     const tableName = `org_limits_${partySlug.replace(/-/g, "_")}`
 
     // Check if the limits table exists
-    const { data: tableExists } = await supabase.rpc("exec_sql", {
-      sql: `
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_name = '${tableName}'
-        )
-      `,
-    })
+    const { data:tableExists, error } = await supabase
+      .from(tableName)  // Dynamically reference the table
+      .select('*');
 
     const orgLimits: Record<string, number> = {}
 
-    if (tableExists) {
+    if (tableExists && tableExists[0]) {
       // Fetch limits from the table
       const { data: limitsData } = await supabase.from(tableName).select("organization, limit_value")
 
