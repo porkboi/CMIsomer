@@ -300,7 +300,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
   const filteredConfirmed = confirmedRegistrations.filter((reg) => {
     const matchesSearch =
       reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.andrewID.toLowerCase().includes(searchTerm.toLowerCase())
+      reg.andrew_id.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesOrg = filteredOrgs.length === 0 || filteredOrgs.includes(reg.organization)
     return matchesSearch && matchesOrg
   })
@@ -308,7 +308,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
   const filteredWaitlist = waitlistedRegistrations.filter((reg) => {
     const matchesSearch =
       reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.andrewID.toLowerCase().includes(searchTerm.toLowerCase())
+      reg.andrew_id.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesOrg = filteredOrgs.length === 0 || filteredOrgs.includes(reg.organization)
     return matchesSearch && matchesOrg
   })
@@ -316,7 +316,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
   const filteredPending = pendingRegistrations.filter((reg) => {
     const matchesSearch =
       reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.andrewID.toLowerCase().includes(searchTerm.toLowerCase())
+      reg.andrew_id.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesOrg = filteredOrgs.length === 0 || filteredOrgs.includes(reg.organization)
     return matchesSearch && matchesOrg
   })
