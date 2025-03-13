@@ -1,4 +1,4 @@
-import { Sparkles, Calendar, Clock, MapPin } from "lucide-react"
+import { Sparkles, Calendar, Clock, MapPin, Github } from "lucide-react"
 
 interface PartyHeaderProps {
   title: string
@@ -17,6 +17,17 @@ const orgColors = {
   TSA: "pink",
   ASA: "indigo",
 } as const
+
+const GithubLink = () => (
+  <a
+    href="https://github.com/porkboi/CMIsomer"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="hover:opacity-80 transition-opacity"
+  >
+    <Github size={24} className="text-black" />
+  </a>
+);
 
 var link = <a href={'https://cm-isomer.vercel.app/'}>CMIsomer</a>;
 
@@ -65,7 +76,7 @@ export function PartyHeader({ title, organizations, eventDate, eventTime, locati
       )}
 
       <p className="text-zinc-400 max-w-2xl mx-auto">
-        Powered by {link} by the Tartan Cultural League.
+        Powered by {link} by the Tartan Cultural League {GithubLink}.
       </p>
       <div className="flex flex-wrap justify-center gap-2 text-xs">
         {organizations.map((org) => {
