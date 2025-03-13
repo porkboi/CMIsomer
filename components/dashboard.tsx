@@ -468,7 +468,6 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                     ),
                   ]}
                   layout="vertical"
-                  stackOffset="expand"
                 >
                   <XAxis type="number" domain={[0, maxCapacity]} />
                   <YAxis type="category" dataKey="name" hide />
