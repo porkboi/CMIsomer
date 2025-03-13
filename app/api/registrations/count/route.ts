@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const { count, error } = await supabase
       .from(tableName)
       .select("*", { count: "exact", head: true })
-      .eq("status", "*")
+      .eq("status", ["confirmed", "pending"])
 
     if (error) {
       console.error("Error counting registrations:", error)
