@@ -507,7 +507,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                 },
                 limit: {
                   label: "Capacity Limit",
-                  color: "red",
+                  color: "white",
                 },
               }}
             >
@@ -527,7 +527,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                   <Bar dataKey="confirmed" stackId="a" fill="purple" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="waitlisted" stackId="a" fill="blue" radius={[0, 0, 0, 0]} />
                   {/* Render limit as a reference line or separate bar */}
-                  <Bar dataKey="limit" fill="none" stroke="hsl(var(--chart-3))" strokeWidth={2} strokeDasharray="5 5" />
+                  <Bar dataKey="limit" fill="none" stroke="white" strokeWidth={2} strokeDasharray="5 5" />
                 </BarChart>
               </ResponsiveContainer>
             </ChartContainer>
