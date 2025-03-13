@@ -287,7 +287,7 @@ export function RegistrationForm({
                   <FormItem>
                     <FormLabel>Age</FormLabel>
                     <FormControl>
-                      <Input placeholder="18+" {...field} className="bg-zinc-900 border-zinc-800" />
+                      <Input placeholder="18" {...field} className="bg-zinc-900 border-zinc-800" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
