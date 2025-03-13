@@ -439,56 +439,6 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
 
       <Card className="bg-zinc-950 border-zinc-800">
         <CardHeader>
-          <CardTitle className="text-white">Price Tier Progress</CardTitle>
-          <CardDescription className="text-white">Distribution of registrations across price tiers</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-112">
-            <ChartContainer
-              config={tierData.reduce(
-                (config, tier, index) => {
-                  config[`tier${index + 1}`] = {
-                    label: tier.name,
-                    color: `hsl(var(--chart-${index + 1}))`,
-                  }
-                  return config
-                },
-                {} as Record<string, { label: string; color: string }>,
-              )}
-            >
-              <ResponsiveContainer width="100%" height={100}>
-                <BarChart
-                  data={[
-                    tierData.reduce(
-                      (data, tier, index) => {
-                        data[`tier${index + 1}`] = tier.count
-                        return data
-                      },
-                      { name: "Tiers" } as any,
-                    ),
-                  ]}
-                  layout="vertical"
-                >
-                  <XAxis type="number" domain={[0, maxCapacity]} />
-                  <YAxis type="category" dataKey="name" hide />
-                  <Tooltip content={<ChartTooltipContent />} />
-                  {tierData.map((_, index) => (
-                    <Bar
-                      key={`tier${index + 1}`}
-                      dataKey={`tier${index + 1}`}
-                      stackId="a"
-                      fill={`hsl(var(--chart-${index + 1}))`}
-                    />
-                  ))}
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-zinc-950 border-zinc-800">
-        <CardHeader>
           <CardTitle className="text-white">Organization Allocation</CardTitle>
           <CardDescription className="text-white">Distribution of registrations by organization</CardDescription>
         </CardHeader>
