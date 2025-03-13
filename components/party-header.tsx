@@ -18,17 +18,6 @@ const orgColors = {
   ASA: "indigo",
 } as const
 
-const GithubLink = () => (
-  <a
-    href="https://github.com/porkboi/CMIsomer"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="hover:opacity-80 transition-opacity"
-  >
-    <Github size={24} className="text-black" />
-  </a>
-);
-
 var link = <a href={'https://cm-isomer.vercel.app/'}>CMIsomer</a>;
 
 export function PartyHeader({ title, organizations, eventDate, eventTime, location }: PartyHeaderProps) {
@@ -76,7 +65,7 @@ export function PartyHeader({ title, organizations, eventDate, eventTime, locati
       )}
 
       <p className="text-zinc-400 max-w-2xl mx-auto">
-        Powered by {link} by the Tartan Cultural League {GithubLink}.
+        Powered by {link} by the Tartan Cultural League.
       </p>
       <div className="flex flex-wrap justify-center gap-2 text-xs">
         {organizations.map((org) => {
