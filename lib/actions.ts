@@ -346,12 +346,6 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
     const validatedData = registrationSchema.parse(formData)
     console.log("Validation passed:", validatedData) // Add this line for debugging
 
-    const existingUser = await getRegistrationByAndrewID(validatedData.andrewID, partySlug)
-
-    if (existingUser) {
-      return { success: false, message: "A registration with this Andrew ID already exists." }
-    }
-
     // Get party details
     const { data: party } = await supabase
       .from("parties")
