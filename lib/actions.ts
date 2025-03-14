@@ -346,6 +346,10 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
     const validatedData = registrationSchema.parse(formData)
     console.log("Validation passed:", validatedData) // Add this line for debugging
 
+    const existingUser = await getRegistrationByAndrewID(validatedData.andrewID, partySlug)
+
+    
+
     // Get party details
     const { data: party } = await supabase
       .from("parties")
@@ -366,7 +370,7 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
     let tierName = "Standard"
 
     if (formData.promoCode === "TCLISCOOL") {
-      price = price * 0.8 // 20% discount
+      price = price - 2
       tierName = "Promo"
     }
 
