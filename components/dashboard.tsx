@@ -474,6 +474,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                   <YAxis dataKey="name" type="category" width={50} />
                   <Tooltip content={<ChartTooltipContent />} />
                   <Bar dataKey="confirmed" stackId="a" fill="purple" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="pending" stackId="a" fill="pink" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="waitlisted" stackId="a" fill="blue" radius={[0, 0, 0, 0]} />
                   {/* Render limit as a reference line or separate bar */}
                   <Bar dataKey="limit" fill="none" stroke="white" strokeWidth={2} strokeDasharray="5 5" />
