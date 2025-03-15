@@ -302,7 +302,7 @@ export function RegistrationForm({
                 <FormItem>
                   <FormLabel>Andrew ID</FormLabel>
                   <FormControl>
-                    <Input placeholder="jdoe (For non-CMU students, use a CMU student's AndrewID and get them to forward the ticket)" {...field} className="bg-zinc-900 border-zinc-800" />
+                    <Input placeholder="jdoe" {...field} className="bg-zinc-900 border-zinc-800" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
