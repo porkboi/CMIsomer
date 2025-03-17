@@ -365,7 +365,7 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
     let price = party.ticket_price
     let tierName = "Standard"
 
-    if (formData.promoCode === "TCLISCOOL") {
+    if (formData.promoCode === "TCLISCOOL" || formData.promoCode === "boardmember") {
       price = price - 2
       tierName = "Promo"
     }
