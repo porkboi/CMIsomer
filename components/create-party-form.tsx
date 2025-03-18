@@ -167,7 +167,7 @@ export function CreatePartyForm() {
                 required: "Party name is required",
                 minLength: { value: 2, message: "Party name must be at least 2 characters" },
               })}
-              placeholder="Spring Formal 2024"
+              placeholder="TCL x ASA x Avalon 2025"
             />
             {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>}
           </div>
