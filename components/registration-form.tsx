@@ -58,6 +58,7 @@ export function RegistrationForm({
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [registrationCount, setRegistrationCount] = useState(0)
+  const [currentTierCap, setCurrentTierCap] = useState(0)
   const [priceTiers, setPriceTiers] = useState<any[]>([])
   const [currentTierIndex, setCurrentTierIndex] = useState(0)
   const { toast } = useToast()
@@ -103,7 +104,7 @@ export function RegistrationForm({
             break
           }
         }
-
+        setCurrentTierCap(cumulativeCapacity)
         setCurrentTierIndex(currentIndex)
       } catch (error) {
         console.error("Error fetching price tiers:", error)
@@ -149,7 +150,7 @@ export function RegistrationForm({
     }
   }
 
-  const spotsRemaining = currentTierIndex === 0 ? 100 - registrationCount : (currentTierIndex === 1 ? 200 - registrationCount : 280 - registrationCount)
+  const spotsRemaining = currentTierCap - registrationCount
   const isSoldOut = spotsRemaining <= 0
   const currentTierPrice = priceTiers.length > 0 ? priceTiers[currentTierIndex].price : ticketPrice
 
