@@ -5,6 +5,11 @@ import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
 
+export const metadata: Metadata = {
+  title: 'CMIsomer - Party Management System',
+  description: 'By the Tartan Cultural League',
+}
+
 export default function RootLayout({
   children,
 }: {
