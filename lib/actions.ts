@@ -873,9 +873,9 @@ export async function confirmAttendance(
       .single()
 
     if (fetchError) {
-      console.log("here");
+      console.log("here")
     } else if (!registration) {
-      console.log("here2");
+      console.log("here2")
     }
 
     if (fetchError || !registration) {
