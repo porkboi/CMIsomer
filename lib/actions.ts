@@ -872,12 +872,6 @@ export async function confirmAttendance(
       .eq("andrew_id", andrewID)
       .single()
 
-    if (fetchError) {
-      console.log("here")
-    } else if (!registration) {
-      console.log("here2")
-    }
-
     if (fetchError || !registration) {
       console.error("Error fetching registration:", fetchError)
       return { success: false, message: "Registration not found" }

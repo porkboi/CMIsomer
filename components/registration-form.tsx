@@ -186,7 +186,7 @@ export function RegistrationForm({
                     {isPast
                       ? "No longer available"
                       : isCurrent
-                        ? `${spotsRemaining} spots remaining at this price`
+                        ? `$Spots avaliable`
                         : "Available after current tier sells out"}
                   </CardDescription>
                 </CardHeader>
