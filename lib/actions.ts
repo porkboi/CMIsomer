@@ -394,7 +394,7 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
       age: Number.parseInt(validatedData.age),
       price,
       qrCode,
-      status: confirmedCount + pendingCount < party.max_capacity ? "pending" : "waitlist", // Changed from "confirmed" to "pending"
+      status: confirmedCount < party.max_capacity ? "pending" : "waitlist", // Changed from "confirmed" to "pending"
       tierName,
       tierPrice: price,
     })
