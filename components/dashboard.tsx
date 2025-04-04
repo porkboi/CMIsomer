@@ -575,7 +575,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                           size="sm"
                           variant="outline"
                           onClick={async () => {
-                            const result = await confirmAttendance(partySlug, reg.id, reg.andrew_id)
+                            const result = await confirmAttendance(partySlug, reg.name, reg.andrew_id)
                             if (result.success) {
                               toast({
                                 title: "Success",
@@ -655,7 +655,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                         size="sm"
                         variant="outline"
                         onClick={async () => {
-                          const result = await confirmAttendance(partySlug, reg.andrew_id)
+                          const result = await confirmAttendance(partySlug, reg.id, reg.andrew_id)
                           if (result.success) {
                             toast({
                               title: "Success",
