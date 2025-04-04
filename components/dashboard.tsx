@@ -476,7 +476,6 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                   <Bar dataKey="confirmed" stackId="a" fill="purple" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="pending" stackId="a" fill="pink" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="waitlisted" stackId="a" fill="blue" radius={[0, 0, 0, 0]} />
-                  {/* Render limit as a reference line or separate bar */}
                   <Bar dataKey="limit" fill="none" stroke="white" strokeWidth={2} strokeDasharray="5 5" />
                 </BarChart>
               </ResponsiveContainer>
@@ -738,7 +737,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleRemoveFromWaitlist(reg.andrew_id)}
+                        onClick={() => handleRemoveFromList(reg.andrew_id)}
                         className="bg-red-900/20 hover:bg-red-900/40"
                       >
                         Remove
