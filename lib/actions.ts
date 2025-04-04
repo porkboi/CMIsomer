@@ -151,9 +151,18 @@ export async function getPriceTiers(partySlug: string): Promise<PriceTier[]> {
       console.error("Error fetching price tiers:", error)
       return []
     }
+    const updatedTiers = [
+      ...tiersData,
+      {
+        id: tiersData.length,
+        name: "Waitlist",
+        price: tiersData[tiersData.length - 1].price,
+        capacity: 999,
+      }
+    ]
 
-    if (tiersData && tiersData.length > 0) {
-      return tiersData.map((tier) => ({
+    if (updatedTiers && updatedTiers.length > 0) {
+      return updatedTiers.map((tier) => ({
         id: tier.id.toString(),
         name: tier.name,
         price: tier.price,

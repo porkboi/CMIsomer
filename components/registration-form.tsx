@@ -156,13 +156,13 @@ export function RegistrationForm({
 
   return (
     <div className="space-y-6">
-      {/* Price Tiers Display */}
       <div className="grid gap-4 md:grid-cols-3">
         {priceTiers.length > 0 ? (
           priceTiers.map((tier, index) => {
             const isCurrent = index === currentTierIndex
             const isPast = index < currentTierIndex
             const isFuture = index > currentTierIndex
+            const iswl = currentTierIndex === priceTiers.length
 
             return (
               <Card
