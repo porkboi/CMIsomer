@@ -369,7 +369,6 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
     // Get registrations for this party
     const registrations = await getRegistrations(partySlug)
     const confirmedCount = registrations.filter((reg) => reg.status === "confirmed").length
-    const pendingCount = registrations.filter((reg) => reg.status === "pending").length
 
     // Determine price (apply promo code if provided)
     let price = party.ticket_price
