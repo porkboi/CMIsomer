@@ -61,6 +61,7 @@ export function RegistrationForm({
   const [currentTierCap, setCurrentTierCap] = useState(0)
   const [priceTiers, setPriceTiers] = useState<any[]>([])
   const [currentTierIndex, setCurrentTierIndex] = useState(0)
+  const [isWL, setIsWL] = useState(false)
   const { toast } = useToast()
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -162,7 +163,7 @@ export function RegistrationForm({
             const isCurrent = index === currentTierIndex
             const isPast = index < currentTierIndex
             const isFuture = index > currentTierIndex
-            const iswl = currentTierIndex === priceTiers.length
+            setIsWL(currentTierIndex === priceTiers.length)
 
             return (
               <Card
