@@ -870,7 +870,7 @@ export async function updateMaxCapacity(
 // Add this new server action to send confirmation emails
 export async function confirmAttendance(
   partySlug: string,
-  regid: number,
+  name: string,
   andrewID: string,
 ): Promise<{ success: boolean; message: string }> {
   if (!(await isAuthenticated(partySlug))) {
@@ -883,7 +883,7 @@ export async function confirmAttendance(
     const { data: registration, error: fetchError } = await supabase
       .from(tableName)
       .select("*")
-      .eq("id", regid)
+      .eq("name", name)
       .single()
 
     if (fetchError || !registration) {
@@ -895,7 +895,7 @@ export async function confirmAttendance(
     const { error: updateError } = await supabase
       .from(tableName)
       .update({ status: "confirmed" })
-      .eq("id", regid)
+      .eq("name", name)
 
     if (updateError) {
       console.error("Error updating registration status:", updateError)
