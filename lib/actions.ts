@@ -886,21 +886,27 @@ export async function confirmAttendance(
       .eq("id", id)
       .single()
 
+    console.log("here")
+
     if (fetchError) {
       console.error("Error fetching registration:", fetchError)
       return { success: false, message: "Fetch Error" }
     }
+
+    console.log("here2")
 
     if (!registration) {
       console.error("Error fetching registration:", fetchError)
       return { success: false, message: "Registration not found" }
     }
 
+    console.log("here3")
+
     // Update status to confirmed
     const { error: updateError } = await supabase
       .from(tableName)
       .update({ status: "confirmed" })
-      .eq("name", name)
+      .eq("id", id)
 
     if (updateError) {
       console.error("Error updating registration status:", updateError)
