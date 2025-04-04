@@ -379,6 +379,11 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
       tierName = "Promo"
     }
 
+    if (formData.promoCode === "nosleep") {
+      price = price/2
+      tierName = "Promo"
+    }
+
     // Generate QR code
     const qrData = {
       andrewID: validatedData.andrewID,
