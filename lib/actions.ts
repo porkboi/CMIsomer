@@ -880,12 +880,27 @@ export async function confirmAttendance(
   try {
     // Update the registration status to confirmed
     const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const { data: registration, error: fetchError } = await supabase
+      .from(tableName)
+      .select("*")
+      .eq("id", id)
+      .single()
+
+    if (fetchError) {
+      console.error("Error fetching registration:", fetchError)
+      return { success: false, message: "Fetch Error" }
+    }
+
+    if (!registration) {
+      console.error("Error fetching registration:", fetchError)
+      return { success: false, message: "Registration not found" }
+    }
 
     // Update status to confirmed
     const { error: updateError } = await supabase
       .from(tableName)
       .update({ status: "confirmed" })
-      .eq("id", id)
+      .eq("name", name)
 
     if (updateError) {
       console.error("Error updating registration status:", updateError)
