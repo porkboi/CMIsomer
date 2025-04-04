@@ -737,7 +737,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleRemoveFromList(reg.andrew_id)}
+                        onClick={() => handleRemoveFromList(reg.id)}
                         className="bg-red-900/20 hover:bg-red-900/40"
                       >
                         Remove
