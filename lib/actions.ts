@@ -369,6 +369,7 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
     // Get registrations for this party
     const registrations = await getRegistrations(partySlug)
     const confirmedCount = registrations.filter((reg) => reg.status === "confirmed").length
+    const pendingCount = registrations.filter((reg) => reg.status === "pending").length
 
     // Determine price (apply promo code if provided)
     let price = party.ticket_price
@@ -393,7 +394,7 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
       age: Number.parseInt(validatedData.age),
       price,
       qrCode,
-      status: registrations.length < party.max_capacity ? "pending" : "waitlist", // Changed from "confirmed" to "pending"
+      status: confirmedCount + pendingCount < party.max_capacity ? "pending" : "waitlist", // Changed from "confirmed" to "pending"
       tierName,
       tierPrice: price,
     })
