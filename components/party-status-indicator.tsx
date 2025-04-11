@@ -44,8 +44,10 @@ export function PartyStatusIndicator({ checkedInCount, maxCapacity }: PartyStatu
 
   return (
     <div className="flex items-center">
-      <span className={`h-4 w-4 rounded-full ${status.color} animate-ping absolute inline-flex opacity-75`}></span>
-      <span className="font-medium">{status.text}</span>
+        <span
+            className={`mr-2 h-3 w-3 rounded-full pulse-light-${status.className}`}
+        ></span>
+        <span className="font-medium">{status.text}</span>
     </div>
   )
 }
