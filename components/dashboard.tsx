@@ -298,7 +298,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
   const confirmedRegistrations = registrations.filter((reg) => reg.status === "confirmed")
   const waitlistedRegistrations = registrations.filter((reg) => reg.status === "waitlist")
   const pendingRegistrations = registrations.filter((reg) => reg.status === "pending")
-  const checkedIn = registrations.filter((reg) => reg.status === true)
+  const checkedIn = registrations.filter((reg) => reg.checked_in === true)
 
   const filteredConfirmed = confirmedRegistrations.filter((reg) => {
     const matchesSearch =
