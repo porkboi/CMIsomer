@@ -31,7 +31,7 @@ export default async function TicketPage({ params, searchParams }: PageProps) {
   const confirmedRegistrations = registrations.filter((reg) => reg.status === "confirmed")
   const checkedIn = registrations.filter((reg) => reg.checked_in === true)
 
-  const ratio = checkedIn.length / confirmedRegistrations.length
+  const ratio = checkedIn.length / confirmedRegistrations
 
   let vibe = {
     text: "it's dead",
@@ -86,6 +86,8 @@ export default async function TicketPage({ params, searchParams }: PageProps) {
                   ></span>
                 </div>
                 <div className="text-lg font-semibold">{vibe.text}</div>
+              </CardContent>
+
 
 
               {/* ✅ Use the new Client Component here */}
