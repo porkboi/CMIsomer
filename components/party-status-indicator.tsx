@@ -44,8 +44,11 @@ export function PartyStatusIndicator({ checkedInCount, maxCapacity }: PartyStatu
 
   return (
     <div className="relative flex items-center">
-        <span className={`h-4 w-4 rounded-full bg-${status.color}-500 animate-ping`}></span>
-        <span className="font-medium relative">{status.text}</span>
+        <span
+            className={`absolute left-0 h-4 w-4 rounded-full bg-${status.color}-500 animate-ping`}
+            style={{ zIndex: 10 }}
+        ></span>
+        <span className="pl-5 font-medium relative z-20">{status.text}</span>
     </div>
   )
 }
