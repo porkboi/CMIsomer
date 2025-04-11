@@ -425,7 +425,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
           <CardContent> 
             <div className="text-2xl font-bold text-white">{checkedIn.length}</div>
             <p className="text-xs text-zinc-400">
-              {checkedIn.length/confirmedRegistrations.length*100}% of confirmed
+              {Math.round(checkedIn.length/confirmedRegistrations.length)*100}% of confirmed
             </p>
           </CardContent>
         </Card>
