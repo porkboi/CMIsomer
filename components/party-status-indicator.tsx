@@ -47,7 +47,6 @@ export function PartyStatusIndicator({ checkedInCount, maxCapacity }: PartyStatu
         <span
             className={`mr-2 h-3 w-3 rounded-full pulse-light-${status.className}`}
         ></span>
-        <span className="font-medium">{status.text}</span>
     </div>
   )
 }
