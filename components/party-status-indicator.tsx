@@ -43,9 +43,7 @@ export function PartyStatusIndicator({ checkedInCount, maxCapacity }: PartyStatu
   }, [checkedInCount, maxCapacity])
 
   return (
-    <div
-        className={`pulse-light-${status.className}`}
-    ></div>
+    <div className={`pulse-light-${status.className}`}></div>
     <div className="font-medium">{status.text}</div>
   )
 }
