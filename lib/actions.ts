@@ -687,6 +687,43 @@ export async function addRegistration(
   return data
 }
 
+export async function getCheckedInCount(partySlug: string): Promise<{ checkedInCount: number; maxCapacity: number }> {
+  try {
+    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+
+    // Get checked-in count
+    const { count: checkedInCount, error: countError } = await supabase
+      .from(tableName)
+      .select("*", { count: "exact", head: true })
+      .eq("checked_in", true)
+
+    if (countError) {
+      console.error("Error counting checked-in attendees:", countError)
+      return { checkedInCount: 0, maxCapacity: 0 }
+    }
+
+    // Get max capacity
+    const { data: party, error: partyError } = await supabase
+      .from("parties")
+      .select("max_capacity")
+      .eq("slug", partySlug)
+      .single()
+
+    if (partyError) {
+      console.error("Error fetching party max capacity:", partyError)
+      return { checkedInCount: checkedInCount || 0, maxCapacity: 0 }
+    }
+
+    return {
+      checkedInCount: checkedInCount || 0,
+      maxCapacity: party.max_capacity,
+    }
+  } catch (error) {
+    console.error("Error getting checked-in count:", error)
+    return { checkedInCount: 0, maxCapacity: 0 }
+  }
+}
+
 export async function checkInGuest(
   partySlug: string,
   name: string
