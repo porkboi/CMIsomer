@@ -687,6 +687,23 @@ export async function addRegistration(
   return data
 }
 
+export async function checkInGuest(
+  partySlug: string,
+  name: string
+): Promise<void> {
+  const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+
+  const { error } = await supabase
+    .from(tableName)
+    .update({ checked_in: true })
+    .eq("name", name)
+
+  if (error) {
+    console.error("Error checking in guest:", error)
+    throw error
+  }
+}
+
 export async function verifyPartyAdmin(partySlug: string, username: string, password: string) {
   try {
     const { data: party, error } = await supabase

@@ -30,6 +30,7 @@ import {
   updatePriceTiers,
   updateMaxCapacity,
   confirmAttendance,
+  checkInGuest,
 } from "@/lib/actions"
 import { OrgLimitsModal } from "./org-limits-modal"
 import { PriceTiersModal, type PriceTier } from "./price-tiers-modal"
@@ -136,6 +137,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
           description: `Verified: ${result.registration.name} (${result.registration.andrew_id})`,
           variant: "default",
         })
+        checkInGuest(partySlug, result.registration.name)
       } else {
         toast({
           title: "Invalid QR Code",
