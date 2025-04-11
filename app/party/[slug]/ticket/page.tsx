@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation"
-import { getPartyBySlug, getTicketByToken } from "@/lib/actions"
+import { getPartyBySlug, getTicketByToken,getRegistrations } from "@/lib/actions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
 import { Ticket, User, Calendar, MapPin, Clock } from "lucide-react"
@@ -25,6 +25,29 @@ export default async function TicketPage({ params, searchParams }: PageProps) {
   const ticket = await getTicketByToken(params.slug, token)
   if (!ticket) {
     redirect(`/party/${params.slug}?error=invalid_token`)
+  }
+
+  const registrations = getRegistrations(params.slug)
+  const confirmedRegistrations = registrations.filter((reg) => reg.status === "confirmed")
+  const checkedIn = registrations.filter((reg) => reg.checked_in === true)
+
+  const ratio = checkedIn.length / confirmedRegistrations.length
+
+  let vibe = {
+    text: "it's dead",
+    color: "bg-green-500",
+  }
+
+  if (ratio > 2 / 3) {
+    vibe = {
+      text: "WOOOO",
+      color: "bg-red-500",
+    }
+  } else if (ratio > 1 / 3) {
+    vibe = {
+      text: "lively",
+      color: "bg-yellow-400",
+    }
   }
 
   return (
@@ -53,6 +76,17 @@ export default async function TicketPage({ params, searchParams }: PageProps) {
                   priority
                 />
               </div>
+              <CardContent className="flex items-center space-x-4 p-6">
+                <div className="relative">
+                  <span
+                    className={`h-4 w-4 rounded-full ${vibe.color} animate-ping absolute inline-flex opacity-75`}
+                  ></span>
+                  <span
+                    className={`h-4 w-4 rounded-full ${vibe.color} relative inline-flex`}
+                  ></span>
+                </div>
+                <div className="text-lg font-semibold">{vibe.text}</div>
+
 
               {/* ✅ Use the new Client Component here */}
               <WalletButtons />
