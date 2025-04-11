@@ -68,3 +68,46 @@ a:hover {
   }
 }
 
+@keyframes pulse-light {
+  0% {
+    opacity: 0.6;
+    box-shadow: 0 0 5px 2px currentColor;
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 15px 5px currentColor;
+  }
+  100% {
+    opacity: 0.6;
+    box-shadow: 0 0 5px 2px currentColor;
+  }
+}
+
+.pulse-light {
+  animation: pulse-light 2s infinite;
+  border-radius: 50%;
+  height: 12px;
+  width: 12px;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.pulse-light-green {
+  color: #10b981;
+}
+
+.pulse-light-yellow {
+  color: #f59e0b;
+}
+
+.pulse-light-red {
+  color: #ef4444;
+}
+
+/* Disabled registration form */
+.registration-ended {
+  opacity: 0.6;
+  pointer-events: none;
+  filter: grayscale(0.8);
+}
+
