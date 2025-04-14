@@ -730,14 +730,23 @@ export async function checkInGuest(
 ): Promise<void> {
   const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
 
-  const { error } = await supabase
-    .from(tableName)
-    .update({ "checked_in": true })
-    .eq("name", name)
+  const { data, error: fetchError } = await supabase
+  .from(tableName)
+  .select("checked_in")
+  .eq("name", name)
+  .single();
 
-  if (error) {
-    console.error("Error checking in guest:", error)
-    throw error
+  if (fetchError) {
+    console.error("Error fetching current value:", fetchError);
+  } else {
+    const { error: updateError } = await supabase
+      .from(tableName)
+      .update({ checked_in: !data.checked_in })
+      .eq("name", name);
+
+    if (updateError) {
+      console.error("Error updating value:", updateError);
+    }
   }
 }
 
