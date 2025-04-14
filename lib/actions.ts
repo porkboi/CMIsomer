@@ -736,8 +736,6 @@ export async function checkInGuest(
   .eq("name", name)
   .single();
 
-  console.log("ok");
-
   if (fetchError) {
     console.error("Error fetching current value:", fetchError);
   } else {
