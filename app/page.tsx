@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@radix-ui/themes";
+import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function HomePage() {
