@@ -168,6 +168,7 @@ export function CreatePartyForm() {
                 minLength: { value: 2, message: "Party name must be at least 2 characters" },
               })}
               placeholder="My Super Cool Party"
+              className = "bg-zinc-900"
             />
             {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>}
           </div>
