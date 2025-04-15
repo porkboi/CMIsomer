@@ -167,7 +167,7 @@ export function CreatePartyForm() {
                 required: "Party name is required",
                 minLength: { value: 2, message: "Party name must be at least 2 characters" },
               })}
-              placeholder="TCL x ASA x Avalon 2025"
+              placeholder="My Super Cool Party"
             />
             {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>}
           </div>
@@ -179,7 +179,7 @@ export function CreatePartyForm() {
                 required: "Organizations are required",
                 minLength: { value: 2, message: "Organizations must be at least 2 characters" },
               })}
-              placeholder="SSA, HKSA, SIAM, KSA, CSA, TSA, ASA"
+              placeholder="Orgs, Separated, By, Comma"
             />
             <p className="text-sm text-muted-foreground mt-1">Enter organization names separated by commas.</p>
             {errors.organizations && <p className="text-sm text-red-500">{errors.organizations.message}</p>}
