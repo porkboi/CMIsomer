@@ -158,7 +158,7 @@ export function CreatePartyForm() {
         </CardTitle>
         <CardDescription>Set up a new party registration page with custom settings.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent classname="bg-zinc-800">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           <div>
             <label className="text-sm font-medium">Party Name</label>
