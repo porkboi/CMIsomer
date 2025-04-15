@@ -181,6 +181,7 @@ export function CreatePartyForm() {
                 minLength: { value: 2, message: "Organizations must be at least 2 characters" },
               })}
               placeholder="Orgs, Separated, By, Comma"
+              className = "bg-zinc-900"
             />
             <p className="text-sm text-muted-foreground mt-1">Enter organization names separated by commas.</p>
             {errors.organizations && <p className="text-sm text-red-500">{errors.organizations.message}</p>}
@@ -194,7 +195,7 @@ export function CreatePartyForm() {
                 {...register("eventDate", {
                   required: "Event date is required",
                 })}
-                className="mt-1"
+                className="bg-zinc-900 mt-1"
               />
               {errors.eventDate && <p className="text-sm text-red-500 mt-1">{errors.eventDate.message}</p>}
             </div>
@@ -206,7 +207,7 @@ export function CreatePartyForm() {
                 {...register("eventTime", {
                   required: "Event time is required",
                 })}
-                className="mt-1"
+                className="bg-zinc-900 mt-1"
               />
               {errors.eventTime && <p className="text-sm text-red-500 mt-1">{errors.eventTime.message}</p>}
             </div>
@@ -218,7 +219,7 @@ export function CreatePartyForm() {
                   required: "Location is required",
                 })}
                 placeholder="e.g., Cohon University Center, Rangos Ballroom"
-                className="mt-1"
+                className="bg-zinc-900 mt-1"
               />
               {errors.location && <p className="text-sm text-red-500 mt-1">{errors.location.message}</p>}
             </div>
@@ -234,6 +235,7 @@ export function CreatePartyForm() {
                   min: { value: 1, message: "Capacity must be at least 1" },
                 })}
                 placeholder="300"
+                className="bg-zinc-900"
               />
               {errors.maxCapacity && <p className="text-sm text-red-500 mt-1">{errors.maxCapacity.message}</p>}
             </div>
@@ -259,13 +261,14 @@ export function CreatePartyForm() {
                 min: { value: 0, message: "Price must be at least 0" },
               })}
               placeholder="15"
+              className="bg-zinc-900"
             />
             {errors.ticketPrice && <p className="text-sm text-red-500 mt-1">{errors.ticketPrice.message}</p>}
           </div>
 
           <div>
             <label className="text-sm font-medium">Venmo Username</label>
-            <Input {...register("venmoUsername", { required: "Venmo username is required" })} placeholder="@username" />
+            <Input {...register("venmoUsername", { required: "Venmo username is required" })} placeholder="@username" className="bg-zinc-900"/>
             <p className="text-sm text-muted-foreground mt-1">Enter your Venmo username without the @ symbol</p>
             {errors.venmoUsername && <p className="text-sm text-red-500">{errors.venmoUsername.message}</p>}
           </div>
@@ -275,6 +278,7 @@ export function CreatePartyForm() {
             <Input
               {...register("zelleInfo", { required: "Zelle information is required" })}
               placeholder="Phone or email"
+              className="bg-zinc-900"
             />
             <p className="text-sm text-muted-foreground mt-1">
               Enter the phone number or email associated with your Zelle account
@@ -285,7 +289,7 @@ export function CreatePartyForm() {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="text-sm font-medium">Admin Username</label>
-              <Input {...register("adminUsername", { required: "Admin username is required" })} placeholder="admin" />
+              <Input {...register("adminUsername", { required: "Admin username is required" })} placeholder="admin" className="bg-zinc-900"/>
               {errors.adminUsername && <p className="text-sm text-red-500 mt-1">{errors.adminUsername.message}</p>}
             </div>
 
@@ -298,6 +302,7 @@ export function CreatePartyForm() {
                   minLength: { value: 6, message: "Password must be at least 6 characters" },
                 })}
                 placeholder="••••••"
+                className="bg-zinc-900"
               />
               {errors.adminPassword && <p className="text-sm text-red-500 mt-1">{errors.adminPassword.message}</p>}
             </div>
