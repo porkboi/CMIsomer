@@ -156,7 +156,7 @@ export function RegistrationForm({
   const currentTierPrice = priceTiers.length > 0 ? priceTiers[currentTierIndex].price : ticketPrice
 
   return (
-    <div className="space-y-6">
+    <div className="bg-zinc-800 space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
         {priceTiers.length > 0 ? (
           priceTiers.map((tier, index) => {

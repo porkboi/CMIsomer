@@ -1,19 +1,26 @@
-import { CreatePartyForm } from "@/components/create-party-form"
-import { ThemeToggle } from "@/components/theme-toggle"
+import React from "react";
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text">
-            CMIsomer: by the Tartan Cultural League
-          </h1>
-          <ThemeToggle />
+    <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center p-4">
+      <Card className="bg-zinc-900 text-center max-w-md w-full shadow-xl rounded-2xl p-6 space-y-6">
+        <h1 className="text-3xl font-bold">CMIsomer 🎉</h1>
+        <p className="text-zinc-400">Plan your next event in just a few clicks.</p>
+        <div className="flex flex-col gap-4">
+          <a href="/create">
+            <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-2xl py-2 px-4 shadow">
+              Create New Party
+            </Button>
+          </a>
+          <a href="/about">
+            <Button className="w-full bg-zinc-700 hover:bg-zinc-600 text-white rounded-2xl py-2 px-4 shadow">
+              Learn More About Us
+            </Button>
+          </a>
         </div>
-        <CreatePartyForm />
-      </div>
+      </Card>
     </div>
-  )
+  );
 }
-
