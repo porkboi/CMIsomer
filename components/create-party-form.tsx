@@ -302,7 +302,7 @@ export function CreatePartyForm() {
             </div>
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full">
+          <Button type="submit" disabled={isSubmitting} className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-2xl py-2 px-4 shadow">
             {isSubmitting ? "Creating..." : "Create Party"}
           </Button>
         </form>
