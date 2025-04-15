@@ -11,6 +11,8 @@ Webapp to manage and host parties at CMU easily
 - Managed by your peers :)
 
 ## TODO: ##
+- Make free event toggle
+- make Paynow/Paylah (SG) deeplink
 - Google Calendar Integration
 - Google Wallet/ Apple Wallet
 - Waiting Room (paywalled)
