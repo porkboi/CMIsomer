@@ -13,7 +13,7 @@ Webapp to manage and host parties at CMU easily
 ## TODO: ##
 - Make free event toggle
 - make Paynow/Paylah (SG) deeplink
-- Google Calendar Integration
+- Google Calendar Integration (@porkboi)
 - Google Wallet/ Apple Wallet
 - Waiting Room (paywalled)
 - User Management System
