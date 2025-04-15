@@ -111,7 +111,7 @@ export function CreatePartyForm() {
 
   if (successData) {
     return (
-      <Card className="animate-in slide-in-from-bottom-4 duration-700">
+      <Card className="bg-zinc-800 animate-in slide-in-from-bottom-4 duration-700">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-green-500">
             <Check className="h-6 w-6" />
@@ -119,7 +119,7 @@ export function CreatePartyForm() {
           </CardTitle>
           <CardDescription>Your party registration page is ready.</CardDescription>
         </CardHeader>
-        <CardContent className="bg-zinc-800 space-y-4">
+        <CardContent className="space-y-4">
           <div className="rounded-lg border bg-muted/50 p-4">
             <p className="text-sm font-medium">Your unique party URL:</p>
             <div className="mt-2 flex items-center gap-2">
