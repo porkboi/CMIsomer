@@ -150,7 +150,7 @@ export function CreatePartyForm() {
   }
 
   return (
-    <Card classname="bg-zinc-800">
+    <Card className="bg-zinc-800">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
