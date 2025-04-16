@@ -259,7 +259,7 @@ export function RegistrationForm({
         )}
       </div>
 
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6 shadow-lg">
+      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6 shadow-lg">
         <div className="mb-6 flex items-center gap-2">
           <PartyPopper className="h-5 w-5 text-pink-500" />
           <h2 className="text-xl font-semibold">Party Registration</h2>

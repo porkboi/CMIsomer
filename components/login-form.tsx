@@ -40,7 +40,7 @@ export function LoginForm({ partySlug, adminUsername }: LoginFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto bg-zinc-950 border-zinc-800">
+    <Card className="w-full max-w-md mx-auto bg-zinc-900 border-zinc-800">
       <CardHeader>
         <CardTitle className="text-white">Admin Login</CardTitle>
         <CardDescription className="text-zinc-400">
@@ -55,7 +55,7 @@ export function LoginForm({ partySlug, adminUsername }: LoginFormProps) {
               placeholder={`Username`}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="bg-zinc-900 border-zinc-800"
+              className="bg-zinc-800 border-zinc-800"
             />
           </div>
           <div className="space-y-2">
