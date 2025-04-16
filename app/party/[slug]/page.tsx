@@ -42,7 +42,7 @@ export default async function PartyPage({ params }: PageProps) {
               Dashboard
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="register" className="mt-6">
+          <TabsContent value="register" className="bg-zinc-800 mt-6">
             <Suspense fallback={<div>Loading...</div>}>
               <RegistrationForm
                 partySlug={params.slug}
@@ -55,7 +55,7 @@ export default async function PartyPage({ params }: PageProps) {
               />
             </Suspense>
           </TabsContent>
-          <TabsContent value="dashboard" className="mt-6">
+          <TabsContent value="dashboard" className="bg-zinc-800 mt-6">
             {authenticated ? (
               <Suspense key="dashboard" fallback={<div>Loading...</div>}>
                 <Dashboard
