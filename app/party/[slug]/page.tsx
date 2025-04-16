@@ -23,8 +23,8 @@ export default async function PartyPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-zinc-900 text-white">
+      <div className="container bg-zinc-800 mx-auto px-4 py-8">
         <PartyHeader
           title={party.name}
           organizations={party.organizations}
