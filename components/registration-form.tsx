@@ -157,7 +157,7 @@ export function RegistrationForm({
 
   return (
     <div className="bg-zinc-800 space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="bg-zinc-900 grid gap-4 md:grid-cols-3">
         {priceTiers.length > 0 ? (
           priceTiers.map((tier, index) => {
             const isCurrent = index === currentTierIndex
