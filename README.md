@@ -11,6 +11,10 @@ Webapp to manage and host parties at CMU easily
 - Managed by your peers :)
 
 ## TODO: ##
+- Add Organisations
+- Edit Party Details
+- Announcement page on ticket page
+- Add photo
 - Make free event toggle
 - make Paynow/Paylah (SG) deeplink
 - Google Calendar Integration (@porkboi)
