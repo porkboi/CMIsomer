@@ -8,7 +8,7 @@ export default function HomePage() {
       <Card className="bg-zinc-900 text-center max-w-md w-full shadow-xl rounded-2xl p-6 space-y-6">
         <h1 className="text-3xl font-bold">CMIsomer 🎉</h1>
         <p className="text-zinc-400">Plan your next event in just a few clicks.</p>
-        <div className="flex flex-row gap-4">
+        <div className="flex flex-row gap-4 content-center">
           <a href="/create-party">
             <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-2xl py-2 px-4 shadow">
               Create New Party
