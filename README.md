@@ -13,7 +13,9 @@ Webapp to manage and host parties at CMU easily
 ## TODO: ##
 - Add Organisations
 - Edit Party Details
-- Announcement page on ticket page
+- Announcement page on ticket page / Email Announcement
+- Custom Fields
+- Business Cards
 - Add photo
 - Make free event toggle
 - make Paynow/Paylah (SG) deeplink
