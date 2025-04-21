@@ -9,12 +9,12 @@ export default function HomePage() {
         <h1 className="text-3xl font-bold">CMIsomer 🎉</h1>
         <p className="text-zinc-400">Plan your next event in just a few clicks.</p>
         <div className="flex flex-row gap-4 content-center">
-          <a href="/create-party">
+          <a href="create/create-party">
             <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-2xl py-2 px-4 shadow">
               Create New Party
             </Button>
           </a>
-          <a href="/create-corporate">
+          <a href="create/create-corporate">
             <Button className="w-full bg-zinc-700 hover:bg-zinc-600 text-white rounded-2xl py-2 px-4 shadow">
               Create New Function
             </Button>
