@@ -1,7 +1,9 @@
+"use client"
+
 import React from "react";
 import { motion } from "framer-motion";
 
-export const LiteWordArt = () => {
+const LiteWordArt = () => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
         <motion.h1
@@ -21,3 +23,5 @@ export const LiteWordArt = () => {
       </div>
     );
   };
+
+export default LiteWordArt;
