@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import "./globals.css"
+import "@/app/globals.css"
 
 export const ProWordArt = () => {
     return (
