@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card";
+import LiteWordArt from "@/components/word-art"
 
 export default function HomePage() {
   return (
@@ -10,6 +11,7 @@ export default function HomePage() {
         <p className="text-zinc-400">Plan your next event in just a few clicks.</p>
         <div className="flex flex-row gap-4 justify-center">
           <a href="/create/create-party">
+            <LiteWordArt/>
             <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-2xl py-2 px-4 shadow">
               Create New Party
             </Button>
