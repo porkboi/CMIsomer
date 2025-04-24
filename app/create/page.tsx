@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card";
-import LiteWordArt from "@/components/word-art"
+import {LiteWordArt, ProWordArt} from "@/components/word-art"
 
 export default function HomePage() {
   return (
@@ -18,6 +18,7 @@ export default function HomePage() {
           </a>
           <a href="/create/create-corporate">
             <Button className="w-full bg-zinc-700 hover:bg-zinc-600 text-white rounded-2xl py-2 px-4 shadow">
+              <ProWordArt/>
               Create New Function
             </Button>
           </a>
