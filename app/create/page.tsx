@@ -6,7 +6,7 @@ import {LiteWordArt, ProWordArt} from "@/components/word-art"
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center p-4">
-      <Card className="bg-zinc-800 text-center max-w-md w-full shadow-xl rounded-2xl p-6 space-y-6">
+      <Card className="bg-zinc-800 text-center max-w-lg w-full shadow-xl rounded-2xl p-6 space-y-6">
         <h1 className="text-3xl font-bold">CMIsomer 🎉</h1>
         <p className="text-zinc-400">Plan your next event in just a few clicks.</p>
         <div className="flex flex-row gap-4 justify-center">

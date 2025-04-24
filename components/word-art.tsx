@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 export const ProWordArt = () => {
     return (
-      <div className="flex items-center justify-center bg-zinc-900">
+      <div className="flex items-center justify-center">
         <motion.h1
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -26,7 +26,7 @@ export const ProWordArt = () => {
 
 export const LiteWordArt = () => {
     return (
-      <div className="flex items-center justify-center bg-zinc-900">
+      <div className="flex items-center justify-center">
         <motion.h1
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
