@@ -24,7 +24,7 @@ export const ProWordArt = () => {
       </div>
     );
   };
-
+  
   export const LiteWordArt = () => {
     const [position, setPosition] = useState({ x: 0, y: 0 })
     const containerRef = useRef<HTMLDivElement>(null)
@@ -45,26 +45,26 @@ export const ProWordArt = () => {
         className="relative flex items-center justify-center"
       >
         <div
-          className="pointer-events-none absolute z-0 h-[200px] w-[200px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_rgba(216,191,255,0.7)_0%,_transparent_70%)] blur-[8px] transition-opacity duration-150"
+          className="pointer-events-none absolute z-10 h-[200px] w-[200px] -translate-x-1/2 -translate-y-1/2 rounded-full mix-blend-lighten bg-[radial-gradient(circle,_rgba(255,255,255,0.7)_0%,_transparent_70%)]"
           style={{
             left: `${position.x}px`,
             top: `${position.y}px`,
           }}
         />
-
+  
         <motion.h1
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6 }}
-          className="relative z-10 text-[7rem] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-700 cursor-pointer"
+          className="relative z-20 text-[7rem] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-700 cursor-pointer"
         >
-          <span className="absolute left-0 top-0 text-[7rem] font-extrabold text-pink-500 drop-shadow-[0_0_5px_rgba(255,105,180,0.8)]">
+          <span className="absolute left-0 top-0 text-[7rem] font-extrabold text-pink-500 drop-shadow-[0_0_5px_rgba(74,20,140,0.8)]">
             Lite
           </span>
           <span className="absolute left-0 top-0 text-[7rem] font-extrabold text-purple-700 drop-shadow-[0_0_15px_rgba(128,0,128,0.6)]">
             Lite
           </span>
-          <span className="relative z-10">Lite</span>
+          <span className="relative z-20">Lite</span>
         </motion.h1>
       </div>
     )
