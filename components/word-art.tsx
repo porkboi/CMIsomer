@@ -2,6 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import "./globals.css"
 
 export const ProWordArt = () => {
     return (
@@ -31,19 +32,15 @@ export const ProWordArt = () => {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6 }}
-          whileHover={{
-            textShadow: '0 0 25px rgba(216,191,255,0.9)', // light purple glow
-            scale: 1.05,
-          }}
-          className="text-[7rem] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500 relative cursor-pointer transition-all duration-150 ease-in-out"
+          className="lite-word relative text-[7rem] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-700 cursor-pointer"
         >
           <span className="absolute left-0 top-0 text-[7rem] font-extrabold text-pink-500 drop-shadow-[0_0_5px_rgba(255,105,180,0.8)]">
             Lite
           </span>
-          <span className="absolute left-0 top-0 text-[7rem] font-extrabold text-purple-500 drop-shadow-[0_0_15px_rgba(128,0,128,0.6)]">
+          <span className="absolute left-0 top-0 text-[7rem] font-extrabold text-purple-700 drop-shadow-[0_0_15px_rgba(128,0,128,0.6)]">
             Lite
           </span>
-          <span className="relative">Lite</span>
+          <span className="relative z-10">Lite</span>
         </motion.h1>
       </div>
     )
