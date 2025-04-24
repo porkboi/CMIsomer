@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react";
+import { React, useState, useRef } from 'react'
 import { motion } from "framer-motion";
 import "@/app/globals.css"
 
@@ -26,13 +26,37 @@ export const ProWordArt = () => {
   };
 
   export const LiteWordArt = () => {
+    const [position, setPosition] = useState({ x: 0, y: 0 })
+    const containerRef = useRef<HTMLDivElement>(null)
+  
+    const handleMouseMove = (e: React.MouseEvent) => {
+      const bounds = containerRef.current?.getBoundingClientRect()
+      if (bounds) {
+        const x = e.clientX - bounds.left
+        const y = e.clientY - bounds.top
+        setPosition({ x, y })
+      }
+    }
+  
     return (
-      <div className="flex items-center justify-center">
+      <div
+        ref={containerRef}
+        onMouseMove={handleMouseMove}
+        className="relative flex items-center justify-center"
+      >
+        <div
+          className="pointer-events-none absolute z-0 h-[200px] w-[200px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_rgba(216,191,255,0.7)_0%,_transparent_70%)] blur-[8px] transition-opacity duration-150"
+          style={{
+            left: `${position.x}px`,
+            top: `${position.y}px`,
+          }}
+        />
+
         <motion.h1
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6 }}
-          className="lite-word relative text-[7rem] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-700 cursor-pointer"
+          className="relative z-10 text-[7rem] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-700 cursor-pointer"
         >
           <span className="absolute left-0 top-0 text-[7rem] font-extrabold text-pink-500 drop-shadow-[0_0_5px_rgba(255,105,180,0.8)]">
             Lite
