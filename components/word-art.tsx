@@ -13,10 +13,10 @@ export const ProWordArt = () => {
           className="text-[8rem] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500 relative"
         >
           <span className="absolute left-0 top-0 text-[8rem] font-extrabold text-gray-500 drop-shadow-[0_0_5px_rgba(255,105,180,0.8)]">
-            Lite
+            Pro
           </span>
           <span className="absolute left-0 top-0 text-[8rem] font-extrabold text-gray-200 drop-shadow-[0_0_15px_rgba(128,0,128,0.6)]">
-            Lite
+            Pro
           </span>
           <span className="relative">Lite</span>
         </motion.h1>
