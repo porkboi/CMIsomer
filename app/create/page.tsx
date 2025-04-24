@@ -11,8 +11,8 @@ export default function HomePage() {
         <p className="text-zinc-400">Plan your next event in just a few clicks.</p>
         <div className="flex flex-row gap-4 justify-center">
           <a href="/create/create-party">
-            <LiteWordArt/>
             <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-2xl py-2 px-4 shadow">
+              <LiteWordArt/>
               Create New Party
             </Button>
           </a>
