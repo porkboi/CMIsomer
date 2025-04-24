@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 const LiteWordArt = () => {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
+      <div className="flex items-center justify-center bg-zinc-900">
         <motion.h1
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
