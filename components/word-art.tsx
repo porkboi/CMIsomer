@@ -24,14 +24,18 @@ export const ProWordArt = () => {
     );
   };
 
-export const LiteWordArt = () => {
+  export const LiteWordArt = () => {
     return (
       <div className="flex items-center justify-center">
         <motion.h1
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6 }}
-          className="text-[7rem] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500 relative"
+          whileHover={{
+            textShadow: '0 0 20px rgba(255,182,193,0.8)',
+            scale: 1.05,
+          }}
+          className="text-[7rem] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500 relative cursor-pointer transition-all duration-300"
         >
           <span className="absolute left-0 top-0 text-[7rem] font-extrabold text-pink-500 drop-shadow-[0_0_5px_rgba(255,105,180,0.8)]">
             Lite
@@ -42,5 +46,5 @@ export const LiteWordArt = () => {
           <span className="relative">Lite</span>
         </motion.h1>
       </div>
-    );
-  };
+    )
+  }
