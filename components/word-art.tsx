@@ -27,6 +27,7 @@ export const ProWordArt = () => {
   
   export const LiteWordArt = () => {
     const [position, setPosition] = useState({ x: 0, y: 0 })
+    const [isHovering, setIsHovering] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
   
     const handleMouseMove = (e: React.MouseEvent) => {
@@ -42,15 +43,20 @@ export const ProWordArt = () => {
       <div
         ref={containerRef}
         onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
         className="relative flex items-center justify-center"
       >
-        <div
-          className="pointer-events-none absolute z-10 h-[200px] w-[200px] -translate-x-1/2 -translate-y-1/2 rounded-full mix-blend-lighten bg-[radial-gradient(circle,_rgba(255,255,255,0.7)_0%,_transparent_70%)]"
-          style={{
-            left: `${position.x}px`,
-            top: `${position.y}px`,
-          }}
-        />
+        {isHovering && (
+          <div
+            className="pointer-events-none absolute z-10 h-[200px] w-[200px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_rgba(255,255,255,0.7)_0%,_transparent_70%)]"
+            style={{
+              left: `${position.x}px`,
+              top: `${position.y}px`,
+              mixBlendMode: "normal", // remove light blending with background
+            }}
+          />
+        )}
   
         <motion.h1
           initial={{ opacity: 0, scale: 0.8 }}
