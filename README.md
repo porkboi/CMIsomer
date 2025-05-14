@@ -11,11 +11,12 @@ Webapp to manage and host parties at CMU easily
 - Managed by your peers :)
 
 ## TODO: ##
-- Add Organisations
-- Edit Party Details
-- Announcement page on ticket page / Email Announcement
-- Custom Fields
-- Business Cards
+- Proper /about
+- Announcement page on ticket page / Email Announcement (emailJS API)
+- Add Organisations on Dashboard screen
+- Edit Party Details on Dashboard screen
+- Custom Fields on Dashboard screen
+- Business Cards (figure out how)
 - Add photo
 - Make free event toggle
 - make Paynow/Paylah (SG) deeplink
@@ -23,5 +24,4 @@ Webapp to manage and host parties at CMU easily
 - Google Wallet/ Apple Wallet
 - Waiting Room (paywalled)
 - User Management System
-- Proper Homepage
 - Promo Code Generator
