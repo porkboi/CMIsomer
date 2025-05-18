@@ -21,7 +21,7 @@ Webapp to manage and host parties at CMU easily
 - Make free event toggle
 - make Paynow/Paylah (SG) deeplink
 - Google Calendar Integration (@porkboi)
-- Google Wallet/ Apple Wallet
+- Google Wallet/ Apple Wallet (colby)
 - Waiting Room (paywalled)
 - User Management System
-- Promo Code Generator
+- Promo Code Generator (colby)
