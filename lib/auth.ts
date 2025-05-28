@@ -8,7 +8,7 @@ export async function login(partySlug: string, username: string, password: strin
   const isValid = await verifyPartyAdmin(partySlug, username, password)
 
   if (isValid) {
-    cookies().set(`party_auth_${partySlug}`, "authenticated", {
+    (await cookies()).set(`party_auth_${partySlug}`, "authenticated", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
@@ -21,11 +21,11 @@ export async function login(partySlug: string, username: string, password: strin
 }
 
 export async function logout(partySlug: string) {
-  cookies().delete(`party_auth_${partySlug}`)
+  (await cookies()).delete(`party_auth_${partySlug}`)
 }
 
 export async function isAuthenticated(partySlug?: string) {
   console.log(partySlug)
-  return cookies().get(`party_auth_${partySlug}`)?.value === "authenticated"
+  return (await cookies()).get(`party_auth_${partySlug}`)?.value === "authenticated";
 }
 

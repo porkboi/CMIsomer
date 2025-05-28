@@ -9,12 +9,13 @@ import { isAuthenticated } from "@/lib/auth"
 import { getPartyBySlug } from "@/lib/actions"
 
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
-export default async function PartyPage({ params }: PageProps) {
+export default async function PartyPage(props: PageProps) {
+  const params = await props.params;
   const authenticated = await isAuthenticated(params.slug)
   const party = await getPartyBySlug(params.slug)
 
