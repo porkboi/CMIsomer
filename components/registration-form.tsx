@@ -280,7 +280,7 @@ export function RegistrationForm({
                     {isPast
                       ? "No longer available"
                       : isCurrent
-                      ? `Spots avaliable`
+                      ? `Spots available`
                       : "Available after current tier sells out"}
                   </CardDescription>
                 </CardHeader>
@@ -288,7 +288,7 @@ export function RegistrationForm({
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-2xl font-bold text-white">
-                        ${tier.price}
+                        {tier.price === 0 ? "Free" : '$' + tier.price}
                       </p>
                     </div>
                     <div
