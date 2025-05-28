@@ -252,28 +252,59 @@ export function CreatePartyForm() {
               />
             </div>
           </div>
+          <div className="space-y-4">
+            <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <label className="text-base font-medium">Free Event</label>
+                <p className="text-sm text-muted-foreground">
+                  Make this event free for all attendees
+                </p>
+              </div>
+              <Switch
+                checked={watch("ticketPrice") === "0"}
+                onCheckedChange={(checked) => {
+                  setValue("ticketPrice", checked ? "0" : "");
+                }}
+              />
+            </div>
 
-          <div>
-            <label className="text-sm font-medium">Ticket Price ($)</label>            <Input
-              type="number"
-              min="0"
-              {...register("ticketPrice", {
-                required: "Ticket price is required",
-                min: { value: 0, message: "Price must be at least 0" },
-              })}
-              placeholder="15"
-              className="bg-zinc-900"
-            />
-            {errors.ticketPrice && <p className="text-sm text-red-500 mt-1">{errors.ticketPrice.message}</p>}
+            <div>
+              <label className="text-sm font-medium">Ticket Price ($)</label>
+              <Input
+                type="number"
+                {...register("ticketPrice", {
+                  required: "Ticket price is required",
+                  min: { value: 0, message: "Price must be at least 0" },
+                })}
+                placeholder="15"
+                className="bg-zinc-900"
+                disabled={watch("ticketPrice") === "0"}
+              />
+              {errors.ticketPrice && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.ticketPrice.message}
+                </p>
+              )}
+            </div>
           </div>
-
           <div>
             <label className="text-sm font-medium">Venmo Username</label>
-            <Input {...register("venmoUsername", { required: "Venmo username is required" })} placeholder="@username" className="bg-zinc-900"/>
-            <p className="text-sm text-muted-foreground mt-1">Enter your Venmo username without the @ symbol</p>
-            {errors.venmoUsername && <p className="text-sm text-red-500">{errors.venmoUsername.message}</p>}
+            <Input
+              {...register("venmoUsername", {
+                required: "Venmo username is required",
+              })}
+              placeholder="@username"
+              className="bg-zinc-900"
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              Enter your Venmo username without the @ symbol
+            </p>
+            {errors.venmoUsername && (
+              <p className="text-sm text-red-500">
+                {errors.venmoUsername.message}
+              </p>
+            )}
           </div>
-
           <div>
             <label className="text-sm font-medium">Zelle Information</label>
             <Input
@@ -286,7 +317,6 @@ export function CreatePartyForm() {
             </p>
             {errors.zelleInfo && <p className="text-sm text-red-500">{errors.zelleInfo.message}</p>}
           </div>
-
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="text-sm font-medium">Admin Username</label>
@@ -326,6 +356,6 @@ export function CreatePartyForm() {
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }
 
