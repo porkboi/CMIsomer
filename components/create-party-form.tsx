@@ -226,11 +226,11 @@ export function CreatePartyForm() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
+          <div className="grid gap-4 md:grid-cols-2">            <div>
               <label className="text-sm font-medium">Maximum Capacity</label>
               <Input
                 type="number"
+                min="1"
                 {...register("maxCapacity", {
                   required: "Maximum capacity is required",
                   min: { value: 1, message: "Capacity must be at least 1" },
