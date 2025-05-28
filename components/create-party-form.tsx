@@ -254,9 +254,9 @@ export function CreatePartyForm() {
           </div>
 
           <div>
-            <label className="text-sm font-medium">Ticket Price ($)</label>
-            <Input
+            <label className="text-sm font-medium">Ticket Price ($)</label>            <Input
               type="number"
+              min="0"
               {...register("ticketPrice", {
                 required: "Ticket price is required",
                 min: { value: 0, message: "Price must be at least 0" },
