@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useForm } from "react-hook-form"
-import { Check, Copy, Sparkles } from "lucide-react"
+import { Check, Copy, Sparkles, Eye, EyeOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,6 +30,7 @@ export function CreatePartyForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successData, setSuccessData] = useState<{ slug: string; url: string } | null>(null)
   const [copied, setCopied] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const { toast } = useToast()
 
   const form = useForm<FormData>({
@@ -78,7 +79,7 @@ export function CreatePartyForm() {
 
       const result = await createParty(partyData)
 
-      if (result.success) {
+      if (result.success && result.slug) {
         const url = `${window.location.origin}/party/${result.slug}`
         setSuccessData({ slug: result.slug, url })
         form.reset()
@@ -225,11 +226,11 @@ export function CreatePartyForm() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
+          <div className="grid gap-4 md:grid-cols-2">            <div>
               <label className="text-sm font-medium">Maximum Capacity</label>
               <Input
                 type="number"
+                min="1"
                 {...register("maxCapacity", {
                   required: "Maximum capacity is required",
                   min: { value: 1, message: "Capacity must be at least 1" },
@@ -251,28 +252,59 @@ export function CreatePartyForm() {
               />
             </div>
           </div>
+          <div className="space-y-4">
+            <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <label className="text-base font-medium">Free Event</label>
+                <p className="text-sm text-muted-foreground">
+                  Make this event free for all attendees
+                </p>
+              </div>
+              <Switch
+                checked={watch("ticketPrice") === "0"}
+                onCheckedChange={(checked) => {
+                  setValue("ticketPrice", checked ? "0" : "");
+                }}
+              />
+            </div>
 
-          <div>
-            <label className="text-sm font-medium">Ticket Price ($)</label>
-            <Input
-              type="number"
-              {...register("ticketPrice", {
-                required: "Ticket price is required",
-                min: { value: 0, message: "Price must be at least 0" },
-              })}
-              placeholder="15"
-              className="bg-zinc-900"
-            />
-            {errors.ticketPrice && <p className="text-sm text-red-500 mt-1">{errors.ticketPrice.message}</p>}
+            <div>
+              <label className="text-sm font-medium">Ticket Price ($)</label>
+              <Input
+                type="number"
+                {...register("ticketPrice", {
+                  required: "Ticket price is required",
+                  min: { value: 0, message: "Price must be at least 0" },
+                })}
+                placeholder="15"
+                className="bg-zinc-900"
+                disabled={watch("ticketPrice") === "0"}
+              />
+              {errors.ticketPrice && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.ticketPrice.message}
+                </p>
+              )}
+            </div>
           </div>
-
           <div>
             <label className="text-sm font-medium">Venmo Username</label>
-            <Input {...register("venmoUsername", { required: "Venmo username is required" })} placeholder="@username" className="bg-zinc-900"/>
-            <p className="text-sm text-muted-foreground mt-1">Enter your Venmo username without the @ symbol</p>
-            {errors.venmoUsername && <p className="text-sm text-red-500">{errors.venmoUsername.message}</p>}
+            <Input
+              {...register("venmoUsername", {
+                required: "Venmo username is required",
+              })}
+              placeholder="@username"
+              className="bg-zinc-900"
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              Enter your Venmo username without the @ symbol
+            </p>
+            {errors.venmoUsername && (
+              <p className="text-sm text-red-500">
+                {errors.venmoUsername.message}
+              </p>
+            )}
           </div>
-
           <div>
             <label className="text-sm font-medium">Zelle Information</label>
             <Input
@@ -285,25 +317,35 @@ export function CreatePartyForm() {
             </p>
             {errors.zelleInfo && <p className="text-sm text-red-500">{errors.zelleInfo.message}</p>}
           </div>
-
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="text-sm font-medium">Admin Username</label>
               <Input {...register("adminUsername", { required: "Admin username is required" })} placeholder="admin" className="bg-zinc-900"/>
               {errors.adminUsername && <p className="text-sm text-red-500 mt-1">{errors.adminUsername.message}</p>}
-            </div>
-
-            <div>
+            </div>            <div>
               <label className="text-sm font-medium">Admin Password</label>
-              <Input
-                type="password"
-                {...register("adminPassword", {
-                  required: "Admin password is required",
-                  minLength: { value: 6, message: "Password must be at least 6 characters" },
-                })}
-                placeholder="••••••"
-                className="bg-zinc-900"
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  {...register("adminPassword", {
+                    required: "Admin password is required",
+                    minLength: { value: 6, message: "Password must be at least 6 characters" },
+                  })}
+                  placeholder="••••••"
+                  className="bg-zinc-900 pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-zinc-400" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-zinc-400" />
+                  )}
+                </button>
+              </div>
               {errors.adminPassword && <p className="text-sm text-red-500 mt-1">{errors.adminPassword.message}</p>}
             </div>
           </div>
@@ -314,6 +356,6 @@ export function CreatePartyForm() {
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }
 

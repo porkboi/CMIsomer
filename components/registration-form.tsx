@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -34,7 +34,16 @@ export function RegistrationForm({
   zelleInfo,
   organizations,
 }: RegistrationFormProps) {
-  const formSchema = z.object({
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [registrationCount, setRegistrationCount] = useState(0)
+  const [currentTierCap, setCurrentTierCap] = useState(0)
+  const [priceTiers, setPriceTiers] = useState<any[]>([])
+  const [currentTierIndex, setCurrentTierIndex] = useState(0)
+  const { toast } = useToast()
+
+  const currentTierPrice = priceTiers.length > 0 ? priceTiers[currentTierIndex]?.price || 0 : ticketPrice
+
+  const formSchema = useMemo(() => z.object({
     name: z.string().min(2, {
       message: "Name must be at least 2 characters.",
     }),
@@ -44,25 +53,17 @@ export function RegistrationForm({
     andrewID: z.string().min(3, {
       message: "Andrew ID must be at least 3 characters.",
     }),
-    paymentMethod: z.enum(["venmo", "zelle"], {
+    paymentMethod: currentTierPrice > 0 ? z.enum(["venmo", "zelle"], {
       required_error: "Please select a payment method.",
-    }),
-    paymentConfirmed: z.enum(["yes", "no"], {
+    }) : z.string().optional(),
+    paymentConfirmed: currentTierPrice > 0 ? z.enum(["yes", "no"], {
       required_error: "Please confirm if you've paid.",
-    }),
+    }) : z.string().optional(),
     organization: z.enum(organizations as [string, ...string[]], {
       required_error: "Please select your organization.",
     }),
     promoCode: z.string().optional(),
-  })
-
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [registrationCount, setRegistrationCount] = useState(0)
-  const [currentTierCap, setCurrentTierCap] = useState(0)
-  const [priceTiers, setPriceTiers] = useState<any[]>([])
-  const [currentTierIndex, setCurrentTierIndex] = useState(0)
-  const { toast } = useToast()
-
+  }), [currentTierPrice, organizations])
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -72,6 +73,11 @@ export function RegistrationForm({
       promoCode: "",
     },
   })
+
+  // Update form resolver when schema changes
+  useEffect(() => {
+    form.clearErrors()
+  }, [formSchema, form])
 
   useEffect(() => {
     // Fetch registration count
@@ -104,7 +110,7 @@ export function RegistrationForm({
             break
           }
         }
- 
+
         setCurrentTierCap(cumulativeCapacity)
         setCurrentTierIndex(currentIndex)
       } catch (error) {
@@ -113,18 +119,103 @@ export function RegistrationForm({
     }
 
     fetchRegistrationCount()
-    fetchPriceTiers()
-  }, [partySlug, registrationCount])
+    fetchPriceTiers()  }, [partySlug, registrationCount])
 
-  const venmoPaymentLink = `venmo://paycharge?txn=pay&recipients=${venmoUsername}&amount=${
-    priceTiers.length > 0 ? priceTiers[currentTierIndex].price : ticketPrice
-  }&note=Party%20Registration`
+  // Payment component functions
+  const renderPaymentMethodSelector = () => (
+    <FormField
+      control={form.control}
+      name="paymentMethod"
+      render={({ field }) => (
+        <FormItem className="space-y-3">
+          <FormLabel>Payment Method</FormLabel>
+          <FormControl>
+            <RadioGroup
+              onValueChange={field.onChange}
+              defaultValue={field.value}
+              className="flex flex-col space-y-1"
+            >
+              <FormItem className="flex items-center space-x-3 space-y-0">
+                <FormControl>
+                  <RadioGroupItem value="venmo" />
+                </FormControl>
+                <FormLabel className="font-normal">Venmo</FormLabel>
+              </FormItem>
+              <FormItem className="flex items-center space-x-3 space-y-0">
+                <FormControl>
+                  <RadioGroupItem value="zelle" />
+                </FormControl>
+                <FormLabel className="font-normal">Zelle</FormLabel>
+              </FormItem>
+            </RadioGroup>
+          </FormControl>
+          <FormDescription>
+            Please send the above quoted amount using one of these methods, and include your andrewID in the description:
+            <br />
+            <span className="font-medium">Venmo:</span> {venmoUsername}
+            <br />
+            <span className="font-medium">Zelle:</span> {zelleInfo}
+          </FormDescription>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  )
+
+  const renderVenmoPaymentButton = () => {
+    const venmoPaymentLink = `venmo://paycharge?txn=pay&recipients=${venmoUsername}&amount=${currentTierPrice}&note=Party%20Registration`
+
+    return (
+      <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center">
+        <a href={venmoPaymentLink}>
+          <Send className="mr-2 h-4 w-4" />
+          Pay with Venmo - ${currentTierPrice}
+        </a>
+      </Button>
+    )
+  }
+
+  const renderPaymentConfirmation = () => (
+    <FormField
+      control={form.control}
+      name="paymentConfirmed"
+      render={({ field }) => (
+        <FormItem className="space-y-3">
+          <FormLabel>Have you Venmo/Zelle'd?</FormLabel>
+          <FormControl>
+            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
+              <FormItem className="flex items-center space-x-2 space-y-0">
+                <FormControl>
+                  <RadioGroupItem value="yes" />
+                </FormControl>
+                <FormLabel className="font-normal">Yes</FormLabel>
+              </FormItem>
+              <FormItem className="flex items-center space-x-2 space-y-0">
+                <FormControl>
+                  <RadioGroupItem value="no" />
+                </FormControl>
+                <FormLabel className="font-normal">No</FormLabel>
+              </FormItem>
+            </RadioGroup>
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  )
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
 
     try {
-      const result = await submitRegistration(partySlug, values)
+      // Prepare submission data based on whether payment is required
+      const submissionData = {
+        ...values,
+        paymentMethod: currentTierPrice > 0 ? values.paymentMethod as "venmo" | "zelle" : "venmo",
+        paymentConfirmed: currentTierPrice > 0 ? values.paymentConfirmed as "yes" | "no" : "yes"
+      }
+
+      const result = await submitRegistration(partySlug, submissionData)
 
       if (result.success) {
         toast({
@@ -148,22 +239,20 @@ export function RegistrationForm({
       })
     } finally {
       setIsSubmitting(false)
-    }
-  }
+    }  }
 
   const spotsRemaining = currentTierCap - registrationCount
   const isSoldOut = spotsRemaining <= 0
-  const currentTierPrice = priceTiers.length > 0 ? priceTiers[currentTierIndex].price : ticketPrice
 
   return (
     <div className="bg-zinc-800 space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
         {priceTiers.length > 0 ? (
           priceTiers.map((tier, index) => {
-            const isCurrent = index === currentTierIndex
-            const isPast = index < currentTierIndex
-            const isFuture = index > currentTierIndex
-            const iswl = currentTierIndex === priceTiers.length
+            const isCurrent = index === currentTierIndex;
+            const isPast = index < currentTierIndex;
+            const isFuture = index > currentTierIndex;
+            const iswl = currentTierIndex === priceTiers.length;
 
             return (
               <Card
@@ -177,52 +266,58 @@ export function RegistrationForm({
                     <Ticket className="h-4 w-4" />
                     {tier.name}
                     {isCurrent && (
-                      <span className="ml-auto text-xs bg-primary text-white px-2 py-1 rounded-full">Current</span>
+                      <span className="ml-auto text-xs bg-primary text-white px-2 py-1 rounded-full">
+                        Current
+                      </span>
                     )}
                     {isPast && (
-                      <span className="ml-auto text-xs bg-zinc-700 text-zinc-300 px-2 py-1 rounded-full">Sold Out</span>
+                      <span className="ml-auto text-xs bg-zinc-700 text-zinc-300 px-2 py-1 rounded-full">
+                        Sold Out
+                      </span>
                     )}
                   </CardTitle>
                   <CardDescription className="text-zinc-400">
                     {isPast
                       ? "No longer available"
                       : isCurrent
-                        ? `Spots avaliable`
-                        : "Available after current tier sells out"}
+                      ? `Spots available`
+                      : "Available after current tier sells out"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-2xl font-bold text-white">${tier.price}</p>
+                      <p className="text-2xl font-bold text-white">
+                        {tier.price === 0 ? "Free" : '$' + tier.price}
+                      </p>
                     </div>
                     <div
                       className={`px-3 py-1 rounded-full text-sm ${
                         isPast
                           ? "bg-zinc-800 text-zinc-400"
                           : isCurrent
-                            ? isSoldOut
-                              ? "bg-red-900/50 text-red-300"
-                              : spotsRemaining < 20
-                                ? "bg-yellow-900/50 text-yellow-300"
-                                : "bg-green-900/50 text-green-300"
-                            : "bg-zinc-800 text-zinc-400"
+                          ? isSoldOut
+                            ? "bg-red-900/50 text-red-300"
+                            : spotsRemaining < 20
+                            ? "bg-yellow-900/50 text-yellow-300"
+                            : "bg-green-900/50 text-green-300"
+                          : "bg-zinc-800 text-zinc-400"
                       }`}
                     >
                       {isPast
                         ? "Closed"
                         : isCurrent
-                          ? isSoldOut
-                            ? "Sold Out"
-                            : spotsRemaining < 20
-                              ? "Limited"
-                              : "Available"
-                          : "Coming Soon"}
+                        ? isSoldOut
+                          ? "Sold Out"
+                          : spotsRemaining < 20
+                          ? "Limited"
+                          : "Available"
+                        : "Coming Soon"}
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            )
+            );
           })
         ) : (
           // Fallback to single tier if no price tiers are defined
@@ -233,13 +328,17 @@ export function RegistrationForm({
                 Ticket Information
               </CardTitle>
               <CardDescription className="text-zinc-400">
-                {isSoldOut ? "Sold out - join the waitlist" : `${spotsRemaining} spots remaining`}
+                {isSoldOut
+                  ? "Sold out - join the waitlist"
+                  : `${spotsRemaining} spots remaining`}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-2xl font-bold text-white">${ticketPrice}</p>
+                  <p className="text-2xl font-bold text-white">
+                    ${ticketPrice}
+                  </p>
                   <p className="text-xs text-zinc-400">Standard admission</p>
                 </div>
                 <div
@@ -247,11 +346,15 @@ export function RegistrationForm({
                     isSoldOut
                       ? "bg-red-900/50 text-red-300"
                       : spotsRemaining < 20
-                        ? "bg-yellow-900/50 text-yellow-300"
-                        : "bg-green-900/50 text-green-300"
+                      ? "bg-yellow-900/50 text-yellow-300"
+                      : "bg-green-900/50 text-green-300"
                   }`}
                 >
-                  {isSoldOut ? "Sold Out" : spotsRemaining < 20 ? "Limited Availability" : "Available"}
+                  {isSoldOut
+                    ? "Sold Out"
+                    : spotsRemaining < 20
+                    ? "Limited Availability"
+                    : "Available"}
                 </div>
               </div>
             </CardContent>
@@ -275,7 +378,11 @@ export function RegistrationForm({
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="John Doe" {...field} className="bg-zinc-900 border-zinc-800" />
+                      <Input
+                        placeholder="John Doe"
+                        {...field}
+                        className="bg-zinc-900 border-zinc-800"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -289,7 +396,11 @@ export function RegistrationForm({
                   <FormItem>
                     <FormLabel>Age</FormLabel>
                     <FormControl>
-                      <Input placeholder="18" {...field} className="bg-zinc-900 border-zinc-800" />
+                      <Input
+                        placeholder="18"
+                        {...field}
+                        className="bg-zinc-900 border-zinc-800"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -304,7 +415,11 @@ export function RegistrationForm({
                 <FormItem>
                   <FormLabel>Andrew ID</FormLabel>
                   <FormControl>
-                    <Input placeholder="jdoe" {...field} className="bg-zinc-900 border-zinc-800" />
+                    <Input
+                      placeholder="jdoe"
+                      {...field}
+                      className="bg-zinc-900 border-zinc-800"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -318,9 +433,15 @@ export function RegistrationForm({
                 <FormItem>
                   <FormLabel>Promo Code (Optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter promo code" {...field} className="bg-zinc-900 border-zinc-800" />
+                    <Input
+                      placeholder="Enter promo code"
+                      {...field}
+                      className="bg-zinc-900 border-zinc-800"
+                    />
                   </FormControl>
-                  <FormDescription>Have a promo code? Enter it here for special pricing.</FormDescription>
+                  <FormDescription>
+                    Have a promo code? Enter it here for special pricing.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -339,7 +460,10 @@ export function RegistrationForm({
                       className="grid grid-cols-2 gap-4 sm:grid-cols-4"
                     >
                       {organizations.map((org) => (
-                        <FormItem key={org} className="flex items-center space-x-2 space-y-0">
+                        <FormItem
+                          key={org}
+                          className="flex items-center space-x-2 space-y-0"
+                        >
                           <FormControl>
                             <RadioGroupItem value={org} />
                           </FormControl>
@@ -353,91 +477,33 @@ export function RegistrationForm({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="paymentMethod"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>Payment Method</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex flex-col space-y-1"
-                    >
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="venmo" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Venmo</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="zelle" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Zelle</FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormDescription>
-                    Please send the above quoted amount using one of these methods, and include your andrewID in the description:
-                    <br />
-                    <span className="font-medium">Venmo:</span> {venmoUsername}
-                    <br />
-                    <span className="font-medium">Zelle:</span> {zelleInfo}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center">
-              <a href={venmoPaymentLink}>
-                <Send className="mr-2 h-4 w-4" />
-                Pay with Venmo - ${currentTierPrice}
-              </a>
-            </Button>
-
-            <FormField
-              control={form.control}
-              name="paymentConfirmed"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>Have you Venmo/Zelle'd?</FormLabel>
-                  <FormControl>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
-                      <FormItem className="flex items-center space-x-2 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="yes" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Yes</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-2 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="no" />
-                        </FormControl>
-                        <FormLabel className="font-normal">No</FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {currentTierPrice > 0 && (
+              <>
+                {renderPaymentMethodSelector()}
+                {renderVenmoPaymentButton()}
+                {renderPaymentConfirmation()}
+              </>
+            )}
 
             <Button
               type="submit"
               disabled={isSubmitting}
               className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700"
             >
-              {isSubmitting ? <Music className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-              Submit Registration (${currentTierPrice})
+              {isSubmitting ? (
+                <Music className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="mr-2 h-4 w-4" />
+              )}
+              {currentTierPrice > 0
+                ? `Submit Registration ($${currentTierPrice})`
+                : "Submit Registration (Free)"}
             </Button>
           </form>
         </Form>
         <Toaster />
       </div>
     </div>
-  )
+  );
 }
 

@@ -7,11 +7,13 @@ import { WalletButtons } from "@/components/wallet-buttons"
 import { PartyStatusIndicator } from "@/components/party-status-indicator"
 
 interface PageProps {
-  params: { slug: string }
-  searchParams: { token?: string }
+  params: Promise<{ slug: string }>
+  searchParams: Promise<{ token?: string }>
 }
 
-export default async function TicketPage({ params, searchParams }: PageProps) {
+export default async function TicketPage(props: PageProps) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const token = searchParams.token
 
   if (!token) {
