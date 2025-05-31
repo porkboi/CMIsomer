@@ -42,17 +42,11 @@ export default async function PartyPage(props: PageProps) {
             <TabsTrigger value="dashboard" className="text-white">
               Dashboard
             </TabsTrigger>
-          </TabsList>
-          <TabsContent value="register" className="bg-zinc-800 mt-6">
+          </TabsList>          <TabsContent value="register" className="bg-zinc-800 mt-6">
             <Suspense fallback={<div>Loading...</div>}>
               <RegistrationForm
+                party={party}
                 partySlug={params.slug}
-                maxCapacity={party.max_capacity}
-                allowWaitlist={party.allow_waitlist}
-                ticketPrice={party.ticket_price}
-                venmoUsername={party.venmo_username}
-                zelleInfo={party.zelle_info}
-                organizations={party.organizations}
               />
             </Suspense>
           </TabsContent>
@@ -60,9 +54,8 @@ export default async function PartyPage(props: PageProps) {
             {authenticated ? (
               <Suspense key="dashboard" fallback={<div>Loading...</div>}>
                 <Dashboard
+                  party={party}
                   partySlug={params.slug}
-                  organizations={party.organizations}
-                  maxCapacity={party.max_capacity}
                 />
               </Suspense>
             ) : (

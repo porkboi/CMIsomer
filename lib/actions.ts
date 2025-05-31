@@ -13,6 +13,7 @@ import { isAuthenticated } from "./auth"
 import { createSlug } from "@/lib/utils"
 import { supabase } from "@/lib/supabase"
 import type { PriceTier } from "@/components/price-tiers-modal"
+import type { Party } from "@/lib/types"
 import { sendEmail } from "./email"
 import bcrypt from "bcrypt"
 
@@ -628,7 +629,7 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
   }
 }
 
-export async function getPartyBySlug(slug: string) {
+export async function getPartyBySlug(slug: string): Promise<Party | null> {
   const { data, error } = await supabase.from("parties").select("*").eq("slug", slug).single()
 
   if (error) {
@@ -647,7 +648,6 @@ export async function getPartyBySlug(slug: string) {
     venmo_username: data.venmo_username,
     zelle_info: data.zelle_info,
     admin_username: data.admin_username,
-    // admin_password: data.admin_password, //Removed for security
     created_at: data.created_at,
     event_date: data.event_date,
     event_time: data.event_time,

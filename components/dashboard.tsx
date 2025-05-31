@@ -36,11 +36,11 @@ import { OrgLimitsModal } from "./org-limits-modal"
 import { PriceTiersModal, type PriceTier } from "./price-tiers-modal"
 import { MaxCapacityModal } from "./max-capacity-modal"
 import { EditPartyModal } from "./edit-party-modal"
+import { Party } from "@/lib/types"
 
 interface DashboardProps {
+  party: Party
   partySlug: string
-  organizations: string[]
-  maxCapacity: number
 }
 
 interface Registration {
@@ -56,7 +56,9 @@ interface Registration {
   price: number
 }
 
-export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardProps) {
+export function Dashboard({ party, partySlug }: DashboardProps) {
+  const organizations = party.organizations
+  const maxCapacity = party.max_capacity
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredOrgs, setFilteredOrgs] = useState<string[]>([])
   const [registrations, setRegistrations] = useState<Registration[]>([])

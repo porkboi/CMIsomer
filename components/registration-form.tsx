@@ -14,25 +14,16 @@ import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { submitRegistration, getPriceTiers } from "@/lib/actions"
+import { Party } from "@/lib/types"
 
 interface RegistrationFormProps {
+  party: Party
   partySlug: string
-  maxCapacity: number
-  allowWaitlist: boolean
-  ticketPrice: number
-  venmoUsername: string
-  zelleInfo: string
-  organizations: string[]
 }
 
 export function RegistrationForm({
+  party,
   partySlug,
-  maxCapacity,
-  allowWaitlist,
-  ticketPrice,
-  venmoUsername,
-  zelleInfo,
-  organizations,
 }: RegistrationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [registrationCount, setRegistrationCount] = useState(0)
@@ -41,7 +32,7 @@ export function RegistrationForm({
   const [currentTierIndex, setCurrentTierIndex] = useState(0)
   const { toast } = useToast()
 
-  const currentTierPrice = priceTiers.length > 0 ? priceTiers[currentTierIndex]?.price || 0 : ticketPrice
+  const currentTierPrice = priceTiers.length > 0 ? priceTiers[currentTierIndex]?.price || 0 : party.ticket_price
 
   const formSchema = useMemo(() => z.object({
     name: z.string().min(2, {
@@ -58,12 +49,11 @@ export function RegistrationForm({
     }) : z.string().optional(),
     paymentConfirmed: currentTierPrice > 0 ? z.enum(["yes", "no"], {
       required_error: "Please confirm if you've paid.",
-    }) : z.string().optional(),
-    organization: z.enum(organizations as [string, ...string[]], {
+    }) : z.string().optional(),    organization: z.enum(party.organizations as [string, ...string[]], {
       required_error: "Please select your organization.",
     }),
     promoCode: z.string().optional(),
-  }), [currentTierPrice, organizations])
+  }), [currentTierPrice, party.organizations])
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -148,22 +138,20 @@ export function RegistrationForm({
                 <FormLabel className="font-normal">Zelle</FormLabel>
               </FormItem>
             </RadioGroup>
-          </FormControl>
-          <FormDescription>
+          </FormControl>          <FormDescription>
             Please send the above quoted amount using one of these methods, and include your andrewID in the description:
             <br />
-            <span className="font-medium">Venmo:</span> {venmoUsername}
+            <span className="font-medium">Venmo:</span> {party.venmo_username}
             <br />
-            <span className="font-medium">Zelle:</span> {zelleInfo}
+            <span className="font-medium">Zelle:</span> {party.zelle_info}
           </FormDescription>
           <FormMessage />
         </FormItem>
       )}
     />
   )
-
   const renderVenmoPaymentButton = () => {
-    const venmoPaymentLink = `venmo://paycharge?txn=pay&recipients=${venmoUsername}&amount=${currentTierPrice}&note=Party%20Registration`
+    const venmoPaymentLink = `venmo://paycharge?txn=pay&recipients=${party.venmo_username}&amount=${currentTierPrice}&note=Party%20Registration`
 
     return (
       <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center">
@@ -240,7 +228,7 @@ export function RegistrationForm({
     } finally {
       setIsSubmitting(false)
     }  }
-    
+
   // Ticket helper functions
   const getTicketTierStatus = (tierIndex: number) => {
     const isCurrent = tierIndex === currentTierIndex
@@ -318,9 +306,8 @@ export function RegistrationForm({
       </Card>
     )
   }
-
   const renderFallbackTicketCard = () => {
-    const spotsRemaining = maxCapacity - registrationCount
+    const spotsRemaining = party.max_capacity - registrationCount
     const isSoldOut = spotsRemaining <= 0
 
     const getStatusConfig = () => {
@@ -345,10 +332,9 @@ export function RegistrationForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between items-center">
-            <div>
+          <div className="flex justify-between items-center">            <div>
               <p className="text-2xl font-bold text-white">
-                {formatPrice(ticketPrice)}
+                {formatPrice(party.ticket_price)}
               </p>
               <p className="text-xs text-zinc-400">Standard admission</p>
             </div>
@@ -465,9 +451,8 @@ export function RegistrationForm({
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      className="grid grid-cols-2 gap-4 sm:grid-cols-4"
-                    >
-                      {organizations.map((org) => (
+                      className="grid grid-cols-2 gap-4 sm:grid-cols-4"                    >
+                      {party.organizations.map((org) => (
                         <FormItem
                           key={org}
                           className="flex items-center space-x-2 space-y-0"
