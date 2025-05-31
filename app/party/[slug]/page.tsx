@@ -1,26 +1,26 @@
-import { Suspense } from "react"
-import { notFound } from "next/navigation"
-import { PartyHeader } from "@/components/party-header"
-import { RegistrationForm } from "@/components/registration-form"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dashboard } from "@/components/dashboard"
-import { LoginForm } from "@/components/login-form"
-import { isAuthenticated } from "@/lib/auth"
-import { getPartyBySlug } from "@/lib/actions"
+import { Suspense } from "react";
+import { notFound } from "next/navigation";
+import { PartyHeader } from "@/components/party-header";
+import { RegistrationForm } from "@/components/registration-form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dashboard } from "@/components/dashboard";
+import { LoginForm } from "@/components/login-form";
+import { isAuthenticated } from "@/lib/auth";
+import { getPartyBySlug } from "@/lib/actions";
 
 interface PageProps {
   params: Promise<{
-    slug: string
-  }>
+    slug: string;
+  }>;
 }
 
 export default async function PartyPage(props: PageProps) {
   const params = await props.params;
-  const authenticated = await isAuthenticated(params.slug)
-  const party = await getPartyBySlug(params.slug)
+  const authenticated = await isAuthenticated(params.slug);
+  const party = await getPartyBySlug(params.slug);
 
   if (!party) {
-    notFound()
+    notFound();
   }
 
   return (
@@ -42,31 +42,28 @@ export default async function PartyPage(props: PageProps) {
             <TabsTrigger value="dashboard" className="text-white">
               Dashboard
             </TabsTrigger>
-          </TabsList>          <TabsContent value="register" className="bg-zinc-800 mt-6">
+          </TabsList>{" "}
+          <TabsContent value="register" className="bg-zinc-800 mt-6">
             <Suspense fallback={<div>Loading...</div>}>
-              <RegistrationForm
-                party={party}
-                partySlug={params.slug}
-              />
+              <RegistrationForm party={party} partySlug={params.slug} />
             </Suspense>
           </TabsContent>
           <TabsContent value="dashboard" className="bg-zinc-800 mt-6">
             {authenticated ? (
               <Suspense key="dashboard" fallback={<div>Loading...</div>}>
-                <Dashboard
-                  party={party}
-                  partySlug={params.slug}
-                />
+                <Dashboard party={party} partySlug={params.slug} />
               </Suspense>
             ) : (
               <Suspense key="login" fallback={<div>Loading...</div>}>
-                <LoginForm partySlug={params.slug} adminUsername={party.admin_username} />
+                <LoginForm
+                  partySlug={params.slug}
+                  adminUsername={party.admin_username}
+                />
               </Suspense>
             )}
           </TabsContent>
         </Tabs>
       </div>
     </div>
-  )
+  );
 }
-
