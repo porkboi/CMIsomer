@@ -240,126 +240,134 @@ export function RegistrationForm({
     } finally {
       setIsSubmitting(false)
     }  }
+    
+  // Ticket helper functions
+  const getTicketTierStatus = (tierIndex: number) => {
+    const isCurrent = tierIndex === currentTierIndex
+    const isPast = tierIndex < currentTierIndex
+    const isFuture = tierIndex > currentTierIndex
 
-  const spotsRemaining = currentTierCap - registrationCount
-  const isSoldOut = spotsRemaining <= 0
+    return { isCurrent, isPast, isFuture }
+  }
+
+  const getAvailabilityStatus = (isCurrent: boolean, isPast: boolean) => {
+    const spotsRemaining = currentTierCap - registrationCount
+    const isSoldOut = spotsRemaining <= 0
+
+    if (isPast) return { status: "Closed", className: "bg-zinc-800 text-zinc-400" }
+    if (!isCurrent) return { status: "Coming Soon", className: "bg-zinc-800 text-zinc-400" }
+
+    if (isSoldOut) return { status: "Sold Out", className: "bg-red-900/50 text-red-300" }
+    if (spotsRemaining < 20) return { status: "Limited", className: "bg-yellow-900/50 text-yellow-300" }
+
+    return { status: "Available", className: "bg-green-900/50 text-green-300" }
+  }
+
+  const formatPrice = (price: number) => {
+    return price === 0 ? "Free" : `$${price}`
+  }
+
+  const getTierDescription = (isCurrent: boolean, isPast: boolean) => {
+    if (isPast) return "No longer available"
+    if (isCurrent) return "Spots available"
+    return "Available after current tier sells out"
+  }
+
+  const renderTierCard = (tier: any, index: number) => {
+    const { isCurrent, isPast } = getTicketTierStatus(index)
+    const { status, className } = getAvailabilityStatus(isCurrent, isPast)
+
+    return (
+      <Card
+        key={tier.id}
+        className={`bg-zinc-950 border-zinc-800 transition-all ${
+          isCurrent ? "ring-2 ring-primary scale-105 z-10" : ""
+        } ${isPast ? "opacity-60" : ""}`}
+      >
+        <CardHeader className={`${isCurrent ? "bg-primary/10" : ""}`}>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Ticket className="h-4 w-4" />
+            {tier.name}
+            {isCurrent && (
+              <span className="ml-auto text-xs bg-primary text-white px-2 py-1 rounded-full">
+                Current
+              </span>
+            )}
+            {isPast && (
+              <span className="ml-auto text-xs bg-zinc-700 text-zinc-300 px-2 py-1 rounded-full">
+                Sold Out
+              </span>
+            )}
+          </CardTitle>
+          <CardDescription className="text-zinc-400">
+            {getTierDescription(isCurrent, isPast)}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-2xl font-bold text-white">
+                {formatPrice(tier.price)}
+              </p>
+            </div>
+            <div className={`px-3 py-1 rounded-full text-sm ${className}`}>
+              {status}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const renderFallbackTicketCard = () => {
+    const spotsRemaining = maxCapacity - registrationCount
+    const isSoldOut = spotsRemaining <= 0
+
+    const getStatusConfig = () => {
+      if (isSoldOut) return { status: "Sold Out", className: "bg-red-900/50 text-red-300" }
+      if (spotsRemaining < 20) return { status: "Limited Availability", className: "bg-yellow-900/50 text-yellow-300" }
+      return { status: "Available", className: "bg-green-900/50 text-green-300" }
+    }
+
+    const { status, className } = getStatusConfig()
+
+    return (
+      <Card className="bg-zinc-950 border-zinc-800 md:col-span-3">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Ticket className="h-4 w-4" />
+            Ticket Information
+          </CardTitle>
+          <CardDescription className="text-zinc-400">
+            {isSoldOut
+              ? "Sold out - join the waitlist"
+              : `${spotsRemaining} spots remaining`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-2xl font-bold text-white">
+                {formatPrice(ticketPrice)}
+              </p>
+              <p className="text-xs text-zinc-400">Standard admission</p>
+            </div>
+            <div className={`px-3 py-1 rounded-full text-sm ${className}`}>
+              {status}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <div className="bg-zinc-800 space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
-        {priceTiers.length > 0 ? (
-          priceTiers.map((tier, index) => {
-            const isCurrent = index === currentTierIndex;
-            const isPast = index < currentTierIndex;
-            const isFuture = index > currentTierIndex;
-            const iswl = currentTierIndex === priceTiers.length;
-
-            return (
-              <Card
-                key={tier.id}
-                className={`bg-zinc-950 border-zinc-800 transition-all ${
-                  isCurrent ? "ring-2 ring-primary scale-105 z-10" : ""
-                } ${isPast ? "opacity-60" : ""}`}
-              >
-                <CardHeader className={`${isCurrent ? "bg-primary/10" : ""}`}>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Ticket className="h-4 w-4" />
-                    {tier.name}
-                    {isCurrent && (
-                      <span className="ml-auto text-xs bg-primary text-white px-2 py-1 rounded-full">
-                        Current
-                      </span>
-                    )}
-                    {isPast && (
-                      <span className="ml-auto text-xs bg-zinc-700 text-zinc-300 px-2 py-1 rounded-full">
-                        Sold Out
-                      </span>
-                    )}
-                  </CardTitle>
-                  <CardDescription className="text-zinc-400">
-                    {isPast
-                      ? "No longer available"
-                      : isCurrent
-                      ? `Spots available`
-                      : "Available after current tier sells out"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-2xl font-bold text-white">
-                        {tier.price === 0 ? "Free" : '$' + tier.price}
-                      </p>
-                    </div>
-                    <div
-                      className={`px-3 py-1 rounded-full text-sm ${
-                        isPast
-                          ? "bg-zinc-800 text-zinc-400"
-                          : isCurrent
-                          ? isSoldOut
-                            ? "bg-red-900/50 text-red-300"
-                            : spotsRemaining < 20
-                            ? "bg-yellow-900/50 text-yellow-300"
-                            : "bg-green-900/50 text-green-300"
-                          : "bg-zinc-800 text-zinc-400"
-                      }`}
-                    >
-                      {isPast
-                        ? "Closed"
-                        : isCurrent
-                        ? isSoldOut
-                          ? "Sold Out"
-                          : spotsRemaining < 20
-                          ? "Limited"
-                          : "Available"
-                        : "Coming Soon"}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        ) : (
-          // Fallback to single tier if no price tiers are defined
-          <Card className="bg-zinc-950 border-zinc-800 md:col-span-3">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Ticket className="h-4 w-4" />
-                Ticket Information
-              </CardTitle>
-              <CardDescription className="text-zinc-400">
-                {isSoldOut
-                  ? "Sold out - join the waitlist"
-                  : `${spotsRemaining} spots remaining`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-2xl font-bold text-white">
-                    ${ticketPrice}
-                  </p>
-                  <p className="text-xs text-zinc-400">Standard admission</p>
-                </div>
-                <div
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    isSoldOut
-                      ? "bg-red-900/50 text-red-300"
-                      : spotsRemaining < 20
-                      ? "bg-yellow-900/50 text-yellow-300"
-                      : "bg-green-900/50 text-green-300"
-                  }`}
-                >
-                  {isSoldOut
-                    ? "Sold Out"
-                    : spotsRemaining < 20
-                    ? "Limited Availability"
-                    : "Available"}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {priceTiers.length > 0
+          ? priceTiers.map((tier, index) => renderTierCard(tier, index))
+          : renderFallbackTicketCard()
+        }
       </div>
 
       <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6 shadow-lg">
