@@ -29,6 +29,7 @@ import {
   getPriceTiers,
   updatePriceTiers,
   updateMaxCapacity,
+  updatePartyDetails,
   confirmAttendance,
   checkInGuest,
 } from "@/lib/actions"
@@ -298,19 +299,29 @@ export function Dashboard({ party, partySlug }: DashboardProps) {
       })
     }
   }
-
   const handleSavePartyDetails = async (partyData: { name: string; date: string; location: string }) => {
     try {
-      toast({
-        title: "Success",
-        description: "Party details updated successfully",
-        variant: "default",
-      })
-      setShowPartyModal(false)
+      const result = await updatePartyDetails(partySlug, partyData)
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Party details updated successfully",
+          variant: "default",
+        })
+        setShowPartyModal(false)
+        // Refresh the page to show updated data
+        window.location.reload()
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to update party details",
+          variant: "destructive",
+        })
+      }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update party details",
+        description: "An unexpected error occurred",
         variant: "destructive",
       })
     }
@@ -841,7 +852,9 @@ export function Dashboard({ party, partySlug }: DashboardProps) {
           confirmedCount={confirmedRegistrations.length}
           onClose={() => setShowMaxCapacityModal(false)}
           onSave={handleSaveMaxCapacity}
-        />      )}      <EditPartyModal
+        />      )}
+
+        <EditPartyModal
         isOpen={showPartyModal}
         onClose={() => setShowPartyModal(false)}
         onSave={handleSavePartyDetails}

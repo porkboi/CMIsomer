@@ -1063,3 +1063,43 @@ export async function getTicketByToken(partySlug: string, token: string) {
   }
 }
 
+export async function updatePartyDetails(
+  partySlug: string,
+  partyData: { name: string; date: string; location: string }
+): Promise<{ success: boolean; message: string }> {
+  if (!(await isAuthenticated(partySlug))) {
+    return { success: false, message: "Unauthorized" }
+  }
+
+  try {
+    // Validate the input data
+    if (!partyData.name || partyData.name.trim().length < 2) {
+      return { success: false, message: "Party name must be at least 2 characters long" }
+    }
+
+    if (!partyData.location || partyData.location.trim().length < 2) {
+      return { success: false, message: "Location must be at least 2 characters long" }
+    }
+
+    // Update the party details in the database
+    const { error: updateError } = await supabase
+      .from("parties")
+      .update({
+        name: partyData.name.trim(),
+        event_date: partyData.date || null,
+        location: partyData.location.trim(),
+      })
+      .eq("slug", partySlug)
+
+    if (updateError) {
+      console.error("Error updating party details:", updateError)
+      return { success: false, message: "Failed to update party details" }
+    }
+
+    return { success: true, message: "Party details updated successfully" }
+  } catch (error) {
+    console.error("Error updating party details:", error)
+    return { success: false, message: "An unexpected error occurred" }
+  }
+}
+
