@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Party } from "@/lib/types"
+import { toDateInputValue } from "@/lib/utils"
 
 interface EditPartyModalProps {
   isOpen: boolean
@@ -15,12 +16,11 @@ export function EditPartyModal({ isOpen, onClose, onSave, party }: EditPartyModa
   const [partyName, setPartyName] = useState("")
   const [partyDate, setPartyDate] = useState("")
   const [partyLocation, setPartyLocation] = useState("")
-
   // Populate fields when modal opens or party data changes
   useEffect(() => {
     if (isOpen && party) {
       setPartyName(party.name || "")
-      setPartyDate(party.event_date || "")
+      setPartyDate(toDateInputValue(party.event_date))
       setPartyLocation(party.location || "")
     }
   }, [isOpen, party])
