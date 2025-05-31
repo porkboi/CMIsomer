@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Music, PartyPopper, Send, Ticket } from "lucide-react"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -31,6 +32,7 @@ export function RegistrationForm({
   const [priceTiers, setPriceTiers] = useState<any[]>([])
   const [currentTierIndex, setCurrentTierIndex] = useState(0)
   const { toast } = useToast()
+  const isMobile = useIsMobile()
 
   const currentTierPrice = priceTiers.length > 0 ? priceTiers[currentTierIndex]?.price || 0 : party.ticket_price
 
@@ -150,12 +152,16 @@ export function RegistrationForm({
       )}
     />
   )
-  const renderVenmoPaymentButton = () => {
-    const venmoPaymentLink = `venmo://paycharge?txn=pay&recipients=${party.venmo_username}&amount=${currentTierPrice}&note=Party%20Registration`
+    const renderVenmoPaymentButton = () => {
+    // Mobile devices: Use venmo:// deep link to open Venmo app directly
+    // Desktop/Web: Use https://venmo.com web URL in new tab since app isn't available
+    const venmoPaymentLink = isMobile
+      ? `venmo://paycharge?txn=pay&recipients=${party.venmo_username}&amount=${currentTierPrice}&note=Party%20Registration`
+      : `https://venmo.com/u/${party.venmo_username}`
 
     return (
       <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center">
-        <a href={venmoPaymentLink}>
+        <a href={venmoPaymentLink} target={isMobile ? "_self" : "_blank"} rel={isMobile ? "" : "noopener noreferrer"}>
           <Send className="mr-2 h-4 w-4" />
           Pay with Venmo - ${currentTierPrice}
         </a>
