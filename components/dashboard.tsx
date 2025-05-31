@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
-import { Users, UserCheck, Clock, Filter, RefreshCw, Scan, Settings, DollarSign, Users2 } from "lucide-react"
+import { Users, UserCheck, Clock, Filter, RefreshCw, Scan, Settings, DollarSign, Users2, Pencil } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
@@ -35,6 +35,7 @@ import {
 import { OrgLimitsModal } from "./org-limits-modal"
 import { PriceTiersModal, type PriceTier } from "./price-tiers-modal"
 import { MaxCapacityModal } from "./max-capacity-modal"
+import { EditPartyModal } from "./edit-party-modal"
 
 interface DashboardProps {
   partySlug: string
@@ -68,6 +69,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
   const [orgLimits, setOrgLimits] = useState<Record<string, number>>({})
   const [priceTiers, setPriceTiers] = useState<PriceTier[]>([])
   const [showMaxCapacityModal, setShowMaxCapacityModal] = useState(false)
+  const [showPartyModal, setShowPartyModal] = useState(false)
   const { toast } = useToast()
   const videoRef = useRef(null)
   const qrScannerRef = useRef(null)
@@ -295,6 +297,23 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
     }
   }
 
+  const handleSavePartyDetails = async (partyData: { name: string; date: string; location: string }) => {
+    try {
+      toast({
+        title: "Success",
+        description: "Party details updated successfully",
+        variant: "default",
+      })
+      setShowPartyModal(false)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update party details",
+        variant: "destructive",
+      })
+    }
+  }
+
   const confirmedRegistrations = registrations.filter((reg) => reg.status === "confirmed")
   const waitlistedRegistrations = registrations.filter((reg) => reg.status === "waitlist")
   const pendingRegistrations = registrations.filter((reg) => reg.status === "pending")
@@ -368,6 +387,15 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
         <div className="flex gap-2">
           <Button
             variant="outline"
+            className="bg-zinc-900 border-zinc-800"
+            onClick = {() => setShowPartyModal(true)}
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit Party Details
+          </Button>
+
+          <Button
+            variant="outline"
             onClick={() => setShowMaxCapacityModal(true)}
             className="bg-zinc-900 border-zinc-800"
           >
@@ -422,7 +450,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
             <CardTitle className="text-sm font-medium text-white">Checked In</CardTitle>
             <UserCheck className="h-4 w-4 text-green-500" />
           </CardHeader>
-          <CardContent> 
+          <CardContent>
             <div className="text-2xl font-bold text-white">{checkedIn.length}</div>
             <p className="text-xs text-zinc-400">
               {Math.round(checkedIn.length/confirmedRegistrations.length)*100}% of confirmed
@@ -811,8 +839,13 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
           confirmedCount={confirmedRegistrations.length}
           onClose={() => setShowMaxCapacityModal(false)}
           onSave={handleSaveMaxCapacity}
-        />
-      )}
+        />      )}
+
+      <EditPartyModal
+        isOpen={showPartyModal}
+        onClose={() => setShowPartyModal(false)}
+        onSave={handleSavePartyDetails}
+      />
       <Toaster />
     </div>
   )
