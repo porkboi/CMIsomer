@@ -841,12 +841,11 @@ export function Dashboard({ party, partySlug }: DashboardProps) {
           confirmedCount={confirmedRegistrations.length}
           onClose={() => setShowMaxCapacityModal(false)}
           onSave={handleSaveMaxCapacity}
-        />      )}
-
-      <EditPartyModal
+        />      )}      <EditPartyModal
         isOpen={showPartyModal}
         onClose={() => setShowPartyModal(false)}
         onSave={handleSavePartyDetails}
+        party={party}
       />
       <Toaster />
     </div>

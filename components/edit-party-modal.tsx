@@ -1,18 +1,29 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Party } from "@/lib/types"
 
 interface EditPartyModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (partyData: { name: string; date: string; location: string }) => void
+  party: Party
 }
 
-export function EditPartyModal({ isOpen, onClose, onSave }: EditPartyModalProps) {
+export function EditPartyModal({ isOpen, onClose, onSave, party }: EditPartyModalProps) {
   const [partyName, setPartyName] = useState("")
   const [partyDate, setPartyDate] = useState("")
   const [partyLocation, setPartyLocation] = useState("")
+
+  // Populate fields when modal opens or party data changes
+  useEffect(() => {
+    if (isOpen && party) {
+      setPartyName(party.name || "")
+      setPartyDate(party.event_date || "")
+      setPartyLocation(party.location || "")
+    }
+  }, [isOpen, party])
 
   const handleSave = () => {
     onSave({
