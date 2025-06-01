@@ -1,61 +1,91 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useMemo } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { Music, PartyPopper, Send, Ticket } from "lucide-react"
-import { useIsMobile } from "@/hooks/use-mobile"
+import { useState, useEffect, useMemo } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Music, PartyPopper, Send, Ticket } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { useToast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { submitRegistration, getPriceTiers } from "@/lib/actions"
-import { Party } from "@/lib/types"
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useToast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/ui/toaster";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { submitRegistration, getPriceTiers } from "@/lib/actions";
+import { Party } from "@/lib/types";
 
 interface RegistrationFormProps {
-  party: Party
-  partySlug: string
+  party: Party;
+  partySlug: string;
 }
 
-export function RegistrationForm({
-  party,
-  partySlug,
-}: RegistrationFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [registrationCount, setRegistrationCount] = useState(0)
-  const [currentTierCap, setCurrentTierCap] = useState(0)
-  const [priceTiers, setPriceTiers] = useState<any[]>([])
-  const [currentTierIndex, setCurrentTierIndex] = useState(0)
-  const { toast } = useToast()
-  const isMobile = useIsMobile()
+export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registrationCount, setRegistrationCount] = useState(0);
+  const [currentTierCap, setCurrentTierCap] = useState(0);
+  const [priceTiers, setPriceTiers] = useState<any[]>([]);
+  const [currentTierIndex, setCurrentTierIndex] = useState(0);
+  const { toast } = useToast();
+  const isMobile = useIsMobile();
 
-  const currentTierPrice = priceTiers.length > 0 ? priceTiers[currentTierIndex]?.price || 0 : party.ticket_price
+  const currentTierPrice =
+    priceTiers.length > 0
+      ? priceTiers[currentTierIndex]?.price || 0
+      : party.ticket_price;
 
-  const formSchema = useMemo(() => z.object({
-    name: z.string().min(2, {
-      message: "Name must be at least 2 characters.",
-    }),
-    age: z.string().refine((val) => !isNaN(Number.parseInt(val)) && Number.parseInt(val) >= 18, {
-      message: "You must be at least 18 years old.",
-    }),
-    andrewID: z.string().min(3, {
-      message: "Andrew ID must be at least 3 characters.",
-    }),
-    paymentMethod: currentTierPrice > 0 ? z.enum(["venmo", "zelle"], {
-      required_error: "Please select a payment method.",
-    }) : z.string().optional(),
-    paymentConfirmed: currentTierPrice > 0 ? z.enum(["yes", "no"], {
-      required_error: "Please confirm if you've paid.",
-    }) : z.string().optional(),    organization: z.enum(party.organizations as [string, ...string[]], {
-      required_error: "Please select your organization.",
-    }),
-    promoCode: z.string().optional(),
-  }), [currentTierPrice, party.organizations])
+  const formSchema = useMemo(
+    () =>
+      z.object({
+        name: z.string().min(2, {
+          message: "Name must be at least 2 characters.",
+        }),
+        age: z
+          .string()
+          .refine(
+            (val) => !isNaN(Number.parseInt(val)) && Number.parseInt(val) >= 18,
+            {
+              message: "You must be at least 18 years old.",
+            }
+          ),
+        andrewID: z.string().min(3, {
+          message: "Andrew ID must be at least 3 characters.",
+        }),
+        paymentMethod:
+          currentTierPrice > 0
+            ? z.enum(["venmo", "zelle"], {
+                required_error: "Please select a payment method.",
+              })
+            : z.string().optional(),
+        paymentConfirmed:
+          currentTierPrice > 0
+            ? z.enum(["yes", "no"], {
+                required_error: "Please confirm if you've paid.",
+              })
+            : z.string().optional(),
+        organization: z.enum(party.organizations as [string, ...string[]], {
+          required_error: "Please select your organization.",
+        }),
+        promoCode: z.string().optional(),
+      }),
+    [currentTierPrice, party.organizations]
+  );
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -64,54 +94,57 @@ export function RegistrationForm({
       andrewID: "",
       promoCode: "",
     },
-  })
+  });
 
   // Update form resolver when schema changes
   useEffect(() => {
-    form.clearErrors()
-  }, [formSchema, form])
+    form.clearErrors();
+  }, [formSchema, form]);
 
   useEffect(() => {
     // Fetch registration count
     const fetchRegistrationCount = async () => {
       try {
-        const response = await fetch(`/api/registrations/count?partySlug=${partySlug}`)
+        const response = await fetch(
+          `/api/registrations/count?partySlug=${partySlug}`
+        );
         if (response.ok) {
-          const data = await response.json()
-          setRegistrationCount(data.count)
+          const data = await response.json();
+          setRegistrationCount(data.count);
         }
       } catch (error) {
-        console.error("Error fetching registration count:", error)
+        console.error("Error fetching registration count:", error);
       }
-    }
+    };
 
     // Fetch price tiers
     const fetchPriceTiers = async () => {
       try {
-        const tiers = await getPriceTiers(partySlug)
-        setPriceTiers(tiers)
+        const tiers = await getPriceTiers(partySlug);
+        setPriceTiers(tiers);
 
         // Determine current tier based on registration count
-        let cumulativeCapacity = 0
-        let currentIndex = 0
+        let cumulativeCapacity = 0;
+        let currentIndex = 0;
 
         for (let i = 0; i < tiers.length; i++) {
-          cumulativeCapacity += tiers[i].capacity
+          cumulativeCapacity += tiers[i].capacity;
           if (registrationCount < cumulativeCapacity) {
-            currentIndex = i
-            break
+            currentIndex = i;
+            break;
           }
         }
 
-        setCurrentTierCap(cumulativeCapacity)
-        setCurrentTierIndex(currentIndex)
+        setCurrentTierCap(cumulativeCapacity);
+        setCurrentTierIndex(currentIndex);
       } catch (error) {
-        console.error("Error fetching price tiers:", error)
+        console.error("Error fetching price tiers:", error);
       }
-    }
+    };
 
-    fetchRegistrationCount()
-    fetchPriceTiers()  }, [partySlug, registrationCount])
+    fetchRegistrationCount();
+    fetchPriceTiers();
+  }, [partySlug, registrationCount]);
 
   // Payment component functions
   const renderPaymentMethodSelector = () => (
@@ -140,8 +173,10 @@ export function RegistrationForm({
                 <FormLabel className="font-normal">Zelle</FormLabel>
               </FormItem>
             </RadioGroup>
-          </FormControl>          <FormDescription>
-            Please send the above quoted amount using one of these methods, and include your andrewID in the description:
+          </FormControl>{" "}
+          <FormDescription>
+            Please send the above quoted amount using one of these methods, and
+            include your andrewID in the description:
             <br />
             <span className="font-medium">Venmo:</span> {party.venmo_username}
             <br />
@@ -151,23 +186,30 @@ export function RegistrationForm({
         </FormItem>
       )}
     />
-  )
-    const renderVenmoPaymentButton = () => {
+  );
+  const renderVenmoPaymentButton = () => {
     // Mobile devices: Use venmo:// deep link to open Venmo app directly
     // Desktop/Web: Use https://venmo.com web URL in new tab since app isn't available
     const venmoPaymentLink = isMobile
       ? `venmo://paycharge?txn=pay&recipients=${party.venmo_username}&amount=${currentTierPrice}&note=Party%20Registration`
-      : `https://venmo.com/u/${party.venmo_username}`
+      : `https://venmo.com/u/${party.venmo_username}`;
 
     return (
-      <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center">
-        <a href={venmoPaymentLink} target={isMobile ? "_self" : "_blank"} rel={isMobile ? "" : "noopener noreferrer"}>
+      <Button
+        asChild
+        className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center"
+      >
+        <a
+          href={venmoPaymentLink}
+          target={isMobile ? "_self" : "_blank"}
+          rel={isMobile ? "" : "noopener noreferrer"}
+        >
           <Send className="mr-2 h-4 w-4" />
           Pay with Venmo - ${currentTierPrice}
         </a>
       </Button>
-    )
-  }
+    );
+  };
 
   const renderPaymentConfirmation = () => (
     <FormField
@@ -177,7 +219,11 @@ export function RegistrationForm({
         <FormItem className="space-y-3">
           <FormLabel>Have you Venmo/Zelle'd?</FormLabel>
           <FormControl>
-            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
+            <RadioGroup
+              onValueChange={field.onChange}
+              defaultValue={field.value}
+              className="flex space-x-4"
+            >
               <FormItem className="flex items-center space-x-2 space-y-0">
                 <FormControl>
                   <RadioGroupItem value="yes" />
@@ -196,80 +242,95 @@ export function RegistrationForm({
         </FormItem>
       )}
     />
-  )
+  );
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       // Prepare submission data based on whether payment is required
       const submissionData = {
         ...values,
-        paymentMethod: currentTierPrice > 0 ? values.paymentMethod as "venmo" | "zelle" : "venmo",
-        paymentConfirmed: currentTierPrice > 0 ? values.paymentConfirmed as "yes" | "no" : "yes"
-      }
+        paymentMethod:
+          currentTierPrice > 0
+            ? (values.paymentMethod as "venmo" | "zelle")
+            : "venmo",
+        paymentConfirmed:
+          currentTierPrice > 0
+            ? (values.paymentConfirmed as "yes" | "no")
+            : "yes",
+      };
 
-      const result = await submitRegistration(partySlug, submissionData)
+      const result = await submitRegistration(partySlug, submissionData);
 
       if (result.success) {
         toast({
           title: "Registration submitted!",
-          description: "We are confirming your attendance. Please check your CMU email inbox for more details.",
+          description:
+            "We are confirming your attendance. Please check your CMU email inbox for more details.",
           variant: "default",
-        })
-        form.reset()
+        });
+        form.reset();
       } else {
         toast({
           title: "Registration failed",
           description: result.message,
           variant: "destructive",
-        })
+        });
       }
     } catch (error) {
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsSubmitting(false)
-    }  }
+      setIsSubmitting(false);
+    }
+  }
 
   // Ticket helper functions
   const getTicketTierStatus = (tierIndex: number) => {
-    const isCurrent = tierIndex === currentTierIndex
-    const isPast = tierIndex < currentTierIndex
-    const isFuture = tierIndex > currentTierIndex
+    const isCurrent = tierIndex === currentTierIndex;
+    const isPast = tierIndex < currentTierIndex;
+    const isFuture = tierIndex > currentTierIndex;
 
-    return { isCurrent, isPast, isFuture }
-  }
+    return { isCurrent, isPast, isFuture };
+  };
 
   const getAvailabilityStatus = (isCurrent: boolean, isPast: boolean) => {
-    const spotsRemaining = currentTierCap - registrationCount
-    const isSoldOut = spotsRemaining <= 0
+    const spotsRemaining = currentTierCap - registrationCount;
+    const isSoldOut = spotsRemaining <= 0;
 
-    if (isPast) return { status: "Closed", className: "bg-zinc-800 text-zinc-400" }
-    if (!isCurrent) return { status: "Coming Soon", className: "bg-zinc-800 text-zinc-400" }
+    if (isPast)
+      return { status: "Closed", className: "bg-zinc-800 text-zinc-400" };
+    if (!isCurrent)
+      return { status: "Coming Soon", className: "bg-zinc-800 text-zinc-400" };
 
-    if (isSoldOut) return { status: "Sold Out", className: "bg-red-900/50 text-red-300" }
-    if (spotsRemaining < 20) return { status: "Limited", className: "bg-yellow-900/50 text-yellow-300" }
+    if (isSoldOut)
+      return { status: "Sold Out", className: "bg-red-900/50 text-red-300" };
+    if (spotsRemaining < 20)
+      return {
+        status: "Limited",
+        className: "bg-yellow-900/50 text-yellow-300",
+      };
 
-    return { status: "Available", className: "bg-green-900/50 text-green-300" }
-  }
+    return { status: "Available", className: "bg-green-900/50 text-green-300" };
+  };
 
   const formatPrice = (price: number) => {
-    return price === 0 ? "Free" : `$${price}`
-  }
+    return price === 0 ? "Free" : `$${price}`;
+  };
 
   const getTierDescription = (isCurrent: boolean, isPast: boolean) => {
-    if (isPast) return "No longer available"
-    if (isCurrent) return "Spots available"
-    return "Available after current tier sells out"
-  }
+    if (isPast) return "No longer available";
+    if (isCurrent) return "Spots available";
+    return "Available after current tier sells out";
+  };
 
   const renderTierCard = (tier: any, index: number) => {
-    const { isCurrent, isPast } = getTicketTierStatus(index)
-    const { status, className } = getAvailabilityStatus(isCurrent, isPast)
+    const { isCurrent, isPast } = getTicketTierStatus(index);
+    const { status, className } = getAvailabilityStatus(isCurrent, isPast);
 
     return (
       <Card
@@ -310,19 +371,27 @@ export function RegistrationForm({
           </div>
         </CardContent>
       </Card>
-    )
-  }
+    );
+  };
   const renderFallbackTicketCard = () => {
-    const spotsRemaining = party.max_capacity - registrationCount
-    const isSoldOut = spotsRemaining <= 0
+    const spotsRemaining = party.max_capacity - registrationCount;
+    const isSoldOut = spotsRemaining <= 0;
 
     const getStatusConfig = () => {
-      if (isSoldOut) return { status: "Sold Out", className: "bg-red-900/50 text-red-300" }
-      if (spotsRemaining < 20) return { status: "Limited Availability", className: "bg-yellow-900/50 text-yellow-300" }
-      return { status: "Available", className: "bg-green-900/50 text-green-300" }
-    }
+      if (isSoldOut)
+        return { status: "Sold Out", className: "bg-red-900/50 text-red-300" };
+      if (spotsRemaining < 20)
+        return {
+          status: "Limited Availability",
+          className: "bg-yellow-900/50 text-yellow-300",
+        };
+      return {
+        status: "Available",
+        className: "bg-green-900/50 text-green-300",
+      };
+    };
 
-    const { status, className } = getStatusConfig()
+    const { status, className } = getStatusConfig();
 
     return (
       <Card className="bg-zinc-950 border-zinc-800 md:col-span-3">
@@ -338,7 +407,9 @@ export function RegistrationForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between items-center">            <div>
+          <div className="flex justify-between items-center">
+            {" "}
+            <div>
               <p className="text-2xl font-bold text-white">
                 {formatPrice(party.ticket_price)}
               </p>
@@ -350,16 +421,15 @@ export function RegistrationForm({
           </div>
         </CardContent>
       </Card>
-    )
-  }
+    );
+  };
 
   return (
     <div className="bg-zinc-800 space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
         {priceTiers.length > 0
           ? priceTiers.map((tier, index) => renderTierCard(tier, index))
-          : renderFallbackTicketCard()
-        }
+          : renderFallbackTicketCard()}
       </div>
 
       <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6 shadow-lg">
@@ -457,7 +527,8 @@ export function RegistrationForm({
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      className="grid grid-cols-2 gap-4 sm:grid-cols-4"                    >
+                      className="grid grid-cols-2 gap-4 sm:grid-cols-4"
+                    >
                       {party.organizations.map((org) => (
                         <FormItem
                           key={org}
@@ -505,4 +576,3 @@ export function RegistrationForm({
     </div>
   );
 }
-
