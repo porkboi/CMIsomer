@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dashboard } from "@/components/dashboard";
 import { LoginForm } from "@/components/login-form";
 import { isAuthenticated } from "@/lib/auth";
-import { getPartyBySlug } from "@/lib/actions";
+import { getPartyBySlug, getRegistrations, getOrgAllocation, getPriceTiers } from "@/lib/actions";
 import { Party } from "@/lib/types";
 
 // Constants
@@ -45,6 +45,12 @@ interface BaseTabProps {
 
 interface DashboardTabProps extends BaseTabProps {
   authenticated: boolean;
+  dashboardData?: {
+    registrations: any[]
+    orgAllocation: any[]
+    priceTiers: any[]
+    orgLimits: Record<string, number>
+  };
 }
 
 // Utility Functions
@@ -83,11 +89,15 @@ const RegistrationTab = ({ party, slug }: BaseTabProps) => (
 /**
  * Dashboard tab content - shows admin dashboard when authenticated, login form when not
  */
-const DashboardTab = ({ party, slug, authenticated }: DashboardTabProps) => (
+const DashboardTab = ({ party, slug, authenticated, dashboardData }: DashboardTabProps) => (
   <TabsContent value={TAB_VALUES.DASHBOARD} className={STYLES.TABS_CONTENT}>
     {authenticated ? (
       <Suspense key="dashboard" fallback={createLoadingSpinner(LOADING_MESSAGES.DASHBOARD)}>
-        <Dashboard party={party} partySlug={slug} />
+        {dashboardData ? (
+          <Dashboard party={party} partySlug={slug} initialData={dashboardData} />
+        ) : (
+          createLoadingSpinner(LOADING_MESSAGES.DASHBOARD)
+        )}
       </Suspense>
     ) : (
       <Suspense key="login" fallback={createLoadingSpinner(LOADING_MESSAGES.LOGIN)}>
@@ -119,6 +129,38 @@ async function fetchPartyData(slug: string): Promise<{
   }
 }
 
+// Dashboard data fetching utility
+async function fetchDashboardData(slug: string) {
+  try {
+    const [registrations, orgAllocation, priceTiers] = await Promise.all([
+      getRegistrations(slug),
+      getOrgAllocation(slug),
+      getPriceTiers(slug),
+    ]);
+
+    // Get organization limits from orgAllocation data
+    const orgLimits: Record<string, number> = {};
+    orgAllocation.forEach((item: any) => {
+      orgLimits[item.name] = item.total;
+    });
+
+    return {
+      registrations,
+      orgAllocation,
+      priceTiers,
+      orgLimits,
+    };
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    return {
+      registrations: [],
+      orgAllocation: [],
+      priceTiers: [],
+      orgLimits: {},
+    };
+  }
+}
+
 // Main page component
 export default async function PartyPage(props: PageProps) {
   // Extract params and fetch data
@@ -128,6 +170,12 @@ export default async function PartyPage(props: PageProps) {
   // Handle party not found or errors
   if (error || !party) {
     notFound();
+  }
+
+  // Fetch dashboard data if authenticated
+  let dashboardData = undefined;
+  if (authenticated) {
+    dashboardData = await fetchDashboardData(params.slug);
   }
 
   return (
@@ -148,6 +196,7 @@ export default async function PartyPage(props: PageProps) {
             party={party}
             slug={params.slug}
             authenticated={authenticated}
+            dashboardData={dashboardData}
           />
         </Tabs>
       </div>

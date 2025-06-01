@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -39,77 +39,82 @@ import { MaxCapacityModal } from "./max-capacity-modal"
 import { EditPartyModal } from "./edit-party-modal"
 import { Party } from "@/lib/types"
 
+interface DashboardData {
+  registrations: Registration[]
+  orgAllocation: any[]
+  priceTiers: PriceTier[]
+  orgLimits: Record<string, number>
+}
+
 interface DashboardProps {
   party: Party
   partySlug: string
+  initialData: DashboardData
 }
 
 interface Registration {
-  id: string
+  id: number
   name: string
   andrew_id: string
   age: number
   organization: string
   status: "confirmed" | "waitlist" | "pending"
-  paymentMethod: string
+  payment_method: string
   tierName?: string
   tierPrice?: number
   price: number
+  checked_in: boolean
 }
 
-export function Dashboard({ party, partySlug }: DashboardProps) {
+export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   const organizations = party.organizations
   const maxCapacity = party.max_capacity
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredOrgs, setFilteredOrgs] = useState<string[]>([])
-  const [registrations, setRegistrations] = useState<Registration[]>([])
-  const [orgAllocation, setOrgAllocation] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [registrations, setRegistrations] = useState<Registration[]>(initialData.registrations)
+  const [orgAllocation, setOrgAllocation] = useState<any[]>(initialData.orgAllocation)
   const [showScanner, setShowScanner] = useState(false)
   const [showOrgLimitsModal, setShowOrgLimitsModal] = useState(false)
   const [showPriceTiersModal, setShowPriceTiersModal] = useState(false)
-  const [orgLimits, setOrgLimits] = useState<Record<string, number>>({})
-  const [priceTiers, setPriceTiers] = useState<PriceTier[]>([])
+  const [orgLimits, setOrgLimits] = useState<Record<string, number>>(initialData.orgLimits)
+  const [priceTiers, setPriceTiers] = useState<PriceTier[]>(initialData.priceTiers)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [showMaxCapacityModal, setShowMaxCapacityModal] = useState(false)
   const [showPartyModal, setShowPartyModal] = useState(false)
   const { toast } = useToast()
   const videoRef = useRef(null)
   const qrScannerRef = useRef(null)
+  // Data fetching logic
+  const fetchData = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const [newRegistrations, newOrgAllocation, newPriceTiers] = await Promise.all([
+        getRegistrations(partySlug),
+        getOrgAllocation(partySlug),
+        getPriceTiers(partySlug),
+      ]);
 
-  useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true)
-      try {
-        const [registrationsData, orgAllocationData, priceTiersData] = await Promise.all([
-          getRegistrations(partySlug),
-          getOrgAllocation(partySlug),
-          getPriceTiers(partySlug),
-        ])
-        setRegistrations(registrationsData)
-        setOrgAllocation(orgAllocationData)
-        setPriceTiers(priceTiersData)
+      // Get organization limits from orgAllocation data
+      const newOrgLimits: Record<string, number> = {};
+      newOrgAllocation.forEach((item: any) => {
+        newOrgLimits[item.name] = item.total;
+      });
 
-        // Extract org limits from allocation data
-        const limits: Record<string, number> = {}
-        orgAllocationData.forEach((item) => {
-          limits[item.name] = item.total
-        })
-        setOrgLimits(limits)
-      } catch (error) {
-        console.error("Error fetching data:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load dashboard data",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
+      setRegistrations(newRegistrations);
+      setOrgAllocation(newOrgAllocation);
+      setPriceTiers(newPriceTiers);
+      setOrgLimits(newOrgLimits);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
     }
-
-    fetchData()
-  }, [partySlug, toast, refreshKey]) // Removed refreshKey from dependencies
+  }, [partySlug, toast]);
 
   useEffect(() => {
     if (showScanner && videoRef.current) {
@@ -126,11 +131,10 @@ export function Dashboard({ party, partySlug }: DashboardProps) {
 
     return () => {
       qrScannerRef.current?.stop()
-    }
-  }, [showScanner])
+    }  }, [showScanner])
 
   const handleRefresh = () => {
-    setRefreshKey((prev) => prev + 1)
+    fetchData()
   }
 
   const handleScan = async (data: string) => {
@@ -356,8 +360,7 @@ export function Dashboard({ party, partySlug }: DashboardProps) {
     return matchesSearch && matchesOrg
   })
 
-  // Calculate tier progress based on dynamic price tiers
-  const tierData =
+  // Calculate tier progress based on dynamic price tiers  const tierData =
     priceTiers.length > 0
       ? priceTiers.map((tier) => {
           const count = confirmedRegistrations.length <= tier.capacity ? confirmedRegistrations.length : tier.capacity
@@ -375,22 +378,12 @@ export function Dashboard({ party, partySlug }: DashboardProps) {
           },
         ]
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <RefreshCw className="h-8 w-8 animate-spin text-purple-500" />
-        <span className="ml-2 text-lg">Loading data...</span>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-2 justify-between items-center">
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleRefresh} className="bg-zinc-900 border-zinc-800">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh Data
+        <div className="flex gap-2">          <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing} className="bg-zinc-900 border-zinc-800">
+            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
           </Button>
           <Button variant="outline" onClick={() => setShowScanner(true)} className="bg-zinc-900 border-zinc-800">
             <Scan className="mr-2 h-4 w-4" />
