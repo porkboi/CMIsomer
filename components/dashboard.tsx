@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useCallback } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import QrScanner from "qr-scanner"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +36,7 @@ import { OrgLimitsModal } from "./org-limits-modal"
 import { PriceTiersModal, type PriceTier } from "./price-tiers-modal"
 import { MaxCapacityModal } from "./max-capacity-modal"
 import { EditPartyModal } from "./edit-party-modal"
+import { QRScanner } from "./qr-scanner"
 import { Party } from "@/lib/types"
 
 interface DashboardData {
@@ -82,8 +82,6 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   const [showMaxCapacityModal, setShowMaxCapacityModal] = useState(false)
   const [showPartyModal, setShowPartyModal] = useState(false)
   const { toast } = useToast()
-  const videoRef = useRef(null)
-  const qrScannerRef = useRef(null)
   // Data fetching logic
   const fetchData = useCallback(async () => {
     setIsRefreshing(true);
@@ -113,25 +111,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
       });
     } finally {
       setIsRefreshing(false);
-    }
-  }, [partySlug, toast]);
-
-  useEffect(() => {
-    if (showScanner && videoRef.current) {
-      qrScannerRef.current = new QrScanner(
-        videoRef.current,
-        async (result) => {
-          handleScan(result.data)
-        },
-        { returnDetailedScanResult: true },
-      )
-
-      qrScannerRef.current.start()
-    }
-
-    return () => {
-      qrScannerRef.current?.stop()
-    }  }, [showScanner])
+    }  }, [partySlug, toast]);
 
   const handleRefresh = () => {
     fetchData()
@@ -161,6 +141,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
         description: "Failed to verify QR code",
         variant: "destructive",
       })
+      setShowScanner(false)
     }
   }
 
@@ -801,24 +782,11 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
             </div>
           </div>
         </TabsContent>
-      </Tabs>
-
-      {showScanner && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md bg-zinc-950 border-zinc-800">
-            <CardHeader>
-              <CardTitle>Scan QR Code</CardTitle>
-              <CardDescription>Position the QR code in front of your camera</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center">
-              <video ref={videoRef} className="w-full h-auto" />
-              <Button variant="outline" onClick={() => setShowScanner(false)} className="mt-4">
-                Close Scanner
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      </Tabs>      <QRScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onScan={handleScan}
+      />
 
       {showOrgLimitsModal && (
         <OrgLimitsModal
