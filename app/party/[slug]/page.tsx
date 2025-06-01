@@ -8,24 +8,100 @@ import { LoginForm } from "@/components/login-form";
 import { isAuthenticated } from "@/lib/auth";
 import { getPartyBySlug } from "@/lib/actions";
 
+// Constants
+const TAB_VALUES = {
+  REGISTER: "register",
+  DASHBOARD: "dashboard",
+} as const;
+
+const STYLES = {
+  CONTAINER: "min-h-screen bg-zinc-900 text-white",
+  INNER_CONTAINER: "container bg-zinc-800 mx-auto px-4 py-8",
+  TABS: "mt-8",
+  TABS_LIST: "grid w-full grid-cols-2 bg-zinc-900",
+  TABS_TRIGGER: "text-white",
+  TABS_CONTENT: "bg-zinc-800 mt-6",
+} as const;
+
+// Types
 interface PageProps {
   params: Promise<{
     slug: string;
   }>;
 }
 
-export default async function PartyPage(props: PageProps) {
-  const params = await props.params;
-  const authenticated = await isAuthenticated(params.slug);
-  const party = await getPartyBySlug(params.slug);
+type Party = Awaited<ReturnType<typeof getPartyBySlug>>;
 
+// Helper Components
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center p-8">
+    <div className="text-zinc-400">Loading...</div>
+  </div>
+);
+
+const TabNavigation = () => (
+  <TabsList className={STYLES.TABS_LIST}>
+    <TabsTrigger value={TAB_VALUES.REGISTER} className={STYLES.TABS_TRIGGER}>
+      Register
+    </TabsTrigger>
+    <TabsTrigger value={TAB_VALUES.DASHBOARD} className={STYLES.TABS_TRIGGER}>
+      Dashboard
+    </TabsTrigger>
+  </TabsList>
+);
+
+interface RegistrationTabProps {
+  party: NonNullable<Party>;
+  slug: string;
+}
+
+const RegistrationTab = ({ party, slug }: RegistrationTabProps) => (
+  <TabsContent value={TAB_VALUES.REGISTER} className={STYLES.TABS_CONTENT}>
+    <Suspense fallback={<LoadingSpinner />}>
+      <RegistrationForm party={party} partySlug={slug} />
+    </Suspense>
+  </TabsContent>
+);
+
+interface DashboardTabProps {
+  party: NonNullable<Party>;
+  slug: string;
+  authenticated: boolean;
+}
+
+const DashboardTab = ({ party, slug, authenticated }: DashboardTabProps) => (
+  <TabsContent value={TAB_VALUES.DASHBOARD} className={STYLES.TABS_CONTENT}>
+    {authenticated ? (
+      <Suspense key="dashboard" fallback={<LoadingSpinner />}>
+        <Dashboard party={party} partySlug={slug} />
+      </Suspense>
+    ) : (
+      <Suspense key="login" fallback={<LoadingSpinner />}>
+        <LoginForm
+          partySlug={slug}
+          adminUsername={party.admin_username}
+        />
+      </Suspense>
+    )}
+  </TabsContent>
+);
+
+export default async function PartyPage(props: PageProps) {
+  // Extract params and fetch data
+  const params = await props.params;
+  const [authenticated, party] = await Promise.all([
+    isAuthenticated(params.slug),
+    getPartyBySlug(params.slug),
+  ]);
+
+  // Handle party not found
   if (!party) {
     notFound();
   }
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white">
-      <div className="container bg-zinc-800 mx-auto px-4 py-8">
+    <div className={STYLES.CONTAINER}>
+      <div className={STYLES.INNER_CONTAINER}>
         <PartyHeader
           title={party.name}
           organizations={party.organizations}
@@ -34,34 +110,14 @@ export default async function PartyPage(props: PageProps) {
           location={party.location}
         />
 
-        <Tabs defaultValue="register" className="mt-8">
-          <TabsList className="grid w-full grid-cols-2 bg-zinc-900">
-            <TabsTrigger value="register" className="text-white">
-              Register
-            </TabsTrigger>
-            <TabsTrigger value="dashboard" className="text-white">
-              Dashboard
-            </TabsTrigger>
-          </TabsList>{" "}
-          <TabsContent value="register" className="bg-zinc-800 mt-6">
-            <Suspense fallback={<div>Loading...</div>}>
-              <RegistrationForm party={party} partySlug={params.slug} />
-            </Suspense>
-          </TabsContent>
-          <TabsContent value="dashboard" className="bg-zinc-800 mt-6">
-            {authenticated ? (
-              <Suspense key="dashboard" fallback={<div>Loading...</div>}>
-                <Dashboard party={party} partySlug={params.slug} />
-              </Suspense>
-            ) : (
-              <Suspense key="login" fallback={<div>Loading...</div>}>
-                <LoginForm
-                  partySlug={params.slug}
-                  adminUsername={party.admin_username}
-                />
-              </Suspense>
-            )}
-          </TabsContent>
+        <Tabs defaultValue={TAB_VALUES.REGISTER} className={STYLES.TABS}>
+          <TabNavigation />
+          <RegistrationTab party={party} slug={params.slug} />
+          <DashboardTab
+            party={party}
+            slug={params.slug}
+            authenticated={authenticated}
+          />
         </Tabs>
       </div>
     </div>
