@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -65,6 +65,46 @@ interface Registration {
   price: number
   checked_in: boolean
 }
+
+// Helper components for repeated UI blocks
+const RegistrationRow = ({ reg, actions, columns = 8, colorClass = "" }) => (
+  <div className={`grid grid-cols-${columns} gap-4 p-4 text-white ${colorClass}`}>
+    <div>{reg.name}</div>
+    <div>{reg.andrew_id}</div>
+    <div>{reg.age}</div>
+    <div>
+      <Badge variant="outline" className="bg-zinc-900 border-zinc-700">
+        {reg.organization}
+      </Badge>
+    </div>
+    <div>
+      {reg.tierName ? (
+        <Badge className="bg-purple-900/50 text-purple-300 border-purple-700">
+          {reg.tierName} (${reg.tierPrice || reg.price})
+        </Badge>
+      ) : (
+        <span>${reg.price}</span>
+      )}
+    </div>
+    <div className="capitalize">{reg.payment_method}</div>
+    {columns === 8 && (
+      <div>
+        <Badge
+          className={
+            reg.status === "confirmed"
+              ? "bg-green-900/50 text-green-300 border-green-700"
+              : reg.status === "pending"
+              ? "bg-yellow-900/50 text-yellow-300 border-yellow-700"
+              : "bg-red-900/50 text-red-300 border-red-700"
+          }
+        >
+          {reg.status}
+        </Badge>
+      </div>
+    )}
+    <div className="flex gap-2">{actions}</div>
+  </div>
+)
 
 export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   const organizations = party.organizations
@@ -312,34 +352,24 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
     }
   }
 
-  const confirmedRegistrations = registrations.filter((reg) => reg.status === "confirmed")
-  const waitlistedRegistrations = registrations.filter((reg) => reg.status === "waitlist")
-  const pendingRegistrations = registrations.filter((reg) => reg.status === "pending")
-  const checkedIn = registrations.filter((reg) => reg.checked_in === true)
+  // Memoized derived data
+  const confirmedRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "confirmed"), [registrations]);
+  const waitlistedRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "waitlist"), [registrations]);
+  const pendingRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "pending"), [registrations]);
+  const checkedIn = useMemo(() => registrations.filter((reg) => reg.checked_in === true), [registrations]);
 
-  const filteredConfirmed = confirmedRegistrations.filter((reg) => {
+  // Filtering logic
+  const filterRegs = useCallback((regs) => regs.filter((reg) => {
     const matchesSearch =
       reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.andrew_id.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesOrg = filteredOrgs.length === 0 || filteredOrgs.includes(reg.organization)
-    return matchesSearch && matchesOrg
-  })
+      reg.andrew_id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesOrg = filteredOrgs.length === 0 || filteredOrgs.includes(reg.organization);
+    return matchesSearch && matchesOrg;
+  }), [searchTerm, filteredOrgs]);
 
-  const filteredWaitlist = waitlistedRegistrations.filter((reg) => {
-    const matchesSearch =
-      reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.andrew_id.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesOrg = filteredOrgs.length === 0 || filteredOrgs.includes(reg.organization)
-    return matchesSearch && matchesOrg
-  })
-
-  const filteredPending = pendingRegistrations.filter((reg) => {
-    const matchesSearch =
-      reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.andrew_id.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesOrg = filteredOrgs.length === 0 || filteredOrgs.includes(reg.organization)
-    return matchesSearch && matchesOrg
-  })
+  const filteredConfirmed = filterRegs(confirmedRegistrations);
+  const filteredWaitlist = filterRegs(waitlistedRegistrations);
+  const filteredPending = filterRegs(pendingRegistrations);
 
   // Calculate tier progress based on dynamic price tiers  const tierData =
     priceTiers.length > 0
@@ -552,7 +582,6 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
           <TabsTrigger value="pending">Pending ({filteredPending.length})</TabsTrigger>
           <TabsTrigger value="waitlist">Waitlist ({filteredWaitlist.length})</TabsTrigger>
         </TabsList>
-
         <TabsContent value="confirmed" className="mt-4">
           <div className="rounded-md border border-zinc-800 bg-zinc-950">
             <div className="grid grid-cols-8 gap-4 p-4 font-medium text-zinc-400 border-b border-zinc-800">
@@ -568,66 +597,31 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
             <div className="divide-y divide-zinc-800">
               {filteredConfirmed.length > 0 ? (
                 filteredConfirmed.map((reg) => (
-                  <div key={reg.id} className="grid grid-cols-8 gap-4 p-4 text-white bg-red-950/20">
-                    <div>{reg.name}</div>
-                    <div>{reg.andrew_id}</div>
-                    <div>{reg.age}</div>
-                    <div>
-                      <Badge variant="outline" className="bg-zinc-900 border-zinc-700">
-                        {reg.organization}
-                      </Badge>
-                    </div>
-                    <div>
-                      {reg.tierName ? (
-                        <Badge className="bg-purple-900/50 text-purple-300 border-purple-700">
-                          {reg.tierName} (${reg.tierPrice || reg.price})
-                        </Badge>
-                      ) : (
-                        <span>${reg.price}</span>
-                      )}
-                    </div>
-                    <div className="capitalize">{reg.payment_method}</div>
-                    <div>
-                      <Badge
-                        className={
-                          reg.status === "confirmed"
-                            ? "bg-green-900/50 text-green-300 border-green-700"
-                            : reg.status === "pending"
-                              ? "bg-yellow-900/50 text-yellow-300 border-yellow-700"
-                              : "bg-red-900/50 text-red-300 border-red-700"
-                        }
-                      >
-                        {reg.status}
-                      </Badge>
-                    </div>
-                    <div className="flex gap-2">
-                      {reg.status === "pending" && (
+                  <RegistrationRow
+                    key={reg.id}
+                    reg={reg}
+                    actions={[
+                      reg.status === "pending" && (
                         <Button
+                          key="confirm"
                           size="sm"
                           variant="outline"
                           onClick={async () => {
-                            const result = await confirmAttendance(partySlug, reg.name, reg.andrew_id)
+                            const result = await confirmAttendance(partySlug, reg.name, reg.andrew_id);
                             if (result.success) {
-                              toast({
-                                title: "Success",
-                                description: result.message,
-                                variant: "default",
-                              })
-                              handleRefresh()
+                              toast({ title: "Success", description: result.message, variant: "default" });
+                              handleRefresh();
                             } else {
-                              toast({
-                                title: "Error",
-                                description: result.message,
-                                variant: "destructive",
-                              })
+                              toast({ title: "Error", description: result.message, variant: "destructive" });
                             }
                           }}
                           className="bg-green-900/20 hover:bg-green-900/40"
                         >
                           Confirm
                         </Button>
-                      )}
+                      ),
                       <Button
+                        key="remove"
                         size="sm"
                         variant="outline"
                         onClick={() => handleRemoveFromList(Number.parseInt(reg.id))}
@@ -635,8 +629,8 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
                       >
                         Remove
                       </Button>
-                    </div>
-                  </div>
+                    ]}
+                  />
                 ))
               ) : (
                 <div className="p-4 text-center text-zinc-500">No confirmed registrations found</div>
@@ -659,54 +653,29 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
             <div className="divide-y divide-zinc-800">
               {filteredPending.length > 0 ? (
                 filteredPending.map((reg) => (
-                  <div key={reg.id} className="grid grid-cols-8 gap-4 p-4 text-white bg-yellow-950/20">
-                    <div>{reg.name}</div>
-                    <div>{reg.andrew_id}</div>
-                    <div>{reg.age}</div>
-                    <div>
-                      <Badge variant="outline" className="bg-white-900 border-zinc-700">
-                        {reg.organization}
-                      </Badge>
-                    </div>
-                    <div>
-                      {reg.tierName ? (
-                        <Badge className="bg-purple-900/50 text-white-300 border-purple-700">
-                          {reg.tierName} (${reg.tierPrice || reg.price})
-                        </Badge>
-                      ) : (
-                        <span>${reg.price}</span>
-                      )}
-                    </div>
-                    <div className="capitalize">{reg.payment_method}</div>
-                    <div>
-                      <Badge className="bg-yellow-900/50 text-yellow-300 border-yellow-700">{reg.status}</Badge>
-                    </div>
-                    <div className="flex gap-2">
+                  <RegistrationRow
+                    key={reg.id}
+                    reg={reg}
+                    actions={[
                       <Button
+                        key="confirm"
                         size="sm"
                         variant="outline"
                         onClick={async () => {
-                          const result = await confirmAttendance(partySlug, reg.id, reg.andrew_id)
+                          const result = await confirmAttendance(partySlug, reg.id, reg.andrew_id);
                           if (result.success) {
-                            toast({
-                              title: "Success",
-                              description: result.message,
-                              variant: "default",
-                            })
-                            handleRefresh()
+                            toast({ title: "Success", description: result.message, variant: "default" });
+                            handleRefresh();
                           } else {
-                            toast({
-                              title: "Error",
-                              description: result.message,
-                              variant: "destructive",
-                            })
+                            toast({ title: "Error", description: result.message, variant: "destructive" });
                           }
                         }}
                         className="bg-green-900/20 hover:bg-green-900/40"
                       >
                         Confirm
-                      </Button>
+                      </Button>,
                       <Button
+                        key="remove"
                         size="sm"
                         variant="outline"
                         onClick={() => handleRemoveFromList(Number.parseInt(reg.id))}
@@ -714,8 +683,8 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
                       >
                         Remove
                       </Button>
-                    </div>
-                  </div>
+                    ]}
+                  />
                 ))
               ) : (
                 <div className="p-4 text-center text-zinc-500">No pending registrations found</div>
@@ -737,35 +706,23 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
             <div className="divide-y divide-zinc-800">
               {filteredWaitlist.length > 0 ? (
                 filteredWaitlist.map((reg) => (
-                  <div key={reg.id} className="grid grid-cols-7 gap-4 p-4 text-zinc-400 bg-zinc-900/20">
-                    <div>{reg.name}</div>
-                    <div>{reg.andrew_id}</div>
-                    <div>{reg.age}</div>
-                    <div>
-                      <Badge variant="outline" className="bg-zinc-900 border-zinc-700">
-                        {reg.organization}
-                      </Badge>
-                    </div>
-                    <div>
-                      {reg.tierName ? (
-                        <Badge variant="outline" className="bg-zinc-900 border-zinc-700">
-                          {reg.tierName} (${reg.tierPrice || reg.price})
-                        </Badge>
-                      ) : (
-                        <span>${reg.price}</span>
-                      )}
-                    </div>
-                    <div className="capitalize">{reg.payment_method}</div>
-                    <div className="flex gap-2">
+                  <RegistrationRow
+                    key={reg.id}
+                    reg={reg}
+                    columns={7}
+                    colorClass="text-zinc-400 bg-zinc-900/20"
+                    actions={[
                       <Button
+                        key="promote"
                         size="sm"
                         variant="outline"
                         onClick={() => handlePromoteFromWaitlist(reg.andrew_id)}
                         className="bg-green-900/20 hover:bg-green-900/40"
                       >
                         Promote
-                      </Button>
+                      </Button>,
                       <Button
+                        key="remove"
                         size="sm"
                         variant="outline"
                         onClick={() => handleRemoveFromList(reg.id)}
@@ -773,8 +730,8 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
                       >
                         Remove
                       </Button>
-                    </div>
-                  </div>
+                    ]}
+                  />
                 ))
               ) : (
                 <div className="p-4 text-center text-zinc-500">No waitlisted registrations found</div>
@@ -782,7 +739,8 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
             </div>
           </div>
         </TabsContent>
-      </Tabs>      <QRScanner
+      </Tabs>
+      <QRScanner
         isOpen={showScanner}
         onClose={() => setShowScanner(false)}
         onScan={handleScan}
