@@ -1,5 +1,74 @@
 @import "tailwindcss";
 
+/*
+ * Tailwind configuration merged from tailwind.config.js
+ *
+ * This @theme block contains all the design tokens that were previously
+ * defined in the JavaScript configuration file. This allows for a fully
+ * CSS-based approach to Tailwind configuration.
+ *
+ * The original tailwind.config.js contained:
+ * - Dark mode: ["class"]
+ * - Content paths for various file patterns
+ * - Extended theme with custom colors, border radius, keyframes, and animations
+ * - tailwindcss-animate plugin
+ */
+@theme {
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Colors from tailwind.config.js */
+  --color-border: 240 5.9% 90%;
+  --color-input: 240 5.9% 90%;
+  --color-ring: 300 100% 50%;
+  --color-background: 0 0% 100%;
+  --color-foreground: 240 10% 3.9%;
+
+  --color-primary: 300 100% 50%;
+  --color-primary-foreground: 0 0% 100%;
+
+  --color-secondary: 240 4.8% 95.9%;
+  --color-secondary-foreground: 240 5.9% 10%;
+
+  --color-destructive: 0 84.2% 60.2%;
+  --color-destructive-foreground: 0 0% 98%;
+
+  --color-muted: 240 4.8% 95.9%;
+  --color-muted-foreground: 240 3.8% 46.1%;
+
+  --color-accent: 240 4.8% 95.9%;
+  --color-accent-foreground: 240 5.9% 10%;
+
+  --color-popover: 0 0% 100%;
+  --color-popover-foreground: 240 10% 3.9%;
+
+  --color-card: 0 0% 100%;
+  --color-card-foreground: 240 10% 3.9%;
+
+  /* Border radius from tailwind.config.js */
+  --radius: 0.5rem;
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Animations from tailwind.config.js */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  /* Container settings from tailwind.config.js */
+  --breakpoint-2xl: 1400px;
+
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
+  }
+
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -59,10 +128,11 @@ a:hover {
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
 
