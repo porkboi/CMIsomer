@@ -83,7 +83,7 @@ export function MaxCapacityModal({ currentCapacity, confirmedCount, onClose, onS
           <Button
             onClick={handleSave}
             disabled={newCapacity === currentCapacity || newCapacity < confirmedCount}
-            className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700"
+            className="bg-linear-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700"
           >
             Save Changes
           </Button>

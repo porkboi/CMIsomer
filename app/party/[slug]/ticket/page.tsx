@@ -35,13 +35,13 @@ export default async function TicketPage(props: PageProps) {
   return (
     <div className="min-h-screen bg-zinc-900 text-white">
       <div className="container bg-zinc-800 mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text text-center mb-8">
+        <h1 className="text-4xl font-bold bg-linear-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text text-center mb-8">
           Your Ticket for {party.name}
         </h1>
 
         <div className="max-w-md mx-auto">
           <Card className="bg-zinc-950 border-zinc-800">
-            <CardHeader className="bg-gradient-to-r from-pink-600 to-purple-600 text-white">
+            <CardHeader className="bg-linear-to-r from-pink-600 to-purple-600 text-white">
               <CardTitle className="flex items-center gap-2">
                 <Ticket className="h-5 w-5" />
                 Admission Ticket

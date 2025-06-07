@@ -488,7 +488,7 @@ export function RegistrationForm({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700"
+              className="w-full bg-linear-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700"
             >
               {isSubmitting ? (
                 <Music className="mr-2 h-4 w-4 animate-spin" />
