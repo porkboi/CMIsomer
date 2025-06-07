@@ -2,7 +2,7 @@
 
 import { React, useState, useRef } from 'react'
 import { motion } from "framer-motion";
-import "@/app/globals.css"
+import '@/styles/globals.css'
 
 export const ProWordArt = () => {
     return (
@@ -24,12 +24,12 @@ export const ProWordArt = () => {
       </div>
     );
   };
-  
+
   export const LiteWordArt = () => {
     const [position, setPosition] = useState({ x: 0, y: 0 })
     const [isHovering, setIsHovering] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
-  
+
     const handleMouseMove = (e: React.MouseEvent) => {
       const bounds = containerRef.current?.getBoundingClientRect()
       if (bounds) {
@@ -38,7 +38,7 @@ export const ProWordArt = () => {
         setPosition({ x, y })
       }
     }
-  
+
     return (
       <div
         ref={containerRef}
@@ -57,7 +57,7 @@ export const ProWordArt = () => {
             }}
           />
         )}
-  
+
         <motion.h1
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
