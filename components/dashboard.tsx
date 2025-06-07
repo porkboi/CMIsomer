@@ -1,17 +1,16 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
-import { Users, UserCheck, Clock, Filter, RefreshCw, Scan, Settings, DollarSign, Users2 } from "lucide-react"
+import { Users, UserCheck, Clock, Filter, RefreshCw, Scan, Settings, DollarSign, Users2, Pencil } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import QrScanner from "qr-scanner"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,103 +28,133 @@ import {
   getPriceTiers,
   updatePriceTiers,
   updateMaxCapacity,
+  updatePartyDetails,
   confirmAttendance,
   checkInGuest,
 } from "@/lib/actions"
 import { OrgLimitsModal } from "./org-limits-modal"
 import { PriceTiersModal, type PriceTier } from "./price-tiers-modal"
 import { MaxCapacityModal } from "./max-capacity-modal"
+import { EditPartyModal } from "./edit-party-modal"
+import { QRScanner } from "./qr-scanner"
+import { Party } from "@/lib/types"
+
+interface DashboardData {
+  registrations: Registration[]
+  orgAllocation: any[]
+  priceTiers: PriceTier[]
+  orgLimits: Record<string, number>
+}
 
 interface DashboardProps {
+  party: Party
   partySlug: string
-  organizations: string[]
-  maxCapacity: number
+  initialData: DashboardData
 }
 
 interface Registration {
-  id: string
+  id: number
   name: string
   andrew_id: string
   age: number
   organization: string
   status: "confirmed" | "waitlist" | "pending"
-  paymentMethod: string
+  payment_method: string
   tierName?: string
   tierPrice?: number
   price: number
+  checked_in: boolean
 }
 
-export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardProps) {
+// Helper components for repeated UI blocks
+const RegistrationRow = ({ reg, actions, columns = 8, colorClass = "" }) => (
+  <div className={`grid grid-cols-${columns} gap-4 p-4 text-white ${colorClass}`}>
+    <div>{reg.name}</div>
+    <div>{reg.andrew_id}</div>
+    <div>{reg.age}</div>
+    <div>
+      <Badge variant="outline" className="bg-zinc-900 border-zinc-700">
+        {reg.organization}
+      </Badge>
+    </div>
+    <div>
+      {reg.tierName ? (
+        <Badge className="bg-purple-900/50 text-purple-300 border-purple-700">
+          {reg.tierName} (${reg.tierPrice || reg.price})
+        </Badge>
+      ) : (
+        <span>${reg.price}</span>
+      )}
+    </div>
+    <div className="capitalize">{reg.payment_method}</div>
+    {columns === 8 && (
+      <div>
+        <Badge
+          className={
+            reg.status === "confirmed"
+              ? "bg-green-900/50 text-green-300 border-green-700"
+              : reg.status === "pending"
+              ? "bg-yellow-900/50 text-yellow-300 border-yellow-700"
+              : "bg-red-900/50 text-red-300 border-red-700"
+          }
+        >
+          {reg.status}
+        </Badge>
+      </div>
+    )}
+    <div className="flex gap-2">{actions}</div>
+  </div>
+)
+
+export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
+  const organizations = party.organizations
+  const maxCapacity = party.max_capacity
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredOrgs, setFilteredOrgs] = useState<string[]>([])
-  const [registrations, setRegistrations] = useState<Registration[]>([])
-  const [orgAllocation, setOrgAllocation] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [registrations, setRegistrations] = useState<Registration[]>(initialData.registrations)
+  const [orgAllocation, setOrgAllocation] = useState<any[]>(initialData.orgAllocation)
   const [showScanner, setShowScanner] = useState(false)
   const [showOrgLimitsModal, setShowOrgLimitsModal] = useState(false)
   const [showPriceTiersModal, setShowPriceTiersModal] = useState(false)
-  const [orgLimits, setOrgLimits] = useState<Record<string, number>>({})
-  const [priceTiers, setPriceTiers] = useState<PriceTier[]>([])
+  const [orgLimits, setOrgLimits] = useState<Record<string, number>>(initialData.orgLimits)
+  const [priceTiers, setPriceTiers] = useState<PriceTier[]>(initialData.priceTiers)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [showMaxCapacityModal, setShowMaxCapacityModal] = useState(false)
+  const [showPartyModal, setShowPartyModal] = useState(false)
   const { toast } = useToast()
-  const videoRef = useRef(null)
-  const qrScannerRef = useRef(null)
+  // Data fetching logic
+  const fetchData = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const [newRegistrations, newOrgAllocation, newPriceTiers] = await Promise.all([
+        getRegistrations(partySlug),
+        getOrgAllocation(partySlug),
+        getPriceTiers(partySlug),
+      ]);
 
-  useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true)
-      try {
-        const [registrationsData, orgAllocationData, priceTiersData] = await Promise.all([
-          getRegistrations(partySlug),
-          getOrgAllocation(partySlug),
-          getPriceTiers(partySlug),
-        ])
-        setRegistrations(registrationsData)
-        setOrgAllocation(orgAllocationData)
-        setPriceTiers(priceTiersData)
+      // Get organization limits from orgAllocation data
+      const newOrgLimits: Record<string, number> = {};
+      newOrgAllocation.forEach((item: any) => {
+        newOrgLimits[item.name] = item.total;
+      });
 
-        // Extract org limits from allocation data
-        const limits: Record<string, number> = {}
-        orgAllocationData.forEach((item) => {
-          limits[item.name] = item.total
-        })
-        setOrgLimits(limits)
-      } catch (error) {
-        console.error("Error fetching data:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load dashboard data",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [partySlug, toast, refreshKey]) // Removed refreshKey from dependencies
-
-  useEffect(() => {
-    if (showScanner && videoRef.current) {
-      qrScannerRef.current = new QrScanner(
-        videoRef.current,
-        async (result) => {
-          handleScan(result.data)
-        },
-        { returnDetailedScanResult: true },
-      )
-
-      qrScannerRef.current.start()
-    }
-
-    return () => {
-      qrScannerRef.current?.stop()
-    }
-  }, [showScanner])
+      setRegistrations(newRegistrations);
+      setOrgAllocation(newOrgAllocation);
+      setPriceTiers(newPriceTiers);
+      setOrgLimits(newOrgLimits);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }  }, [partySlug, toast]);
 
   const handleRefresh = () => {
-    setRefreshKey((prev) => prev + 1)
+    fetchData()
   }
 
   const handleScan = async (data: string) => {
@@ -152,6 +181,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
         description: "Failed to verify QR code",
         variant: "destructive",
       })
+      setShowScanner(false)
     }
   }
 
@@ -294,38 +324,54 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
       })
     }
   }
+  const handleSavePartyDetails = async (partyData: { name: string; date: string; location: string }) => {
+    try {
+      const result = await updatePartyDetails(partySlug, partyData)
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Party details updated successfully",
+          variant: "default",
+        })
+        setShowPartyModal(false)
+        // Refresh the page to show updated data
+        window.location.reload()
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to update party details",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
+    }
+  }
 
-  const confirmedRegistrations = registrations.filter((reg) => reg.status === "confirmed")
-  const waitlistedRegistrations = registrations.filter((reg) => reg.status === "waitlist")
-  const pendingRegistrations = registrations.filter((reg) => reg.status === "pending")
-  const checkedIn = registrations.filter((reg) => reg.checked_in === true)
+  // Memoized derived data
+  const confirmedRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "confirmed"), [registrations]);
+  const waitlistedRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "waitlist"), [registrations]);
+  const pendingRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "pending"), [registrations]);
+  const checkedIn = useMemo(() => registrations.filter((reg) => reg.checked_in === true), [registrations]);
 
-  const filteredConfirmed = confirmedRegistrations.filter((reg) => {
+  // Filtering logic
+  const filterRegs = useCallback((regs) => regs.filter((reg) => {
     const matchesSearch =
       reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.andrew_id.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesOrg = filteredOrgs.length === 0 || filteredOrgs.includes(reg.organization)
-    return matchesSearch && matchesOrg
-  })
+      reg.andrew_id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesOrg = filteredOrgs.length === 0 || filteredOrgs.includes(reg.organization);
+    return matchesSearch && matchesOrg;
+  }), [searchTerm, filteredOrgs]);
 
-  const filteredWaitlist = waitlistedRegistrations.filter((reg) => {
-    const matchesSearch =
-      reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.andrew_id.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesOrg = filteredOrgs.length === 0 || filteredOrgs.includes(reg.organization)
-    return matchesSearch && matchesOrg
-  })
+  const filteredConfirmed = filterRegs(confirmedRegistrations);
+  const filteredWaitlist = filterRegs(waitlistedRegistrations);
+  const filteredPending = filterRegs(pendingRegistrations);
 
-  const filteredPending = pendingRegistrations.filter((reg) => {
-    const matchesSearch =
-      reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.andrew_id.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesOrg = filteredOrgs.length === 0 || filteredOrgs.includes(reg.organization)
-    return matchesSearch && matchesOrg
-  })
-
-  // Calculate tier progress based on dynamic price tiers
-  const tierData =
+  // Calculate tier progress based on dynamic price tiers  const tierData =
     priceTiers.length > 0
       ? priceTiers.map((tier) => {
           const count = confirmedRegistrations.length <= tier.capacity ? confirmedRegistrations.length : tier.capacity
@@ -343,22 +389,12 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
           },
         ]
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <RefreshCw className="h-8 w-8 animate-spin text-purple-500" />
-        <span className="ml-2 text-lg">Loading data...</span>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-2 justify-between items-center">
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleRefresh} className="bg-zinc-900 border-zinc-800">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh Data
+        <div className="flex gap-2">          <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing} className="bg-zinc-900 border-zinc-800">
+            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
           </Button>
           <Button variant="outline" onClick={() => setShowScanner(true)} className="bg-zinc-900 border-zinc-800">
             <Scan className="mr-2 h-4 w-4" />
@@ -366,6 +402,15 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
           </Button>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="bg-zinc-900 border-zinc-800"
+            onClick = {() => setShowPartyModal(true)}
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit Party Details
+          </Button>
+
           <Button
             variant="outline"
             onClick={() => setShowMaxCapacityModal(true)}
@@ -422,7 +467,7 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
             <CardTitle className="text-sm font-medium text-white">Checked In</CardTitle>
             <UserCheck className="h-4 w-4 text-green-500" />
           </CardHeader>
-          <CardContent> 
+          <CardContent>
             <div className="text-2xl font-bold text-white">{checkedIn.length}</div>
             <p className="text-xs text-zinc-400">
               {Math.round(checkedIn.length/confirmedRegistrations.length)*100}% of confirmed
@@ -537,7 +582,6 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
           <TabsTrigger value="pending">Pending ({filteredPending.length})</TabsTrigger>
           <TabsTrigger value="waitlist">Waitlist ({filteredWaitlist.length})</TabsTrigger>
         </TabsList>
-
         <TabsContent value="confirmed" className="mt-4">
           <div className="rounded-md border border-zinc-800 bg-zinc-950">
             <div className="grid grid-cols-8 gap-4 p-4 font-medium text-zinc-400 border-b border-zinc-800">
@@ -553,66 +597,31 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
             <div className="divide-y divide-zinc-800">
               {filteredConfirmed.length > 0 ? (
                 filteredConfirmed.map((reg) => (
-                  <div key={reg.id} className="grid grid-cols-8 gap-4 p-4 text-white bg-red-950/20">
-                    <div>{reg.name}</div>
-                    <div>{reg.andrew_id}</div>
-                    <div>{reg.age}</div>
-                    <div>
-                      <Badge variant="outline" className="bg-zinc-900 border-zinc-700">
-                        {reg.organization}
-                      </Badge>
-                    </div>
-                    <div>
-                      {reg.tierName ? (
-                        <Badge className="bg-purple-900/50 text-purple-300 border-purple-700">
-                          {reg.tierName} (${reg.tierPrice || reg.price})
-                        </Badge>
-                      ) : (
-                        <span>${reg.price}</span>
-                      )}
-                    </div>
-                    <div className="capitalize">{reg.payment_method}</div>
-                    <div>
-                      <Badge
-                        className={
-                          reg.status === "confirmed"
-                            ? "bg-green-900/50 text-green-300 border-green-700"
-                            : reg.status === "pending"
-                              ? "bg-yellow-900/50 text-yellow-300 border-yellow-700"
-                              : "bg-red-900/50 text-red-300 border-red-700"
-                        }
-                      >
-                        {reg.status}
-                      </Badge>
-                    </div>
-                    <div className="flex gap-2">
-                      {reg.status === "pending" && (
+                  <RegistrationRow
+                    key={reg.id}
+                    reg={reg}
+                    actions={[
+                      reg.status === "pending" && (
                         <Button
+                          key="confirm"
                           size="sm"
                           variant="outline"
                           onClick={async () => {
-                            const result = await confirmAttendance(partySlug, reg.name, reg.andrew_id)
+                            const result = await confirmAttendance(partySlug, reg.name, reg.andrew_id);
                             if (result.success) {
-                              toast({
-                                title: "Success",
-                                description: result.message,
-                                variant: "default",
-                              })
-                              handleRefresh()
+                              toast({ title: "Success", description: result.message, variant: "default" });
+                              handleRefresh();
                             } else {
-                              toast({
-                                title: "Error",
-                                description: result.message,
-                                variant: "destructive",
-                              })
+                              toast({ title: "Error", description: result.message, variant: "destructive" });
                             }
                           }}
                           className="bg-green-900/20 hover:bg-green-900/40"
                         >
                           Confirm
                         </Button>
-                      )}
+                      ),
                       <Button
+                        key="remove"
                         size="sm"
                         variant="outline"
                         onClick={() => handleRemoveFromList(Number.parseInt(reg.id))}
@@ -620,8 +629,8 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                       >
                         Remove
                       </Button>
-                    </div>
-                  </div>
+                    ]}
+                  />
                 ))
               ) : (
                 <div className="p-4 text-center text-zinc-500">No confirmed registrations found</div>
@@ -644,54 +653,29 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
             <div className="divide-y divide-zinc-800">
               {filteredPending.length > 0 ? (
                 filteredPending.map((reg) => (
-                  <div key={reg.id} className="grid grid-cols-8 gap-4 p-4 text-white bg-yellow-950/20">
-                    <div>{reg.name}</div>
-                    <div>{reg.andrew_id}</div>
-                    <div>{reg.age}</div>
-                    <div>
-                      <Badge variant="outline" className="bg-white-900 border-zinc-700">
-                        {reg.organization}
-                      </Badge>
-                    </div>
-                    <div>
-                      {reg.tierName ? (
-                        <Badge className="bg-purple-900/50 text-white-300 border-purple-700">
-                          {reg.tierName} (${reg.tierPrice || reg.price})
-                        </Badge>
-                      ) : (
-                        <span>${reg.price}</span>
-                      )}
-                    </div>
-                    <div className="capitalize">{reg.payment_method}</div>
-                    <div>
-                      <Badge className="bg-yellow-900/50 text-yellow-300 border-yellow-700">{reg.status}</Badge>
-                    </div>
-                    <div className="flex gap-2">
+                  <RegistrationRow
+                    key={reg.id}
+                    reg={reg}
+                    actions={[
                       <Button
+                        key="confirm"
                         size="sm"
                         variant="outline"
                         onClick={async () => {
-                          const result = await confirmAttendance(partySlug, reg.id, reg.andrew_id)
+                          const result = await confirmAttendance(partySlug, reg.id, reg.andrew_id);
                           if (result.success) {
-                            toast({
-                              title: "Success",
-                              description: result.message,
-                              variant: "default",
-                            })
-                            handleRefresh()
+                            toast({ title: "Success", description: result.message, variant: "default" });
+                            handleRefresh();
                           } else {
-                            toast({
-                              title: "Error",
-                              description: result.message,
-                              variant: "destructive",
-                            })
+                            toast({ title: "Error", description: result.message, variant: "destructive" });
                           }
                         }}
                         className="bg-green-900/20 hover:bg-green-900/40"
                       >
                         Confirm
-                      </Button>
+                      </Button>,
                       <Button
+                        key="remove"
                         size="sm"
                         variant="outline"
                         onClick={() => handleRemoveFromList(Number.parseInt(reg.id))}
@@ -699,8 +683,8 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                       >
                         Remove
                       </Button>
-                    </div>
-                  </div>
+                    ]}
+                  />
                 ))
               ) : (
                 <div className="p-4 text-center text-zinc-500">No pending registrations found</div>
@@ -722,35 +706,23 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
             <div className="divide-y divide-zinc-800">
               {filteredWaitlist.length > 0 ? (
                 filteredWaitlist.map((reg) => (
-                  <div key={reg.id} className="grid grid-cols-7 gap-4 p-4 text-zinc-400 bg-zinc-900/20">
-                    <div>{reg.name}</div>
-                    <div>{reg.andrew_id}</div>
-                    <div>{reg.age}</div>
-                    <div>
-                      <Badge variant="outline" className="bg-zinc-900 border-zinc-700">
-                        {reg.organization}
-                      </Badge>
-                    </div>
-                    <div>
-                      {reg.tierName ? (
-                        <Badge variant="outline" className="bg-zinc-900 border-zinc-700">
-                          {reg.tierName} (${reg.tierPrice || reg.price})
-                        </Badge>
-                      ) : (
-                        <span>${reg.price}</span>
-                      )}
-                    </div>
-                    <div className="capitalize">{reg.payment_method}</div>
-                    <div className="flex gap-2">
+                  <RegistrationRow
+                    key={reg.id}
+                    reg={reg}
+                    columns={7}
+                    colorClass="text-zinc-400 bg-zinc-900/20"
+                    actions={[
                       <Button
+                        key="promote"
                         size="sm"
                         variant="outline"
                         onClick={() => handlePromoteFromWaitlist(reg.andrew_id)}
                         className="bg-green-900/20 hover:bg-green-900/40"
                       >
                         Promote
-                      </Button>
+                      </Button>,
                       <Button
+                        key="remove"
                         size="sm"
                         variant="outline"
                         onClick={() => handleRemoveFromList(reg.id)}
@@ -758,8 +730,8 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
                       >
                         Remove
                       </Button>
-                    </div>
-                  </div>
+                    ]}
+                  />
                 ))
               ) : (
                 <div className="p-4 text-center text-zinc-500">No waitlisted registrations found</div>
@@ -768,23 +740,11 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
           </div>
         </TabsContent>
       </Tabs>
-
-      {showScanner && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md bg-zinc-950 border-zinc-800">
-            <CardHeader>
-              <CardTitle>Scan QR Code</CardTitle>
-              <CardDescription>Position the QR code in front of your camera</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center">
-              <video ref={videoRef} className="w-full h-auto" />
-              <Button variant="outline" onClick={() => setShowScanner(false)} className="mt-4">
-                Close Scanner
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <QRScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onScan={handleScan}
+      />
 
       {showOrgLimitsModal && (
         <OrgLimitsModal
@@ -811,8 +771,14 @@ export function Dashboard({ partySlug, organizations, maxCapacity }: DashboardPr
           confirmedCount={confirmedRegistrations.length}
           onClose={() => setShowMaxCapacityModal(false)}
           onSave={handleSaveMaxCapacity}
-        />
-      )}
+        />      )}
+
+        <EditPartyModal
+        isOpen={showPartyModal}
+        onClose={() => setShowPartyModal(false)}
+        onSave={handleSavePartyDetails}
+        party={party}
+      />
       <Toaster />
     </div>
   )
