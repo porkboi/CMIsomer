@@ -9,7 +9,7 @@ export default function AboutPage() {
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="mb-12 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text mb-4">
+          <h1 className="text-4xl md:text-6xl font-bold bg-linear-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text mb-4">
             About CMIsomer
           </h1>
           <p className="text-lg text-zinc-400 max-w-3xl mx-auto">
