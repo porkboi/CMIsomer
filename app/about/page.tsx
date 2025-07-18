@@ -150,7 +150,7 @@ export default function AboutPage() {
               <div className="w-32 h-32 rounded-full overflow-hidden mx-auto mb-4 border-2 border-purple-500">
                 <div className="relative w-full h-full">
                   <Image
-                    src="/placeholder-user.jpg"
+                    src="https://media.licdn.com/dms/image/v2/D5603AQGOWfEBP6FGMQ/profile-displayphoto-shrink_200_200/B56ZeFsZhsHUAc-/0/1750294701661?e=2147483647&v=beta&t=6p5nbCXxoXReeSlZk_qpCr50N5zjnc9Pl1l4eGN8D4I"
                     alt="Team Member"
                     fill
                     className="object-cover"
@@ -164,7 +164,7 @@ export default function AboutPage() {
               <div className="w-32 h-32 rounded-full overflow-hidden mx-auto mb-4 border-2 border-purple-500">
                 <div className="relative w-full h-full">
                   <Image
-                    src="/placeholder-user.jpg"
+                    src="https://media.licdn.com/dms/image/v2/D5603AQE_kCNuLg3iuQ/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1723618544174?e=2147483647&v=beta&t=zYkSChlYV7kZzvAt5WCcLlx7mxMOMf3Ihu_Pc3Z_Bo0"
                     alt="Team Member"
                     fill
                     className="object-cover"
