@@ -24,6 +24,7 @@ interface FormData {
   eventDate: string
   eventTime: string
   location: string
+  locationSecret: boolean
 }
 
 export function CreatePartyForm() {
@@ -47,6 +48,7 @@ export function CreatePartyForm() {
       eventDate: "",
       eventTime: "",
       location: "",
+      locationSecret: false,
     },
   })
 
@@ -75,6 +77,7 @@ export function CreatePartyForm() {
         eventDate: formData.eventDate,
         eventTime: formData.eventTime,
         location: formData.location,
+        locationSecret: formData.locationSecret,
       }
 
       const result = await createParty(partyData)
@@ -215,13 +218,23 @@ export function CreatePartyForm() {
 
             <div>
               <label className="text-sm font-medium">Location</label>
+              <div className="flex flex-row items-center justify-between rounded-lg border p-4 bg-zinc-900">
+                <div className="space-y-0.5">
+                  <label className="text-base font-medium">Location Secret Mode</label>
+                  <p className="text-sm text-muted-foreground">Location will be secret until 1 day before, only on the ticket page</p>
+                </div>
+                <Switch
+                  checked={watch("locationSecret")}
+                  onCheckedChange={(checked) => setValue("locationSecret", checked)}
+                />
+              </div>
               <Input
-                {...register("location", {
-                  required: "Location is required",
-                })}
-                placeholder="e.g., Cohon University Center, Rangos Ballroom"
-                className="bg-zinc-900 mt-1"
-              />
+                  {...register("location", {
+                    required: "Location is required",
+                  })}
+                  placeholder="e.g., Cohon University Center, Rangos Ballroom"
+                  className="bg-zinc-900 mt-1"
+                />
               {errors.location && <p className="text-sm text-red-500 mt-1">{errors.location.message}</p>}
             </div>
           </div>
@@ -241,7 +254,7 @@ export function CreatePartyForm() {
               {errors.maxCapacity && <p className="text-sm text-red-500 mt-1">{errors.maxCapacity.message}</p>}
             </div>
 
-            <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <div className="flex flex-row items-center justify-between rounded-lg border p-4 bg-zinc-900">
               <div className="space-y-0.5">
                 <label className="text-base font-medium">Allow Waitlist</label>
                 <p className="text-sm text-muted-foreground">Enable waitlist after capacity is reached</p>
@@ -253,7 +266,7 @@ export function CreatePartyForm() {
             </div>
           </div>
           <div className="space-y-4">
-            <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <div className="flex flex-row items-center justify-between rounded-lg border p-4 bg-zinc-900">
               <div className="space-y-0.5">
                 <label className="text-base font-medium">Free Event</label>
                 <p className="text-sm text-muted-foreground">

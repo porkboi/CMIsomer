@@ -25,3 +25,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# config files
+next-env.d.ts
+next.config.mjs
+postcss.config.mjs
+pnpm-workspace.yaml

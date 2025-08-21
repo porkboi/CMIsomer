@@ -26,7 +26,7 @@ export function PartyHeader({ title, organizations, eventDate, eventTime, locati
     <div className="text-center space-y-4">
       <div className="flex items-center justify-center gap-2">
         <Sparkles className="h-8 w-8 text-purple-500" />
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text">
+        <h1 className="text-4xl font-bold bg-linear-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text">
           {title}
         </h1>
         <Sparkles className="h-8 w-8 text-purple-500" />

@@ -1,8 +1,8 @@
 "use client"
 
-import { React, useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { motion } from "framer-motion";
-import "@/app/globals.css"
+import '@/styles/globals.css'
 
 export const ProWordArt = () => {
     return (
@@ -11,7 +11,7 @@ export const ProWordArt = () => {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6 }}
-          className="text-[7rem] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-500 to-gray-200 relative"
+          className="text-[7rem] font-extrabold text-transparent bg-clip-text bg-linear-to-r from-gray-500 to-gray-200 relative"
         >
           <span className="absolute left-0 top-0 text-[7rem] font-extrabold text-gray-500 drop-shadow-[0_0_5px_rgba(158,158,158,0.8)]">
             Pro
@@ -24,12 +24,12 @@ export const ProWordArt = () => {
       </div>
     );
   };
-  
+
   export const LiteWordArt = () => {
     const [position, setPosition] = useState({ x: 0, y: 0 })
     const [isHovering, setIsHovering] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
-  
+
     const handleMouseMove = (e: React.MouseEvent) => {
       const bounds = containerRef.current?.getBoundingClientRect()
       if (bounds) {
@@ -38,7 +38,7 @@ export const ProWordArt = () => {
         setPosition({ x, y })
       }
     }
-  
+
     return (
       <div
         ref={containerRef}
@@ -49,7 +49,7 @@ export const ProWordArt = () => {
       >
         {isHovering && (
           <div
-            className="pointer-events-none absolute z-10 h-[200px] w-[200px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_rgba(255,255,255,0.7)_0%,_transparent_70%)]"
+            className="pointer-events-none absolute z-10 h-[200px] w-[200px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.7)_0%,transparent_70%)]"
             style={{
               left: `${position.x}px`,
               top: `${position.y}px`,
@@ -57,12 +57,12 @@ export const ProWordArt = () => {
             }}
           />
         )}
-  
+
         <motion.h1
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6 }}
-          className="relative z-20 text-[7rem] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-700 cursor-pointer"
+          className="relative z-20 text-[7rem] font-extrabold text-transparent bg-clip-text bg-linear-to-r from-pink-500 to-purple-700 cursor-pointer"
         >
           <span className="absolute left-0 top-0 text-[7rem] font-extrabold text-pink-500 drop-shadow-[0_0_5px_rgba(74,20,140,0.8)]">
             Lite
