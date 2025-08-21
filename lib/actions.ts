@@ -15,6 +15,7 @@ import { supabase } from "@/lib/supabase"
 import type { PriceTier } from "@/components/price-tiers-modal"
 import { sendEmail } from "./email"
 import bcrypt from "bcrypt"
+import { kMaxLength } from "buffer"
 
 // Define the registration schema
 const registrationSchema = z.object({
@@ -507,6 +508,7 @@ const partySchema = z.object({
   eventDate: z.string().min(1),
   eventTime: z.string().min(1),
   location: z.string().min(1),
+  locationSecret: z.boolean()
 })
 
 export async function createParty(formData: z.infer<typeof partySchema>) {
@@ -550,17 +552,18 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
       .insert({
         slug,
         name: validatedData.name,
-        organizations: organizations, //Store as comma separated string
+        organizations: organizations, 
         max_capacity: validatedData.maxCapacity,
         allow_waitlist: validatedData.allowWaitlist,
         ticket_price: validatedData.ticketPrice,
         venmo_username: validatedData.venmoUsername,
-        zelle_info: validatedData.zelleInfo, // Added zelleInfo field
+        zelle_info: validatedData.zelleInfo, 
         admin_username: validatedData.adminUsername,
-        admin_password: await bcrypt.hash(validatedData.adminPassword, 10), //Hash the password
+        admin_password: await bcrypt.hash(validatedData.adminPassword, 10),
         event_date: validatedData.eventDate,
         event_time: validatedData.eventTime,
         location: validatedData.location,
+        location_secret: validatedData.locationSecret
       })
       .select()
       .single()
@@ -634,6 +637,13 @@ export async function getPartyBySlug(slug: string) {
   if (error) {
     console.error("Error fetching party:", error)
     return null
+  }
+
+  const dtg : string = `${data.event_date}T${data.event_time}`;
+  const eventDateTime: Date = new Date(dtg);
+
+  if (data.location_secret && eventDateTime.getTime() - Date.now() > 1000 * 60 * 60 * 24) {
+    data.location = "Secret until 1 day before"
   }
 
   return {
