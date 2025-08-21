@@ -10,7 +10,7 @@ import {
   // updateRegistrationStatus,
 } from "./db-client"
 import { isAuthenticated } from "./auth"
-import { createSlug } from "@/lib/utils"
+import { createSlug } from "@/lib/slug"
 import { supabase } from "@/lib/supabase"
 import type { PriceTier } from "@/components/price-tiers-modal"
 import { sendEmail } from "./email"
