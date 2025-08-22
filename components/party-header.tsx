@@ -1,4 +1,5 @@
 import { Sparkles, Calendar, Clock, MapPin, Github } from "lucide-react"
+import { formatEventDate } from "@/lib/utils"
 
 interface PartyHeaderProps {
   title: string
@@ -33,18 +34,10 @@ export function PartyHeader({ title, organizations, eventDate, eventTime, locati
 
       {/* Add event details section */}
       {(eventDate || eventTime || location) && (
-        <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-sm">
-          {eventDate && (
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-sm">          {eventDate && (
             <div className="flex items-center gap-1 text-zinc-300">
               <Calendar className="h-4 w-4 text-purple-500" />
-              <span>
-                {new Date(eventDate).toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </span>
+              <span>{formatEventDate(eventDate)}</span>
             </div>
           )}
 

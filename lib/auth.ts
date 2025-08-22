@@ -25,7 +25,7 @@ export async function logout(partySlug: string) {
 }
 
 export async function isAuthenticated(partySlug?: string) {
-  console.log(partySlug)
+  console.log(`Auth: ${partySlug}`)
   return (await cookies()).get(`party_auth_${partySlug}`)?.value === "authenticated";
 }
 
