@@ -1,69 +1,91 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useMemo } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { Music, PartyPopper, Send, Ticket } from "lucide-react"
+import { useState, useEffect, useMemo } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Music, PartyPopper, Send, Ticket } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { useToast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { submitRegistration, getPriceTiers } from "@/lib/actions"
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useToast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/ui/toaster";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { submitRegistration, getPriceTiers } from "@/lib/actions";
+import { Party } from "@/lib/types";
 
 interface RegistrationFormProps {
-  partySlug: string
-  maxCapacity: number
-  allowWaitlist: boolean
-  ticketPrice: number
-  venmoUsername: string
-  zelleInfo: string
-  organizations: string[]
+  party: Party;
+  partySlug: string;
 }
 
-export function RegistrationForm({
-  partySlug,
-  maxCapacity,
-  allowWaitlist,
-  ticketPrice,
-  venmoUsername,
-  zelleInfo,
-  organizations,
-}: RegistrationFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [registrationCount, setRegistrationCount] = useState(0)
-  const [currentTierCap, setCurrentTierCap] = useState(0)
-  const [priceTiers, setPriceTiers] = useState<any[]>([])
-  const [currentTierIndex, setCurrentTierIndex] = useState(0)
-  const { toast } = useToast()
+export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registrationCount, setRegistrationCount] = useState(0);
+  const [currentTierCap, setCurrentTierCap] = useState(0);
+  const [priceTiers, setPriceTiers] = useState<any[]>([]);
+  const [currentTierIndex, setCurrentTierIndex] = useState(0);
+  const { toast } = useToast();
+  const isMobile = useIsMobile();
 
-  const currentTierPrice = priceTiers.length > 0 ? priceTiers[currentTierIndex]?.price || 0 : ticketPrice
+  const currentTierPrice =
+    priceTiers.length > 0
+      ? priceTiers[currentTierIndex]?.price || 0
+      : party.ticket_price;
 
-  const formSchema = useMemo(() => z.object({
-    name: z.string().min(2, {
-      message: "Name must be at least 2 characters.",
-    }),
-    age: z.string().refine((val) => !isNaN(Number.parseInt(val)) && Number.parseInt(val) >= 18, {
-      message: "You must be at least 18 years old.",
-    }),
-    andrewID: z.string().min(3, {
-      message: "Andrew ID must be at least 3 characters.",
-    }),
-    paymentMethod: currentTierPrice > 0 ? z.enum(["venmo", "zelle"], {
-      required_error: "Please select a payment method.",
-    }) : z.string().optional(),
-    paymentConfirmed: currentTierPrice > 0 ? z.enum(["yes", "no"], {
-      required_error: "Please confirm if you've paid.",
-    }) : z.string().optional(),
-    organization: z.enum(organizations as [string, ...string[]], {
-      required_error: "Please select your organization.",
-    }),
-    promoCode: z.string().optional(),
-  }), [currentTierPrice, organizations])
+  const formSchema = useMemo(
+    () =>
+      z.object({
+        name: z.string().min(2, {
+          message: "Name must be at least 2 characters.",
+        }),
+        age: z
+          .string()
+          .refine(
+            (val) => !isNaN(Number.parseInt(val)) && Number.parseInt(val) >= 18,
+            {
+              message: "You must be at least 18 years old.",
+            }
+          ),
+        andrewID: z.string().min(3, {
+          message: "Andrew ID must be at least 3 characters.",
+        }),
+        paymentMethod:
+          currentTierPrice > 0
+            ? z.enum(["venmo", "zelle"], {
+                required_error: "Please select a payment method.",
+              })
+            : z.string().optional(),
+        paymentConfirmed:
+          currentTierPrice > 0
+            ? z.enum(["yes", "no"], {
+                required_error: "Please confirm if you've paid.",
+              })
+            : z.string().optional(),
+        organization: z.enum(party.organizations as [string, ...string[]], {
+          required_error: "Please select your organization.",
+        }),
+        promoCode: z.string().optional(),
+      }),
+    [currentTierPrice, party.organizations]
+  );
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -72,54 +94,57 @@ export function RegistrationForm({
       andrewID: "",
       promoCode: "",
     },
-  })
+  });
 
   // Update form resolver when schema changes
   useEffect(() => {
-    form.clearErrors()
-  }, [formSchema, form])
+    form.clearErrors();
+  }, [formSchema, form]);
 
   useEffect(() => {
     // Fetch registration count
     const fetchRegistrationCount = async () => {
       try {
-        const response = await fetch(`/api/registrations/count?partySlug=${partySlug}`)
+        const response = await fetch(
+          `/api/registrations/count?partySlug=${partySlug}`
+        );
         if (response.ok) {
-          const data = await response.json()
-          setRegistrationCount(data.count)
+          const data = await response.json();
+          setRegistrationCount(data.count);
         }
       } catch (error) {
-        console.error("Error fetching registration count:", error)
+        console.error("Error fetching registration count:", error);
       }
-    }
+    };
 
     // Fetch price tiers
     const fetchPriceTiers = async () => {
       try {
-        const tiers = await getPriceTiers(partySlug)
-        setPriceTiers(tiers)
+        const tiers = await getPriceTiers(partySlug);
+        setPriceTiers(tiers);
 
         // Determine current tier based on registration count
-        let cumulativeCapacity = 0
-        let currentIndex = 0
+        let cumulativeCapacity = 0;
+        let currentIndex = 0;
 
         for (let i = 0; i < tiers.length; i++) {
-          cumulativeCapacity += tiers[i].capacity
+          cumulativeCapacity += tiers[i].capacity;
           if (registrationCount < cumulativeCapacity) {
-            currentIndex = i
-            break
+            currentIndex = i;
+            break;
           }
         }
 
-        setCurrentTierCap(cumulativeCapacity)
-        setCurrentTierIndex(currentIndex)
+        setCurrentTierCap(cumulativeCapacity);
+        setCurrentTierIndex(currentIndex);
       } catch (error) {
-        console.error("Error fetching price tiers:", error)
+        console.error("Error fetching price tiers:", error);
       }
-    }
+    };
 
-    fetchRegistrationCount()
-    fetchPriceTiers()  }, [partySlug, registrationCount])
+    fetchRegistrationCount();
+    fetchPriceTiers();
+  }, [partySlug, registrationCount]);
 
   // Payment component functions
   const renderPaymentMethodSelector = () => (
@@ -148,32 +173,43 @@ export function RegistrationForm({
                 <FormLabel className="font-normal">Zelle</FormLabel>
               </FormItem>
             </RadioGroup>
-          </FormControl>
+          </FormControl>{" "}
           <FormDescription>
-            Please send the above quoted amount using one of these methods, and include your andrewID in the description:
+            Please send the above quoted amount using one of these methods, and
+            include your andrewID in the description:
             <br />
-            <span className="font-medium">Venmo:</span> {venmoUsername}
+            <span className="font-medium">Venmo:</span> {party.venmo_username}
             <br />
-            <span className="font-medium">Zelle:</span> {zelleInfo}
+            <span className="font-medium">Zelle:</span> {party.zelle_info}
           </FormDescription>
           <FormMessage />
         </FormItem>
       )}
     />
-  )
-
+  );
   const renderVenmoPaymentButton = () => {
-    const venmoPaymentLink = `venmo://paycharge?txn=pay&recipients=${venmoUsername}&amount=${currentTierPrice}&note=Party%20Registration`
+    // Mobile devices: Use venmo:// deep link to open Venmo app directly
+    // Desktop/Web: Use https://venmo.com web URL in new tab since app isn't available
+    const venmoPaymentLink = isMobile
+      ? `venmo://paycharge?txn=pay&recipients=${party.venmo_username}&amount=${currentTierPrice}&note=Party%20Registration`
+      : `https://venmo.com/u/${party.venmo_username}`;
 
     return (
-      <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center">
-        <a href={venmoPaymentLink}>
+      <Button
+        asChild
+        className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center"
+      >
+        <a
+          href={venmoPaymentLink}
+          target={isMobile ? "_self" : "_blank"}
+          rel={isMobile ? "" : "noopener noreferrer"}
+        >
           <Send className="mr-2 h-4 w-4" />
           Pay with Venmo - ${currentTierPrice}
         </a>
       </Button>
-    )
-  }
+    );
+  };
 
   const renderPaymentConfirmation = () => (
     <FormField
@@ -183,7 +219,11 @@ export function RegistrationForm({
         <FormItem className="space-y-3">
           <FormLabel>Have you Venmo/Zelle'd?</FormLabel>
           <FormControl>
-            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
+            <RadioGroup
+              onValueChange={field.onChange}
+              defaultValue={field.value}
+              className="flex space-x-4"
+            >
               <FormItem className="flex items-center space-x-2 space-y-0">
                 <FormControl>
                   <RadioGroupItem value="yes" />
@@ -202,164 +242,194 @@ export function RegistrationForm({
         </FormItem>
       )}
     />
-  )
+  );
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       // Prepare submission data based on whether payment is required
       const submissionData = {
         ...values,
-        paymentMethod: currentTierPrice > 0 ? values.paymentMethod as "venmo" | "zelle" : "venmo",
-        paymentConfirmed: currentTierPrice > 0 ? values.paymentConfirmed as "yes" | "no" : "yes"
-      }
+        paymentMethod:
+          currentTierPrice > 0
+            ? (values.paymentMethod as "venmo" | "zelle")
+            : "venmo",
+        paymentConfirmed:
+          currentTierPrice > 0
+            ? (values.paymentConfirmed as "yes" | "no")
+            : "yes",
+      };
 
-      const result = await submitRegistration(partySlug, submissionData)
+      const result = await submitRegistration(partySlug, submissionData);
 
       if (result.success) {
         toast({
           title: "Registration submitted!",
-          description: "We are confirming your attendance. Please check your CMU email inbox for more details.",
+          description:
+            "We are confirming your attendance. Please check your CMU email inbox for more details.",
           variant: "default",
-        })
-        form.reset()
+        });
+        form.reset();
       } else {
         toast({
           title: "Registration failed",
           description: result.message,
           variant: "destructive",
-        })
+        });
       }
     } catch (error) {
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsSubmitting(false)
-    }  }
+      setIsSubmitting(false);
+    }
+  }
 
-  const spotsRemaining = currentTierCap - registrationCount
-  const isSoldOut = spotsRemaining <= 0
+  // Ticket helper functions
+  const getTicketTierStatus = (tierIndex: number) => {
+    const isCurrent = tierIndex === currentTierIndex;
+    const isPast = tierIndex < currentTierIndex;
+    const isFuture = tierIndex > currentTierIndex;
+
+    return { isCurrent, isPast, isFuture };
+  };
+
+  const getAvailabilityStatus = (isCurrent: boolean, isPast: boolean) => {
+    const spotsRemaining = currentTierCap - registrationCount;
+    const isSoldOut = spotsRemaining <= 0;
+
+    if (isPast)
+      return { status: "Closed", className: "bg-zinc-800 text-zinc-400" };
+    if (!isCurrent)
+      return { status: "Coming Soon", className: "bg-zinc-800 text-zinc-400" };
+
+    if (isSoldOut)
+      return { status: "Sold Out", className: "bg-red-900/50 text-red-300" };
+    if (spotsRemaining < 20)
+      return {
+        status: "Limited",
+        className: "bg-yellow-900/50 text-yellow-300",
+      };
+
+    return { status: "Available", className: "bg-green-900/50 text-green-300" };
+  };
+
+  const formatPrice = (price: number) => {
+    return price === 0 ? "Free" : `$${price}`;
+  };
+
+  const getTierDescription = (isCurrent: boolean, isPast: boolean) => {
+    if (isPast) return "No longer available";
+    if (isCurrent) return "Spots available";
+    return "Available after current tier sells out";
+  };
+
+  const renderTierCard = (tier: any, index: number) => {
+    const { isCurrent, isPast } = getTicketTierStatus(index);
+    const { status, className } = getAvailabilityStatus(isCurrent, isPast);
+
+    return (
+      <Card
+        key={tier.id}
+        className={`bg-zinc-950 border-zinc-800 transition-all ${
+          isCurrent ? "ring-2 ring-primary scale-105 z-10" : ""
+        } ${isPast ? "opacity-60" : ""}`}
+      >
+        <CardHeader className={`${isCurrent ? "bg-primary/10" : ""}`}>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Ticket className="h-4 w-4" />
+            {tier.name}
+            {isCurrent && (
+              <span className="ml-auto text-xs bg-primary text-white px-2 py-1 rounded-full">
+                Current
+              </span>
+            )}
+            {isPast && (
+              <span className="ml-auto text-xs bg-zinc-700 text-zinc-300 px-2 py-1 rounded-full">
+                Sold Out
+              </span>
+            )}
+          </CardTitle>
+          <CardDescription className="text-zinc-400">
+            {getTierDescription(isCurrent, isPast)}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-2xl font-bold text-white">
+                {formatPrice(tier.price)}
+              </p>
+            </div>
+            <div className={`px-3 py-1 rounded-full text-sm ${className}`}>
+              {status}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+  const renderFallbackTicketCard = () => {
+    const spotsRemaining = party.max_capacity - registrationCount;
+    const isSoldOut = spotsRemaining <= 0;
+
+    const getStatusConfig = () => {
+      if (isSoldOut)
+        return { status: "Sold Out", className: "bg-red-900/50 text-red-300" };
+      if (spotsRemaining < 20)
+        return {
+          status: "Limited Availability",
+          className: "bg-yellow-900/50 text-yellow-300",
+        };
+      return {
+        status: "Available",
+        className: "bg-green-900/50 text-green-300",
+      };
+    };
+
+    const { status, className } = getStatusConfig();
+
+    return (
+      <Card className="bg-zinc-950 border-zinc-800 md:col-span-3">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Ticket className="h-4 w-4" />
+            Ticket Information
+          </CardTitle>
+          <CardDescription className="text-zinc-400">
+            {isSoldOut
+              ? "Sold out - join the waitlist"
+              : `${spotsRemaining} spots remaining`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between items-center">
+            {" "}
+            <div>
+              <p className="text-2xl font-bold text-white">
+                {formatPrice(party.ticket_price)}
+              </p>
+              <p className="text-xs text-zinc-400">Standard admission</p>
+            </div>
+            <div className={`px-3 py-1 rounded-full text-sm ${className}`}>
+              {status}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="bg-zinc-800 space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
-        {priceTiers.length > 0 ? (
-          priceTiers.map((tier, index) => {
-            const isCurrent = index === currentTierIndex;
-            const isPast = index < currentTierIndex;
-            const isFuture = index > currentTierIndex;
-            const iswl = currentTierIndex === priceTiers.length;
-
-            return (
-              <Card
-                key={tier.id}
-                className={`bg-zinc-950 border-zinc-800 transition-all ${
-                  isCurrent ? "ring-2 ring-primary scale-105 z-10" : ""
-                } ${isPast ? "opacity-60" : ""}`}
-              >
-                <CardHeader className={`${isCurrent ? "bg-primary/10" : ""}`}>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Ticket className="h-4 w-4" />
-                    {tier.name}
-                    {isCurrent && (
-                      <span className="ml-auto text-xs bg-primary text-white px-2 py-1 rounded-full">
-                        Current
-                      </span>
-                    )}
-                    {isPast && (
-                      <span className="ml-auto text-xs bg-zinc-700 text-zinc-300 px-2 py-1 rounded-full">
-                        Sold Out
-                      </span>
-                    )}
-                  </CardTitle>
-                  <CardDescription className="text-zinc-400">
-                    {isPast
-                      ? "No longer available"
-                      : isCurrent
-                      ? `Spots available`
-                      : "Available after current tier sells out"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-2xl font-bold text-white">
-                        {tier.price === 0 ? "Free" : '$' + tier.price}
-                      </p>
-                    </div>
-                    <div
-                      className={`px-3 py-1 rounded-full text-sm ${
-                        isPast
-                          ? "bg-zinc-800 text-zinc-400"
-                          : isCurrent
-                          ? isSoldOut
-                            ? "bg-red-900/50 text-red-300"
-                            : spotsRemaining < 20
-                            ? "bg-yellow-900/50 text-yellow-300"
-                            : "bg-green-900/50 text-green-300"
-                          : "bg-zinc-800 text-zinc-400"
-                      }`}
-                    >
-                      {isPast
-                        ? "Closed"
-                        : isCurrent
-                        ? isSoldOut
-                          ? "Sold Out"
-                          : spotsRemaining < 20
-                          ? "Limited"
-                          : "Available"
-                        : "Coming Soon"}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        ) : (
-          // Fallback to single tier if no price tiers are defined
-          <Card className="bg-zinc-950 border-zinc-800 md:col-span-3">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Ticket className="h-4 w-4" />
-                Ticket Information
-              </CardTitle>
-              <CardDescription className="text-zinc-400">
-                {isSoldOut
-                  ? "Sold out - join the waitlist"
-                  : `${spotsRemaining} spots remaining`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-2xl font-bold text-white">
-                    ${ticketPrice}
-                  </p>
-                  <p className="text-xs text-zinc-400">Standard admission</p>
-                </div>
-                <div
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    isSoldOut
-                      ? "bg-red-900/50 text-red-300"
-                      : spotsRemaining < 20
-                      ? "bg-yellow-900/50 text-yellow-300"
-                      : "bg-green-900/50 text-green-300"
-                  }`}
-                >
-                  {isSoldOut
-                    ? "Sold Out"
-                    : spotsRemaining < 20
-                    ? "Limited Availability"
-                    : "Available"}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {priceTiers.length > 0
+          ? priceTiers.map((tier, index) => renderTierCard(tier, index))
+          : renderFallbackTicketCard()}
       </div>
 
       <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6 shadow-lg">
@@ -459,7 +529,7 @@ export function RegistrationForm({
                       defaultValue={field.value}
                       className="grid grid-cols-2 gap-4 sm:grid-cols-4"
                     >
-                      {organizations.map((org) => (
+                      {party.organizations.map((org) => (
                         <FormItem
                           key={org}
                           className="flex items-center space-x-2 space-y-0"
@@ -488,7 +558,7 @@ export function RegistrationForm({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700"
+              className="w-full bg-linear-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700"
             >
               {isSubmitting ? (
                 <Music className="mr-2 h-4 w-4 animate-spin" />
@@ -506,4 +576,3 @@ export function RegistrationForm({
     </div>
   );
 }
-

@@ -3,8 +3,9 @@ import { getPartyTickBySlug, getTicketByToken, getCheckedInCount } from "@/lib/a
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
 import { Ticket, User, Calendar, MapPin, Clock } from "lucide-react"
-import { WalletButtons } from "@/components/wallet-buttons" 
+import { WalletButtons } from "@/components/wallet-buttons"
 import { PartyStatusIndicator } from "@/components/party-status-indicator"
+import { formatEventDate } from "@/lib/utils"
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -35,13 +36,13 @@ export default async function TicketPage(props: PageProps) {
   return (
     <div className="min-h-screen bg-zinc-900 text-white">
       <div className="container bg-zinc-800 mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text text-center mb-8">
+        <h1 className="text-4xl font-bold bg-linear-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text text-center mb-8">
           Your Ticket for {party.name}
         </h1>
 
         <div className="max-w-md mx-auto">
           <Card className="bg-zinc-950 border-zinc-800">
-            <CardHeader className="bg-gradient-to-r from-pink-600 to-purple-600 text-white">
+            <CardHeader className="bg-linear-to-r from-pink-600 to-purple-600 text-white">
               <CardTitle className="flex items-center gap-2">
                 <Ticket className="h-5 w-5" />
                 Admission Ticket
@@ -90,22 +91,11 @@ export default async function TicketPage(props: PageProps) {
                     <p className="text-sm text-zinc-400">Organization</p>
                     <p className="font-medium">{ticket.organization}</p>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-3">
+                </div>                <div className="flex items-center gap-3">
                   <Calendar className="h-5 w-5 text-purple-500 shrink-0" />
                   <div>
                     <p className="text-sm text-zinc-400">Date</p>
-                    <p className="font-medium">
-                      {party.event_date
-                        ? new Date(party.event_date).toLocaleDateString("en-US", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })
-                        : "TBA"}
-                    </p>
+                    <p className="font-medium">{formatEventDate(party.event_date)}</p>
                   </div>
                 </div>
 
