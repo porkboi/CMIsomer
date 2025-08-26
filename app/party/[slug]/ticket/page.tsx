@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation"
-import { getPartyBySlug, getTicketByToken, getCheckedInCount } from "@/lib/actions"
+import { getPartyTickBySlug, getTicketByToken, getCheckedInCount } from "@/lib/actions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
 import { Ticket, User, Calendar, MapPin, Clock } from "lucide-react"
@@ -20,7 +20,7 @@ export default async function TicketPage(props: PageProps) {
     redirect(`/party/${params.slug}`)
   }
 
-  const party = await getPartyBySlug(params.slug)
+  const party = await getPartyTickBySlug(params.slug)
   if (!party) {
     notFound()
   }
