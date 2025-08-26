@@ -631,6 +631,40 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
   }
 }
 
+export async function getPartyTickBySlug(slug: string) {
+  const { data, error } = await supabase.from("parties").select("*").eq("slug", slug).single()
+
+  if (error) {
+    console.error("Error fetching party:", error)
+    return null
+  }
+
+  const dtg : string = `${data.event_date}T${data.event_time}`;
+  const eventDateTime: Date = new Date(dtg);
+
+  if (data.location_secret && eventDateTime.getTime() - Date.now() > 1000 * 60 * 60 * 24) {
+    data.location = "Secret until 1 day before on ticket page"
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    slug: data.slug,
+    organizations: data.organizations,
+    max_capacity: data.max_capacity,
+    allow_waitlist: data.allow_waitlist,
+    ticket_price: data.ticket_price,
+    venmo_username: data.venmo_username,
+    zelle_info: data.zelle_info,
+    admin_username: data.admin_username,
+    // admin_password: data.admin_password, //Removed for security
+    created_at: data.created_at,
+    event_date: data.event_date,
+    event_time: data.event_time,
+    location: data.location,
+  }
+}
+
 export async function getPartyBySlug(slug: string) {
   const { data, error } = await supabase.from("parties").select("*").eq("slug", slug).single()
 
