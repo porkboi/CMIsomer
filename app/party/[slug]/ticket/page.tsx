@@ -34,7 +34,13 @@ export default async function TicketPage(props: PageProps) {
   const { checkedInCount, maxCapacity } = await getCheckedInCount(params.slug)
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white">
+    <div
+      className="min-h-screen bg-zinc-900 text-white"
+      style={{
+        color: "#fff",
+        WebkitTextFillColor: "#fff", // For iOS Safari dark mode
+      }}
+    >
       <div className="container bg-zinc-800 mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold bg-linear-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text text-center mb-8">
           Your Ticket for {party.name}
