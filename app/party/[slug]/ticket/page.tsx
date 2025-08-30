@@ -66,10 +66,10 @@ export default async function TicketPage(props: PageProps) {
                 />
               </div>
 
-              <div className="mb-6 p-3 bg-zinc-900 rounded-lg w-full text-center">
+              {/*<div className="mb-6 p-3 bg-zinc-900 rounded-lg w-full text-center">
                 <p className="text-sm text-zinc-400 mb-1">Current Party Status:</p>
                 <PartyStatusIndicator checkedInCount={checkedInCount} maxCapacity={maxCapacity} />
-              </div>
+              </div>*/}
 
               {/* ✅ Use the new Client Component here */}
               <WalletButtons />
