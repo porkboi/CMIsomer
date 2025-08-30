@@ -439,7 +439,12 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6"
+            // Disable form fields if waitlist is not allowed
+            style={party.allow_waitlist ? {} : { pointerEvents: "none", opacity: 0.6 }}
+          >
             <div className="grid gap-6 md:grid-cols-2">
               <FormField
                 control={form.control}
@@ -555,10 +560,18 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
               </>
             )}
 
+            {!party.allow_waitlist && (
+              <div className="text-center text-red-400 font-semibold mb-4">
+                Registration is closed.
+              </div>
+            )}
+
             <Button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-linear-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700"
+              disabled={isSubmitting || !party.allow_waitlist}
+              className={`w-full bg-linear-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 ${
+                !party.allow_waitlist ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               {isSubmitting ? (
                 <Music className="mr-2 h-4 w-4 animate-spin" />
