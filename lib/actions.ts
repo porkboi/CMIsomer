@@ -380,8 +380,8 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
       tierName = "Promo"
     }
 
-    if (formData.promoCode === "nosleep") {
-      price = price/2
+    if (formData.promoCode === "rush25") {
+      price = 5
       tierName = "Promo"
     }
 
