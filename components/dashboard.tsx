@@ -29,7 +29,7 @@ import {
   updatePriceTiers,
   updateMaxCapacity,
   updatePartyDetails,
-  addPromoCode
+  addPromoCode,
   confirmAttendance,
   checkInGuest,
 } from "@/lib/actions"
