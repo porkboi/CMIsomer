@@ -409,14 +409,14 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
       // No longer returning QR code
     }
   } catch (error) {
-    console.error("Registration error:", typeof(error))
+    console.error("Registration error:", error)
     if (error instanceof Error && error.message.includes("Table does not exist")) {
       return {
         success: false,
         message: "The registration system is currently being set up. Please try again later.",
       }
     }
-    if (error instanceof Error && error.message.includes("duplicate key value")) {
+    if (typeof error === "object" && error !== null && "message" in error && (error as any).message.includes("duplicate key value")) {
       return {
         success: false,
         message: "Your registration has been received. Your double submission haas been blocked. Please use a different andrewID.",
