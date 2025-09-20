@@ -419,7 +419,7 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
     if (typeof error === "object" && error !== null && "message" in error && (error as any).message.includes("duplicate key value")) {
       return {
         success: false,
-        message: "Your registration has been received. Your double submission haas been blocked. Please use a different andrewID.",
+        message: "Your registration has been received. Your double submission has been blocked. Please use a different andrewID.",
       }
     }
     return { success: false, message: "An error occurred during registration." }
