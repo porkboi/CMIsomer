@@ -504,7 +504,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
           <CardDescription className="text-white">Distribution of registrations by organization</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-112">
+          <div className="h-400">
             <ChartContainer
               config={{
                 confirmed: {
