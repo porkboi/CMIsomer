@@ -523,6 +523,16 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
         </Card>
       </div>
 
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleGeneratePromo}
+          className="px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white"
+        >
+          Generate Promo
+        </button>
+      </div>
+
       <div className="w-28 h-10 bg-zinc-900 text-white flex items-center justify-center rounded border border-zinc-700 font-mono">
           {newPromo || "—"}
       </div>
@@ -808,15 +818,6 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
         onSave={handleSavePartyDetails}
         party={party}
       />
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={handleGeneratePromo}
-          className="px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white"
-        >
-          Generate Promo
-        </button>
-      </div>
 
       <Toaster />
     </div>
