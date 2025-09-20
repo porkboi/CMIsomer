@@ -29,6 +29,7 @@ import {
   updatePriceTiers,
   updateMaxCapacity,
   updatePartyDetails,
+  addPromoCode
   confirmAttendance,
   checkInGuest,
 } from "@/lib/actions"
@@ -131,21 +132,20 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
     const code = generatePromoCode(5)
     setNewPromo(code)
     try {
-      const res = await fetch(`/api/parties/${partySlug}/promo-codes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        toast({ title: "Failed to add promo code", description: data?.message || "Server error", variant: "destructive" })
+      const result = await addPromoCode(partySlug, code)
+      if (!result?.success) {
+        toast({
+          title: "Failed to add promo code",
+          description: result?.message || "Server error",
+          variant: "destructive",
+        })
         return
       }
       toast({ title: "Promo code created", description: code })
     } catch (error) {
       toast({ title: "Error", description: "Unable to create promo code", variant: "destructive" })
     }
-  }, [partySlug, toast])
+  }, [partySlug, toast, addPromoCode])
 
   // Data fetching logic
   const fetchData = useCallback(async () => {

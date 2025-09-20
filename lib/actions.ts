@@ -513,6 +513,44 @@ const partySchema = z.object({
   locationSecret: z.boolean()
 })
 
+export async function addPromoCode(partySlug: string, code: string): Promise<{ success: boolean; message?: string; promoCodes?: string[] }> {
+  if (!(await isAuthenticated(partySlug))) {
+    return { success: false, message: "Unauthorized" }
+  }
+
+  try {
+    // Fetch current promo_code array
+    const { data: partyRow, error: fetchError } = await supabase
+      .from("parties")
+      .select("promo_code")
+      .eq("slug", partySlug)
+      .single()
+
+    if (fetchError) {
+      console.error("Error fetching party promo codes:", fetchError)
+      return { success: false, message: "Failed to fetch party" }
+    }
+
+    const current = Array.isArray(partyRow?.promo_code) ? partyRow.promo_code : []
+    const updated = [...current, code]
+
+    const { error: updateError } = await supabase
+      .from("parties")
+      .update({ promo_code: updated })
+      .eq("slug", partySlug)
+
+    if (updateError) {
+      console.error("Error updating promo codes:", updateError)
+      return { success: false, message: "Failed to update promo codes" }
+    }
+
+    return { success: true, promoCodes: updated }
+  } catch (error) {
+    console.error("Error in addPromoCode:", error)
+    return { success: false, message: "An unexpected error occurred" }
+  }
+}
+
 export async function createParty(formData: z.infer<typeof partySchema>) {
   try {
     const validatedData = partySchema.parse(formData)
