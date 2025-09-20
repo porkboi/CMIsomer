@@ -191,7 +191,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
     // Mobile devices: Use venmo:// deep link to open Venmo app directly
     // Desktop/Web: Use https://venmo.com web URL in new tab since app isn't available
     const venmoPaymentLink = isMobile
-      ? `venmo://paycharge?txn=pay&recipients=${party.venmo_username}&amount=${currentTierPrice}&note=Party%20Registration`
+      ? `venmo://paycharge?txn=pay&recipients=${party.venmo_username}&amount=${currentTierPrice}&note=Party%20Registration${formSchema.shape.andrewID}`
       : `https://venmo.com/u/${party.venmo_username}`;
 
     return (

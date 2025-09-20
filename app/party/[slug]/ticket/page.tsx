@@ -66,12 +66,13 @@ export default async function TicketPage(props: PageProps) {
                 />
               </div>
 
+              {/* TODO: Toggle Enable Disable Counter */}
               {/*<div className="mb-6 p-3 bg-zinc-900 rounded-lg w-full text-center">
                 <p className="text-sm text-zinc-400 mb-1">Current Party Status:</p>
                 <PartyStatusIndicator checkedInCount={checkedInCount} maxCapacity={maxCapacity} />
               </div>*/}
 
-              {/* ✅ Use the new Client Component here */}
+              {/* TODO: Add Wallet Integration */}
               <WalletButtons />
 
               <div className="w-full space-y-4">

@@ -375,10 +375,11 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
     let price = party.ticket_price
     let tierName = "Standard"
 
-    if (formData.promoCode === "rush25" || formData.promoCode === "cmumgc") {
-      price = 5
-      tierName = "Promo"
-    }
+    // Hardcode Promo in future
+    //if (formData.promoCode === "rush25" || formData.promoCode === "cmumgc") {
+    //  price = 5
+    //  tierName = "Promo"
+    //}
 
     // Generate QR code
     const qrData = {
@@ -413,6 +414,12 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
       return {
         success: false,
         message: "The registration system is currently being set up. Please try again later.",
+      }
+    }
+    if (error instanceof Error && error.message.includes("duplicate key value violates unique constraint")) {
+      return {
+        success: false,
+        message: "Your registration has been received. Your double submission haas been blocked. Please use a different andrewID.",
       }
     }
     return { success: false, message: "An error occurred during registration." }
