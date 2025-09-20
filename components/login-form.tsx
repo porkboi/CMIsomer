@@ -50,7 +50,10 @@ export function LoginForm({ partySlug, adminUsername }: LoginFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" style={{
+            color: "#fff",
+            WebkitTextFillColor: "#fff",
+          }}>
           <div className="space-y-2">
             <Input
               type="text"
@@ -60,7 +63,7 @@ export function LoginForm({ partySlug, adminUsername }: LoginFormProps) {
               className="bg-zinc-800 border-zinc-800"
             />
           </div>          <div className="space-y-2">
-            <div className="relative">
+            <div className="relative" >
               <Input
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"

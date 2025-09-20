@@ -565,7 +565,9 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
         event_date: validatedData.eventDate,
         event_time: validatedData.eventTime,
         location: validatedData.location,
-        location_secret: validatedData.locationSecret
+        location_secret: validatedData.locationSecret,
+        promo_code: [],
+        announcements: [],
       })
       .select()
       .single()

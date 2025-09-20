@@ -121,7 +121,32 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showMaxCapacityModal, setShowMaxCapacityModal] = useState(false)
   const [showPartyModal, setShowPartyModal] = useState(false)
+  const [newPromo, setNewPromo] = useState<string>("")
   const { toast } = useToast()
+  const generatePromoCode = (length = 5) => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    return Array.from({ length }).map(() => chars[Math.floor(Math.random() * chars.length)]).join("")
+  }
+  const handleGeneratePromo = useCallback(async () => {
+    const code = generatePromoCode(5)
+    setNewPromo(code)
+    try {
+      const res = await fetch(`/api/parties/${partySlug}/promo-codes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        toast({ title: "Failed to add promo code", description: data?.message || "Server error", variant: "destructive" })
+        return
+      }
+      toast({ title: "Promo code created", description: code })
+    } catch (error) {
+      toast({ title: "Error", description: "Unable to create promo code", variant: "destructive" })
+    }
+  }, [partySlug, toast])
+
   // Data fetching logic
   const fetchData = useCallback(async () => {
     setIsRefreshing(true);
@@ -779,6 +804,20 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
         onSave={handleSavePartyDetails}
         party={party}
       />
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleGeneratePromo}
+          className="px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white"
+        >
+          Generate Promo
+        </button>
+
+        <div className="w-28 h-10 bg-zinc-900 text-white flex items-center justify-center rounded border border-zinc-700 font-mono">
+          {newPromo || "—"}
+        </div>
+      </div>
+
       <Toaster />
     </div>
   )
