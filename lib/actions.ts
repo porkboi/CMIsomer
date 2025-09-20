@@ -416,7 +416,7 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
         message: "The registration system is currently being set up. Please try again later.",
       }
     }
-    if (error instanceof Error && error.message.includes("duplicate key value violates unique constraint")) {
+    if (error instanceof Error && error.message.includes("duplicate key value")) {
       return {
         success: false,
         message: "Your registration has been received. Your double submission haas been blocked. Please use a different andrewID.",
