@@ -523,6 +523,10 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
         </Card>
       </div>
 
+      <div className="w-28 h-10 bg-zinc-900 text-white flex items-center justify-center rounded border border-zinc-700 font-mono">
+          {newPromo || "—"}
+      </div>
+
       <Card className="bg-zinc-950 border-zinc-800">
         <CardHeader>
           <CardTitle className="text-white">Organization Allocation</CardTitle>
@@ -812,10 +816,6 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
         >
           Generate Promo
         </button>
-
-        <div className="w-28 h-10 bg-zinc-900 text-white flex items-center justify-center rounded border border-zinc-700 font-mono">
-          {newPromo || "—"}
-        </div>
       </div>
 
       <Toaster />
