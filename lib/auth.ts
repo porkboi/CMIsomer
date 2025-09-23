@@ -24,8 +24,20 @@ export async function logout(partySlug: string) {
   (await cookies()).delete(`party_auth_${partySlug}`)
 }
 
-export async function isAuthenticated(partySlug?: string) {
-  console.log(`Auth: ${partySlug}`)
-  return (await cookies()).get(`party_auth_${partySlug}`)?.value === "authenticated";
+export async function isAuthenticated(partySlug?: string, cookieValue?: string) {
+  // If a cookie value is supplied (pages API / plain Node requests), use it.
+  if (typeof cookieValue !== "undefined") {
+    return cookieValue === "authenticated";
+  }
+
+  // Otherwise try next/headers cookies() (app-router/server context)
+  try {
+    const c = await cookies();
+    return c.get(`party_auth_${partySlug}`)?.value === "authenticated";
+  } catch (err) {
+    // cookies() not available in this execution context (pages API / edge / other)
+    console.warn("isAuthenticated: cookies() unavailable in this context");
+    return false;
+  }
 }
 

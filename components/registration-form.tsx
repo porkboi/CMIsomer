@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -28,7 +28,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { submitRegistration, getPriceTiers } from "@/lib/actions";
+import { submitRegistration, getPriceTiers, redeemPromoCode } from "@/lib/actions";
 import { Party } from "@/lib/types";
 
 interface RegistrationFormProps {
@@ -45,10 +45,16 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  const currentTierPrice =
-    priceTiers.length > 0
-      ? priceTiers[currentTierIndex]?.price || 0
-      : party.ticket_price;
+  const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
+  const [applyingPromo, setApplyingPromo] = useState(false);
+
+  const currentTierPrice = useMemo(() => {
+    const base =
+      priceTiers.length > 0
+        ? priceTiers[currentTierIndex]?.price || 0
+        : party.ticket_price;
+    return appliedPromoCode ? 0 : base;
+  }, [priceTiers, currentTierIndex, party.ticket_price, appliedPromoCode]);
 
   const formSchema = useMemo(
     () =>
@@ -259,6 +265,9 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
           currentTierPrice > 0
             ? (values.paymentConfirmed as "yes" | "no")
             : "yes",
+        // include the final price and applied promo for server-side record
+        price: currentTierPrice,
+        appliedPromoCode: appliedPromoCode ?? null,
       };
 
       const result = await submitRegistration(partySlug, submissionData);
@@ -507,15 +516,87 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Promo Code (Optional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter promo code"
-                      {...field}
-                      className="bg-zinc-900 border-zinc-800"
-                    />
-                  </FormControl>
+                  <div className="flex gap-2 items-center">
+                    <FormControl className="flex-1">
+                      <Input
+                        placeholder="Enter promo code"
+                        {...field}
+                        className="bg-zinc-900 border-zinc-800"
+                        disabled={!!appliedPromoCode || applyingPromo}
+                      />
+                    </FormControl>
+
+                    <Button
+                      type="button"
+                      onClick={async () => {
+                        const code = form.getValues("promoCode")?.trim();
+                        if (!code) {
+                          toast({
+                            title: "No code",
+                            description: "Enter a promo code first",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        setApplyingPromo(true);
+                        try {
+                          const res = await redeemPromoCode(partySlug, String(code).trim())
+                          if (!res.success) {
+                            toast({
+                              title: "Invalid promo",
+                              description: "Code not valid",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          setAppliedPromoCode(code);
+                          toast({
+                            title: "Promo applied",
+                            description: "Ticket set to $0",
+                            variant: "default",
+                          });
+                        } catch (err) {
+                          toast({
+                            title: "Error",
+                            description: "Unable to apply promo",
+                            variant: "destructive",
+                          });
+                        } finally {
+                          setApplyingPromo(false);
+                        }
+                      }}
+                      className={`px-3 py-2 rounded ${
+                        appliedPromoCode ? "bg-green-700 hover:bg-green-800" : "bg-indigo-600 hover:bg-indigo-700"
+                      } text-white`}
+                      disabled={applyingPromo || !!appliedPromoCode}
+                    >
+                      {applyingPromo ? "Applying…" : appliedPromoCode ? "Applied" : "Apply"}
+                    </Button>
+                  </div>
+
+                  <div className="mt-2 flex items-center gap-3">
+                    <div className="min-w-[140px] h-10 px-3 flex items-center justify-center bg-gradient-to-r from-zinc-900 to-zinc-950 border border-zinc-700 rounded font-mono text-white text-lg tracking-widest">
+                      {appliedPromoCode ?? <span className="text-zinc-500">{field.value || "—"}</span>}
+                    </div>
+
+                    {appliedPromoCode && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setAppliedPromoCode(null);
+                          form.setValue("promoCode", "");
+                          toast({ title: "Promo removed", description: "Standard pricing restored" });
+                        }}
+                        className="h-10 px-3 bg-zinc-900 border-zinc-700 text-white"
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+
                   <FormDescription>
-                    Have a promo code? Enter it here for special pricing.
+                    Have a promo code? Enter it and click Apply to redeem.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

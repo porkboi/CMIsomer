@@ -28,7 +28,6 @@ import {
   getPriceTiers,
   updatePriceTiers,
   updateMaxCapacity,
-  updatePartyDetails,
   addPromoCode,
   confirmAttendance,
   checkInGuest,

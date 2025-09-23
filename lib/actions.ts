@@ -28,24 +28,26 @@ const registrationSchema = z.object({
   paymentMethod: z.enum(["venmo", "zelle"]),
   paymentConfirmed: z.enum(["yes", "no"]),
   promoCode: z.string().optional(),
+  price: z.number().optional(), // optional client-provided final price (trusted only after promo redeem)
+  appliedPromoCode: z.string().nullable().optional(),
 })
 
-export type Registration = {
-  id: number
-  name: string
-  andrewID: string
-  age: number
-  organization: string
-  paymentMethod: string
-  paymentConfirmed: string
-  status: string
-  createdAt?: string
-  price: number
-  qrCode: string
-  tierName?: string
-  tierPrice?: number
-  confirmation_token?: string
-}
+// export type Registration = {
+//   id: number
+//   name: string
+//   andrewID: string
+//   age: number
+//   organization: string
+//   paymentMethod: string
+//   paymentConfirmed: string
+//   status: string
+//   createdAt?: string
+//   price: number
+//   qrCode: string
+//   tierName?: string
+//   tierPrice?: number
+//   confirmation_token?: string
+// }
 
 // Get all registrations
 export async function getRegistrations(partySlug: string): Promise<Registration[]> {
@@ -371,15 +373,15 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
     const registrations = await getRegistrations(partySlug)
     const confirmedCount = registrations.filter((reg) => reg.status === "confirmed").length
 
-    // Determine price (apply promo code if provided)
+    // Determine price (allow client override when promo was applied client-side)
     let price = party.ticket_price
     let tierName = "Standard"
 
-    // Hardcode Promo in future
-    //if (formData.promoCode === "rush25" || formData.promoCode === "cmumgc") {
-    //  price = 5
-    //  tierName = "Promo"
-    //}
+    if (typeof validatedData.price === "number") {
+      // Accept explicit price override from client when promo was redeemed server-side via redeemPromoCode
+      price = validatedData.price
+      tierName = validatedData.appliedPromoCode ? "Promo" : tierName
+    }
 
     // Generate QR code
     const qrData = {
@@ -547,6 +549,49 @@ export async function addPromoCode(partySlug: string, code: string): Promise<{ s
     return { success: true, promoCodes: updated }
   } catch (error) {
     console.error("Error in addPromoCode:", error)
+    return { success: false, message: "An unexpected error occurred" }
+  }
+}
+
+export async function redeemPromoCode(
+  partySlug: string,
+  code: string
+): Promise<{ success: boolean; message?: string; promoCodes?: string[] }> {
+
+  try {
+    // Fetch current promo_code array
+    const { data: partyRow, error: fetchError } = await supabase
+      .from("parties")
+      .select("promo_code")
+      .eq("slug", partySlug)
+      .single()
+
+    if (fetchError) {
+      console.error("Error fetching party promo codes:", fetchError)
+      return { success: false, message: "Failed to fetch party" }
+    }
+
+    const current = Array.isArray(partyRow?.promo_code) ? partyRow.promo_code : []
+    const idx = current.indexOf(code)
+    if (idx === -1) {
+      return { success: false, message: "Promo code not found" }
+    }
+
+    const updated = [...current.slice(0, idx), ...current.slice(idx + 1)]
+
+    const { error: updateError } = await supabase
+      .from("parties")
+      .update({ promo_code: updated })
+      .eq("slug", partySlug)
+
+    if (updateError) {
+      console.error("Error updating promo codes:", updateError)
+      return { success: false, message: "Failed to update promo codes" }
+    }
+
+    return { success: true, promoCodes: updated }
+  } catch (error) {
+    console.error("Error in redeemPromoCode:", error)
     return { success: false, message: "An unexpected error occurred" }
   }
 }
