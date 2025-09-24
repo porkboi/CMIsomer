@@ -1,42 +1,63 @@
-import { notFound, redirect } from "next/navigation"
-import { getPartyTickBySlug, getTicketByToken, getCheckedInCount } from "@/lib/actions"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import Image from "next/image"
-import TicketQR from "@/components/ticket-qr"
-import { Ticket, User, Calendar, MapPin, Clock } from "lucide-react"
-import { WalletButtons } from "@/components/wallet-buttons"
-import { PartyStatusIndicator } from "@/components/party-status-indicator"
-import { formatEventDate } from "@/lib/utils"
-import AutoRefresh from "@/components/auto-refresh"
+import { notFound, redirect } from "next/navigation";
+import { getPartyTickBySlug, getTicketByToken, getCheckedInCount } from "@/lib/actions";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
+import TicketQR from "@/components/ticket-qr";
+import { Ticket, User, Calendar, MapPin, Clock } from "lucide-react";
+import { WalletButtons } from "@/components/wallet-buttons";
+import { PartyStatusIndicator } from "@/components/party-status-indicator";
+import { formatEventDate } from "@/lib/utils";
+import AutoRefresh from "@/components/auto-refresh";
+import { useState } from "react";
 
 interface PageProps {
-  params: Promise<{ slug: string }>
-  searchParams: Promise<{ token?: string }>
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ token?: string }>;
 }
 
 export default async function TicketPage(props: PageProps) {
   const searchParams = await props.searchParams;
   const params = await props.params;
-  const token = searchParams.token
+  const token = searchParams.token;
 
   if (!token) {
-    redirect(`/party/${params.slug}`)
+    redirect(`/party/${params.slug}`);
   }
 
-  const party = await getPartyTickBySlug(params.slug)
+  const party = await getPartyTickBySlug(params.slug);
   if (!party) {
-    notFound()
+    notFound();
   }
 
-  const ticket = await getTicketByToken(params.slug, token)
+  const ticket = await getTicketByToken(params.slug, token);
   if (!ticket) {
-    redirect(`/party/${params.slug}?error=invalid_token`)
+    redirect(`/party/${params.slug}?error=invalid_token`);
   }
 
-  const { checkedInCount, maxCapacity } = await getCheckedInCount(params.slug)
+  const { checkedInCount, maxCapacity } = await getCheckedInCount(params.slug);
+
+  // Client side state to manage autoRefresh disablement.
+  // We want the page to auto-refresh until the ticket qr_code turns into a GIF.
+  // Note: Because TicketPage is an async Server Component,
+  // you must wrap auto-refresh logic in a client component (or use 'use client' here).
+  // For simplicity, we're using a client wrapper.
+  const AutoRefreshWrapper = (props: { children: React.ReactNode }) => {
+    const [disabled, setDisabled] = useState(false);
+    return (
+      <AutoRefresh disabled={disabled}>
+        {
+          // Pass a callback to TicketQR that disables auto-refresh.
+          // Using a React fragment to pass the setter down.
+          <>
+            {React.cloneElement(props.children as React.ReactElement, { onCheckedIn: () => setDisabled(true) })}
+          </>
+        }
+      </AutoRefresh>
+    );
+  };
 
   return (
-    <AutoRefresh>
+    <AutoRefreshWrapper>
       <div
         className="min-h-screen bg-zinc-900 text-white"
         style={{
@@ -48,7 +69,6 @@ export default async function TicketPage(props: PageProps) {
           <h1 className="text-4xl font-bold bg-linear-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text text-center mb-8">
             Your Ticket for {party.name}
           </h1>
-
           <div className="max-w-md mx-auto">
             <Card className="bg-zinc-950 border-zinc-800">
               <CardHeader className="bg-linear-to-r from-pink-600 to-purple-600 text-white">
@@ -56,21 +76,21 @@ export default async function TicketPage(props: PageProps) {
                   <Ticket className="h-5 w-5" />
                   Admission Ticket
                 </CardTitle>
-                <CardDescription className="text-white/80">Present this QR code at the entrance</CardDescription>
+                <CardDescription className="text-white/80">
+                  Present this QR code at the entrance
+                </CardDescription>
               </CardHeader>
               <CardContent className="p-6 flex flex-col items-center">
-                {/* client component polls the server-rendered page and updates the QR every second (no API endpoint) */}
-                <TicketQR partySlug={params.slug} token={token} initialQr={ticket.qrCode} width={200} height={200} />
-
-                {/* TODO: Toggle Enable Disable Counter */}
-                {/*<div className="mb-6 p-3 bg-zinc-900 rounded-lg w-full text-center">
-                  <p className="text-sm text-zinc-400 mb-1">Current Party Status:</p>
-                  <PartyStatusIndicator checkedInCount={checkedInCount} maxCapacity={maxCapacity} />
-                </div>*/}
-
-                {/* TODO: Add Wallet Integration */}
+                {/* TicketQR now stops auto-refresh when it detects a GIF */}
+                <TicketQR
+                  partySlug={params.slug}
+                  token={token}
+                  initialQr={ticket.qrCode}
+                  width={200}
+                  height={200}
+                />
                 <WalletButtons />
-
+                {/* Other ticket details below */}
                 <div className="w-full space-y-4">
                   <div className="flex items-center gap-3">
                     <User className="h-5 w-5 text-purple-500 shrink-0" />
@@ -94,7 +114,8 @@ export default async function TicketPage(props: PageProps) {
                       <p className="text-sm text-zinc-400">Organization</p>
                       <p className="font-medium">{ticket.organization}</p>
                     </div>
-                  </div>                <div className="flex items-center gap-3">
+                  </div>
+                  <div className="flex items-center gap-3">
                     <Calendar className="h-5 w-5 text-purple-500 shrink-0" />
                     <div>
                       <p className="text-sm text-zinc-400">Date</p>
@@ -132,7 +153,9 @@ export default async function TicketPage(props: PageProps) {
                 </div>
 
                 <div className="mt-8 text-center">
-                  <p className="text-sm text-zinc-400">This ticket is non-transferable and must be presented at entry.</p>
+                  <p className="text-sm text-zinc-400">
+                    This ticket is non-transferable and must be presented at entry.
+                  </p>
                   <p className="text-sm text-zinc-400 mt-1">Ticket ID: {ticket.id}</p>
                 </div>
               </CardContent>
@@ -140,6 +163,6 @@ export default async function TicketPage(props: PageProps) {
           </div>
         </div>
       </div>
-    </AutoRefresh>
-  )
+    </AutoRefreshWrapper>
+  );
 }

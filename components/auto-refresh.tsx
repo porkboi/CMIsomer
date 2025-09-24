@@ -2,15 +2,20 @@
 
 import { useEffect } from "react";
 
-export default function AutoRefresh({ children }: { children: React.ReactNode }) {
+interface AutoRefreshProps {
+  disabled?: boolean;
+  children: React.ReactNode;
+}
+
+export default function AutoRefresh({ disabled = false, children }: AutoRefreshProps) {
   useEffect(() => {
+    if (disabled) return;
     const timer = setInterval(() => {
-      // Reload the page every second
       window.location.reload();
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [disabled]);
 
   return <>{children}</>;
 }

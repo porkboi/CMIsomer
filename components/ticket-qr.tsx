@@ -10,9 +10,11 @@ interface TicketQRProps {
   initialQr: string;
   width?: number;
   height?: number;
+  onCheckedIn?: () => void;
 }
 
-function withTimestamp(src: string, tick: number) {
+function withTimestamp(src: string, tick: number): string {
+  if (!src || src === "/placeholder.svg") return src;
   return src.includes("?") ? `${src}&t=${tick}` : `${src}?t=${tick}`;
 }
 
@@ -22,8 +24,9 @@ export default function TicketQR({
   initialQr,
   width = 200,
   height = 200,
+  onCheckedIn,
 }: TicketQRProps) {
-  const [qr, setQr] = useState<string>(initialQr);
+  const [qr, setQr] = useState<string>(initialQr || "/placeholder.svg");
   const [tick, setTick] = useState<number>(Date.now());
   const intervalRef = useRef<number | null>(null);
 
@@ -61,12 +64,28 @@ export default function TicketQR({
     };
   }, [partySlug, token]);
 
+  // Determine if qr seems to be a GIF URL.
+  const isGif =
+    qr &&
+    (/\.gif($|\?)/i.test(qr) ||
+      qr.includes("giphy.com") ||
+      qr.includes(".gif/"));
+
+  // Fire onCheckedIn when a GIF is detected.
+  useEffect(() => {
+    if (isGif && onCheckedIn) {
+      onCheckedIn();
+    }
+  }, [isGif, onCheckedIn]);
+
+  // Always append timestamp so the URL changes on each poll.
+  const src = withTimestamp(qr, tick);
+
   return (
     <div className="bg-white p-4 rounded-lg mb-6">
-      {/* The unoptimized prop disables Next.js image optimization which may cache the image */}
       <Image
         unoptimized
-        src={qr}
+        src={src || "/placeholder.svg"}
         alt="Ticket QR Code"
         width={width}
         height={height}
