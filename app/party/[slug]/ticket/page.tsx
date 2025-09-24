@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation"
 import { getPartyTickBySlug, getTicketByToken, getCheckedInCount } from "@/lib/actions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
+import TicketQR from "@/components/ticket-qr"
 import { Ticket, User, Calendar, MapPin, Clock } from "lucide-react"
 import { WalletButtons } from "@/components/wallet-buttons"
 import { PartyStatusIndicator } from "@/components/party-status-indicator"
@@ -56,15 +57,8 @@ export default async function TicketPage(props: PageProps) {
               <CardDescription className="text-white/80">Present this QR code at the entrance</CardDescription>
             </CardHeader>
             <CardContent className="p-6 flex flex-col items-center">
-              <div className="bg-white p-4 rounded-lg mb-6">
-                <Image
-                  src={ticket.qrCode || "/placeholder.svg"}
-                  alt="Ticket QR Code"
-                  width={200}
-                  height={200}
-                  priority
-                />
-              </div>
+              {/* client component polls the server-rendered page and updates the QR every second (no API endpoint) */}
+              <TicketQR partySlug={params.slug} token={token} initialQr={ticket.qrCode} width={200} height={200} />
 
               {/* TODO: Toggle Enable Disable Counter */}
               {/*<div className="mb-6 p-3 bg-zinc-900 rounded-lg w-full text-center">

@@ -479,6 +479,7 @@ export async function verifyQRCode(partySlug: string, qrData: string) {
   try {
     const data = JSON.parse(qrData)
     const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+
     const { data: registration, error } = await supabase
       .from(tableName)
       .select("*")
@@ -489,12 +490,65 @@ export async function verifyQRCode(partySlug: string, qrData: string) {
       return { success: false, message: "Registration not found" }
     }
 
+    // If already scanned, return existing GIF (or existing qr_code)
+    if (registration.checked_in) {
+      return {
+        success: true,
+        message: "QR already consumed",
+        gifUrl: registration.qr_code || null,
+        registration,
+      }
+    }
+
+    // Get a random dancing monkey GIF from GIPHY (requires GIPHY_API_KEY in env)
+    let gifUrl: string | null = null
+    try {
+      const apiKey = process.env.GIPHY_API_KEY
+      if (apiKey) {
+        const q = encodeURIComponent("dancing monkey")
+        const res = await fetch(
+          `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${q}&limit=25&rating=pg-13`
+        )
+        if (res.ok) {
+          const json = await res.json()
+          if (json?.data?.length > 0) {
+            const idx = Math.floor(Math.random() * json.data.length)
+            gifUrl =
+              json.data[idx]?.images?.original?.url ||
+              json.data[idx]?.images?.downsized?.url ||
+              null
+          }
+        }
+      }
+    } catch (err) {
+      console.error("GIPHY fetch error:", err)
+      gifUrl = null
+    }
+
+    // Fallback to a local GIF if GIPHY not available
+    if (!gifUrl) {
+      gifUrl = "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExN3phdzMwM2gzMWwybDB0eG9zbHUzcXUzbzFrZjE2aHBjN3N1YTl2aSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/DohrzSCB07moM/giphy.gif"
+    }
+
+    // Mark as checked in and replace QR with the GIF URL
+    const { error: updateError } = await supabase
+      .from(tableName)
+      .update({ checked_in: true, qr_code: gifUrl })
+      .eq("id", registration.id)
+
+    if (updateError) {
+      console.error("Error updating registration after scan:", updateError)
+      return { success: false, message: "Failed to update registration" }
+    }
+
     return {
       success: true,
-      message: "QR code verified successfully",
-      registration,
+      message: "QR consumed",
+      gifUrl,
+      registration: { ...registration, checked_in: true, qr_code: gifUrl },
     }
   } catch (error) {
+    console.error("verifyQRCode error:", error)
     return { success: false, message: "Invalid QR code" }
   }
 }
