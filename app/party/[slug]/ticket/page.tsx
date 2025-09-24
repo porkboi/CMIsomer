@@ -1,3 +1,5 @@
+"use client"
+
 import { notFound, redirect } from "next/navigation";
 import { getPartyTickBySlug, getTicketByToken, getCheckedInCount } from "@/lib/actions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
