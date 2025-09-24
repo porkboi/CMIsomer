@@ -2,11 +2,12 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
+import { supabase } from "@/lib/supabase";
 
 interface TicketQRProps {
   partySlug: string;
   token: string;
-  initialQr?: string | null;
+  initialQr: string;
   width?: number;
   height?: number;
 }
@@ -19,47 +20,45 @@ function withTimestamp(src: string | null, tick: number) {
 export default function TicketQR({
   partySlug,
   token,
-  initialQr = null,
+  initialQr,
   width = 200,
   height = 200,
 }: TicketQRProps) {
-  // start with deterministic values so that server and client markup match:
-  const [qr, setQr] = useState<string | null>(initialQr);
+  // Start with a deterministic initial state so SSR and CSR match
+  const [qr, setQr] = useState<string>(initialQr);
   const [tick, setTick] = useState<number>(0);
   const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
-    let mounted = true;
+    // Poll the tickets table by partySlug and token every second.
+    async function fetchTicket() {
+      const { data, error } = await supabase
+        .from("tickets")
+        .select("*")
+        .eq("party_slug", partySlug)
+        .eq("token", token)
+        .single();
 
-    const fetchPageAndExtractImg = async () => {
-      try {
-        // Fetch the same server-rendered page and extract the QR image source.
-        const url = `/party/${encodeURIComponent(partySlug)}/ticket?token=${encodeURIComponent(token)}`;
-        const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) return;
-        const html = await res.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
-        const img = doc.querySelector('img[alt="Ticket QR Code"]') as HTMLImageElement | null;
-        const srcFromPage = img?.getAttribute("src") ?? null;
-        if (mounted && srcFromPage && srcFromPage !== qr) {
-          setQr(srcFromPage);
-        }
-      } catch {
-        // Ignore errors, keep current qr value.
-      } finally {
-        if (mounted) setTick(Date.now());
+      if (error) {
+        console.error("Error fetching ticket:", error);
+        return;
       }
-    };
 
-    // Do an initial fetch once the component mounts.
-    fetchPageAndExtractImg();
+      if (data) {
+        // The returned row should contain a checked_in boolean and qr_code value.
+        // If checked_in is true then qr_code will be a GIPHY (GIF) URL.
+        setQr(data.qr_code);
+      }
+      setTick(Date.now());
+    }
 
-    // Always poll every second.
-    intervalRef.current = window.setInterval(fetchPageAndExtractImg, 1000);
+    // Initial fetch on mount.
+    fetchTicket();
+
+    // Set up an interval to re-fetch every second.
+    intervalRef.current = window.setInterval(fetchTicket, 1000);
 
     return () => {
-      mounted = false;
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -67,9 +66,12 @@ export default function TicketQR({
     };
   }, [partySlug, token]);
 
-  // If the current QR indicates that the ticket has been checked in (i.e. it's a GIF URL),
-  // we will render it without appending a cache-busting timestamp.
-  const isGif = qr && (/\.gif($|\?)/i.test(qr) || qr.includes("giphy.com") || qr.includes(".gif/"));
+  // Determine if the current qr value appears to be a GIF URL.
+  const isGif =
+    qr && (/\.gif($|\?)/i.test(qr) || qr.includes("giphy.com") || qr.includes(".gif/"));
+
+  // When displaying a QR code, we append a timestamp to help bust caches.
+  // When it's a GIF (checked in) we display it as-is so that the animation can play.
   const src = isGif ? qr || "/placeholder.svg" : withTimestamp(qr ?? "/placeholder.svg", tick);
 
   return (
