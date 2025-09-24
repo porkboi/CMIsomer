@@ -72,12 +72,12 @@ export default function TicketQR({
 
   // When displaying a QR code, we append a timestamp to help bust caches.
   // When it's a GIF (checked in) we display it as-is so that the animation can play.
-  const src = isGif ? qr || "/placeholder.svg" : withTimestamp(qr ?? "/placeholder.svg", tick);
+  // const src = isGif ? qr || "/placeholder.svg" : withTimestamp(qr ?? "/placeholder.svg", tick);
 
   return (
     <div className="bg-white p-4 rounded-lg mb-6">
       <Image
-        src={src || "/placeholder.svg"}
+        src={qr}
         alt="Ticket QR Code"
         width={width}
         height={height}
