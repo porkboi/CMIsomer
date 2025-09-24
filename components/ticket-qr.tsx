@@ -12,8 +12,7 @@ interface TicketQRProps {
   height?: number;
 }
 
-function withTimestamp(src: string | null, tick: number) {
-  if (!src) return src;
+function withTimestamp(src: string, tick: number) {
   return src.includes("?") ? `${src}&t=${tick}` : `${src}?t=${tick}`;
 }
 
@@ -29,7 +28,6 @@ export default function TicketQR({
   const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Poll the tickets table by partySlug and token every second.
     async function fetchTicket() {
       const { data, error } = await supabase
         .from("tickets")
@@ -52,7 +50,7 @@ export default function TicketQR({
     // Initial fetch on mount.
     fetchTicket();
 
-    // Set up an interval to re-fetch every second.
+    // Set up an interval to poll the ticket row every second.
     intervalRef.current = window.setInterval(fetchTicket, 1000);
 
     return () => {
@@ -63,18 +61,20 @@ export default function TicketQR({
     };
   }, [partySlug, token]);
 
-  // Determine if the current qr value appears to be a GIF URL.
+  // If the current qr value appears to be a GIF (checked-in), then
+  // display it directly (without cache busting) so that the animation plays.
+  // Otherwise, append a timestamp to the QR code URL to force a refresh.
   const isGif =
-    qr && (/\.gif($|\?)/i.test(qr) || qr.includes("giphy.com") || qr.includes(".gif/"));
-
-  // When displaying a QR code, we append a timestamp to help bust caches.
-  // When it's a GIF (checked in) we display it as-is so that the animation can play.
-  // const src = isGif ? qr || "/placeholder.svg" : withTimestamp(qr ?? "/placeholder.svg", tick);
+    qr &&
+    (/\.gif($|\?)/i.test(qr) ||
+      qr.includes("giphy.com") ||
+      qr.includes(".gif/"));
+  const src = isGif ? qr : withTimestamp(qr, tick);
 
   return (
     <div className="bg-white p-4 rounded-lg mb-6">
       <Image
-        src={qr}
+        src={src || "/placeholder.svg"}
         alt="Ticket QR Code"
         width={width}
         height={height}
