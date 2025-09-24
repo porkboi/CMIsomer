@@ -96,7 +96,13 @@ export default function TicketQR({
         height={200}
         priority
       />}
-      {isGif && <div className="mt-2 text-sm text-center text-zinc-600">Checked in — enjoy the GIF</div>}
+      {isGif && <Image
+        src={src || "/placeholder.svg"}
+        alt="Success"
+        width={200}
+        height={200}
+        priority
+      />}
     </div>
   );
 }
