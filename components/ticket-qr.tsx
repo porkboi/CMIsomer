@@ -12,6 +12,10 @@ interface TicketQRProps {
   height?: number;
 }
 
+function withTimestamp(src: string, tick: number) {
+  return src.includes("?") ? `${src}&t=${tick}` : `${src}?t=${tick}`;
+}
+
 export default function TicketQR({
   partySlug,
   token,
@@ -57,12 +61,16 @@ export default function TicketQR({
     };
   }, [partySlug, token]);
 
+  // Always append a timestamp so that the URL changes on each poll.
+  // (This will force a re-render and re-fetch even if Next/Image is optimizing.)
+  const src = withTimestamp(qr, tick);
+
   return (
     <div className="bg-white p-4 rounded-lg mb-6">
       {/* The unoptimized prop disables Next.js image optimization which may cache the image */}
       <Image
         unoptimized
-        src={qr}
+        src={src || "/placeholder.svg"}
         alt="Ticket QR Code"
         width={width}
         height={height}
