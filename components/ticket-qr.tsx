@@ -24,7 +24,6 @@ export default function TicketQR({
   width = 200,
   height = 200,
 }: TicketQRProps) {
-  // Start with a deterministic initial state so SSR and CSR match
   const [qr, setQr] = useState<string>(initialQr);
   const [tick, setTick] = useState<number>(0);
   const intervalRef = useRef<number | null>(null);
@@ -36,7 +35,7 @@ export default function TicketQR({
         .from("tickets")
         .select("*")
         .eq("party_slug", partySlug)
-        .eq("token", token)
+        .eq("confirmation_token", token)
         .single();
 
       if (error) {
@@ -45,8 +44,6 @@ export default function TicketQR({
       }
 
       if (data) {
-        // The returned row should contain a checked_in boolean and qr_code value.
-        // If checked_in is true then qr_code will be a GIPHY (GIF) URL.
         setQr(data.qr_code);
       }
       setTick(Date.now());
