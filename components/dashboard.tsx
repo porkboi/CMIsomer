@@ -529,7 +529,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">${totalMoney}</div>
-            <p className="text-xs text-zinc-400">Based on confirmed registrations</p>
+            <p className="text-xs text-zinc-400">Based on all registrations</p>
           </CardContent>
         </Card>
       </div>
