@@ -378,7 +378,9 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
 
   // Memoized derived data
   const confirmedRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "confirmed"), [registrations]);
-  // Add totalMoney derived from confirmed registrations (assuming reg.price represents the received amount)
+  const waitlistedRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "waitlist"), [registrations]);
+  const pendingRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "pending"), [registrations]);
+  const checkedIn = useMemo(() => registrations.filter((reg) => reg.checked_in === true), [registrations]);
   const totalMoney = useMemo(() => confirmedRegistrations.reduce((sum, reg) => sum + reg.price, 0), [confirmedRegistrations]);
 
   // Filtering logic
@@ -520,7 +522,6 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
           </CardContent>
         </Card>
 
-        {/* New Card: Total Money Received */}
         <Card className="bg-zinc-950 border-zinc-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-white">Total Money Received</CardTitle>
