@@ -378,9 +378,8 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
 
   // Memoized derived data
   const confirmedRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "confirmed"), [registrations]);
-  const waitlistedRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "waitlist"), [registrations]);
-  const pendingRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "pending"), [registrations]);
-  const checkedIn = useMemo(() => registrations.filter((reg) => reg.checked_in === true), [registrations]);
+  // Add totalMoney derived from confirmed registrations (assuming reg.price represents the received amount)
+  const totalMoney = useMemo(() => confirmedRegistrations.reduce((sum, reg) => sum + reg.price, 0), [confirmedRegistrations]);
 
   // Filtering logic
   const filterRegs = useCallback((regs) => regs.filter((reg) => {
@@ -518,6 +517,18 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold text-white">{maxCapacity - confirmedRegistrations.length}</div>
             <p className="text-xs text-zinc-400">Out of {maxCapacity} total capacity</p>
+          </CardContent>
+        </Card>
+
+        {/* New Card: Total Money Received */}
+        <Card className="bg-zinc-950 border-zinc-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-white">Total Money Received</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-white">${totalMoney}</div>
+            <p className="text-xs text-zinc-400">Based on confirmed registrations</p>
           </CardContent>
         </Card>
       </div>
