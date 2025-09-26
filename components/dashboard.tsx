@@ -381,7 +381,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   const waitlistedRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "waitlist"), [registrations]);
   const pendingRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "pending"), [registrations]);
   const checkedIn = useMemo(() => registrations.filter((reg) => reg.checked_in === true), [registrations]);
-  const totalMoney = useMemo(() => confirmedRegistrations.reduce((sum, reg) => sum + reg.price, 0), [confirmedRegistrations]);
+  const totalMoney = useMemo(() => registrations.reduce((sum, reg) => sum + reg.price, 0), [registrations]);
 
   // Filtering logic
   const filterRegs = useCallback((regs) => regs.filter((reg) => {
