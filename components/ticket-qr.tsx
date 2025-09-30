@@ -40,7 +40,7 @@ export default function TicketQR({
         .single();
 
       if (error) {
-        console.error("Error fetching ticket:", error);
+        console.log("Error fetching ticket:", error);
         return;
       }
 
@@ -64,28 +64,10 @@ export default function TicketQR({
     };
   }, [partySlug, token]);
 
-  // Determine if qr seems to be a GIF URL.
-  const isGif =
-    qr &&
-    (/\.gif($|\?)/i.test(qr) ||
-      qr.includes("giphy.com") ||
-      qr.includes(".gif/"));
-
-  // Fire onCheckedIn when a GIF is detected.
-  useEffect(() => {
-    if (isGif && onCheckedIn) {
-      onCheckedIn();
-    }
-  }, [isGif, onCheckedIn]);
-
-  // Always append timestamp so the URL changes on each poll.
-  const src = withTimestamp(qr, tick);
-
   return (
     <div className="bg-white p-4 rounded-lg mb-6">
       <Image
-        unoptimized
-        src={src || "/placeholder.svg"}
+        src={qr || "/placeholder.svg"}
         alt="Ticket QR Code"
         width={width}
         height={height}
