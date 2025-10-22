@@ -70,9 +70,12 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
               message: "You must be at least 18 years old.",
             }
           ),
-        andrewID: z.string().min(2, {
-          message: "Andrew ID must be at least 2 characters.",
-        }),
+        andrewID: z
+          .string()
+          .min(2, { message: "Andrew ID must be at least 2 characters." })
+          .refine((val) => !val.includes(" "), {
+            message: "Andrew ID cannot contain spaces.",
+          }),
         paymentMethod:
           currentTierPrice > 0
             ? z.enum(["venmo", "zelle"], {
