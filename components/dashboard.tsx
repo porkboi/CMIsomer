@@ -380,8 +380,12 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   const confirmedRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "confirmed"), [registrations]);
   const waitlistedRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "waitlist"), [registrations]);
   const pendingRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "pending"), [registrations]);
+  const venmoList = useMemo(() => registrations.filter((reg) => reg.payment_method === "venmo"), [registrations]);
+  const zelleList = useMemo(() => registrations.filter((reg) => reg.payment_method === "zelle"), [registrations]);
   const checkedIn = useMemo(() => registrations.filter((reg) => reg.checked_in === true), [registrations]);
   const totalMoney = useMemo(() => registrations.reduce((sum, reg) => sum + reg.price, 0), [registrations]);
+  const venmoMoney = useMemo(() => venmoList.reduce((sum, reg) => sum + reg.price, 0), [venmoList]);
+  const zelleMoney = useMemo(() => zelleList.reduce((sum, reg) => sum + reg.price, 0), [zelleList]);
 
   // Filtering logic
   const filterRegs = useCallback((regs) => regs.filter((reg) => {
@@ -529,7 +533,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">${totalMoney}</div>
-            <p className="text-xs text-zinc-400">Based on all registrations</p>
+            <p className="text-xs text-zinc-400">Venmo: ${venmoMoney} | Zelle: ${zelleMoney}</p>
           </CardContent>
         </Card>
       </div>
