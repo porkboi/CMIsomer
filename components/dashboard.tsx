@@ -380,8 +380,8 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   const confirmedRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "confirmed"), [registrations]);
   const waitlistedRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "waitlist"), [registrations]);
   const pendingRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "pending"), [registrations]);
-  const venmoList = useMemo(() => registrations.filter((reg) => reg.payment_method === "venmo"), [registrations]);
-  const zelleList = useMemo(() => registrations.filter((reg) => reg.payment_method === "zelle"), [registrations]);
+  const venmoList = useMemo(() => confirmedRegistrations.filter((reg) => reg.payment_method === "venmo"), [confirmedRegistrations]);
+  const zelleList = useMemo(() => confirmedRegistrations.filter((reg) => reg.payment_method === "zelle"), [confirmedRegistrations]);
   const checkedIn = useMemo(() => registrations.filter((reg) => reg.checked_in === true), [registrations]);
   const totalMoney = useMemo(() => registrations.reduce((sum, reg) => sum + reg.price, 0), [registrations]);
   const venmoMoney = useMemo(() => venmoList.reduce((sum, reg) => sum + reg.price, 0), [venmoList]);
