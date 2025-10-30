@@ -926,7 +926,7 @@ export async function checkInGuest(
   } else {
     const { error: updateError } = await supabase
       .from(tableName)
-      .update({ "checked_in": !data.checked_in })
+      .update({ "checked_in": true })
       .eq("name", name);
 
     if (updateError) {
