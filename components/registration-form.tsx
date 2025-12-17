@@ -28,8 +28,11 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { submitRegistration, getPriceTiers, redeemPromoCode } from "@/lib/actions";
+import { submitRegistration, getPriceTiers, redeemPromoCode, submitDatingEntry } from "@/lib/actions";
 import { Party } from "@/lib/types";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface RegistrationFormProps {
   party: Party;
@@ -47,6 +50,9 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
 
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
   const [applyingPromo, setApplyingPromo] = useState(false);
+  const datingPoolEnabled = party.enable_dating_pool ?? false;
+  const datingPoolLocked = party.dating_pool_locked ?? false;
+  const seekingOptions = ["Women", "Men", "Non-binary", "Open to anyone"];
 
   const currentTierPrice = useMemo(() => {
     const base =
@@ -92,6 +98,30 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
           required_error: "Please select your organization.",
         }),
         promoCode: z.string().optional(),
+        joinDatingPool: z.boolean().default(false),
+        genderIdentity: z.string().optional(),
+        pronouns: z.string().optional(),
+        seeking: z.array(z.string()).default([]),
+        connectionGoal: z.string().optional(),
+        vibe: z.string().optional(),
+        allowPublicIntro: z.boolean().optional(),
+      }).superRefine((values, ctx) => {
+        if (values.joinDatingPool) {
+          if (!values.genderIdentity || values.genderIdentity.trim().length === 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["genderIdentity"],
+              message: "Tell us how you identify.",
+            });
+          }
+          if (!values.seeking || values.seeking.length === 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["seeking"],
+              message: "Pick who you want to be matched with.",
+            });
+          }
+        }
       }),
     [currentTierPrice, party.organizations]
   );
@@ -102,6 +132,13 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
       age: "",
       andrewID: "",
       promoCode: "",
+      joinDatingPool: false,
+      genderIdentity: "",
+      pronouns: "",
+      seeking: [],
+      connectionGoal: "",
+      vibe: "",
+      allowPublicIntro: false,
     },
   });
 
@@ -276,6 +313,28 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
       const result = await submitRegistration(partySlug, submissionData);
 
       if (result.success) {
+        if (values.joinDatingPool && datingPoolEnabled && !datingPoolLocked) {
+          const datingResult = await submitDatingEntry(partySlug, {
+            andrewID: values.andrewID,
+            name: values.name,
+            age: Number.parseInt(values.age, 10),
+            genderIdentity: values.genderIdentity?.trim() || "unspecified",
+            pronouns: values.pronouns?.trim() || undefined,
+            seeking: values.seeking || [],
+            connectionGoal: values.connectionGoal?.trim() || undefined,
+            vibe: values.vibe?.trim() || undefined,
+            allowPublicIntro: values.allowPublicIntro ?? false,
+          });
+
+          if (!datingResult.success) {
+            toast({
+              title: "Dating pool error",
+              description: datingResult.message,
+              variant: "destructive",
+            });
+          }
+        }
+
         toast({
           title: "Registration submitted!",
           description:
@@ -647,6 +706,169 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
             {!party.allow_waitlist && (
               <div className="text-center text-red-400 font-semibold mb-4">
                 Registration is closed.
+              </div>
+            )}
+
+            {datingPoolEnabled && (
+              <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="font-semibold">Join the matchmaking pool</p>
+                    <p className="text-sm text-zinc-400">
+                      Opt in to be paired based on your preferences. Closes 1 hour before the event.
+                    </p>
+                    {datingPoolLocked && (
+                      <p className="text-sm text-amber-400 mt-1">
+                        This pool is locked while we generate matches.
+                      </p>
+                    )}
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="joinDatingPool"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={datingPoolLocked}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {form.watch("joinDatingPool") && !datingPoolLocked && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="genderIdentity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>How do you identify?</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Woman, man, non-binary..."
+                              {...field}
+                              className="bg-zinc-900 border-zinc-800"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="pronouns"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Pronouns (optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="she/her, he/him, they/them"
+                              {...field}
+                              className="bg-zinc-900 border-zinc-800"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="seeking"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Who do you want to be matched with?</FormLabel>
+                          <div className="grid grid-cols-2 gap-2">
+                            {seekingOptions.map((option) => {
+                              const selected = field.value?.includes(option) ?? false;
+                              return (
+                                <label
+                                  key={option}
+                                  className="flex items-center gap-2 rounded border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm"
+                                >
+                                  <Checkbox
+                                    checked={selected}
+                                    onCheckedChange={(checked) => {
+                                      const current = field.value || [];
+                                      const next = checked
+                                        ? [...current, option]
+                                        : current.filter((val: string) => val !== option);
+                                      field.onChange(next);
+                                    }}
+                                  />
+                                  <span>{option}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="connectionGoal"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>What are you looking for?</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="e.g., Chill vibes, open to meeting someone serious."
+                              className="bg-zinc-900 border-zinc-800"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="vibe"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Share your vibe (fun facts, music taste, etc.)</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Two sentences to help us match you."
+                              className="bg-zinc-900 border-zinc-800"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="allowPublicIntro"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <div className="flex items-center justify-between rounded border border-zinc-800 bg-zinc-950 px-3 py-2">
+                            <div>
+                              <FormLabel>Let us intro you publicly?</FormLabel>
+                              <FormDescription>
+                                Your names may be shown together in the wrapped view.
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
