@@ -15,6 +15,9 @@ export interface Party {
   event_date?: string
   event_time?: string
   location?: string
+  enable_dating_pool?: boolean
+  dating_lock_minutes?: number
+  dating_pool_locked?: boolean
 }
 
 export interface RegistrationFormProps {

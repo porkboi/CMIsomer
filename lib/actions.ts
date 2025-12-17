@@ -32,6 +32,20 @@ const registrationSchema = z.object({
   appliedPromoCode: z.string().nullable().optional(),
 })
 
+const datingEntrySchema = z.object({
+  andrewID: z.string().min(2),
+  name: z.string().min(2),
+  age: z.number().min(18),
+  genderIdentity: z.string().min(1),
+  seeking: z.array(z.string()).min(1),
+  connectionGoal: z.string().optional(),
+  vibe: z.string().optional(),
+  pronouns: z.string().optional(),
+  allowPublicIntro: z.boolean().optional(),
+})
+
+export type DatingEntry = z.infer<typeof datingEntrySchema>
+
 // export type Registration = {
 //   id: number
 //   name: string
@@ -428,6 +442,26 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
   }
 }
 
+export async function submitDatingEntry(partySlug: string, payload: DatingEntry) {
+  try {
+    const validated = datingEntrySchema.parse(payload)
+    const { error } = await supabase.rpc("create_dating_entry", {
+      p_party_slug: partySlug,
+      p_payload: validated,
+    })
+
+    if (error) {
+      console.error("Error submitting dating entry:", error)
+      return { success: false, message: "Could not join dating pool." }
+    }
+
+    return { success: true, message: "Dating pool entry saved." }
+  } catch (error) {
+    console.error("Dating entry error:", error)
+    return { success: false, message: "Unable to save dating info." }
+  }
+}
+
 export async function removeFromList(partySlug: string, id: number) {
   if (!(await isAuthenticated(partySlug))) {
     return { success: false, message: "Unauthorized" }
@@ -566,7 +600,8 @@ const partySchema = z.object({
   eventDate: z.string().min(1),
   eventTime: z.string().min(1),
   location: z.string().min(1),
-  locationSecret: z.boolean()
+  locationSecret: z.boolean(),
+  enableDatingPool: z.boolean().optional().default(false),
 })
 
 export async function addPromoCode(partySlug: string, code: string): Promise<{ success: boolean; message?: string; promoCodes?: string[] }> {
@@ -703,6 +738,7 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
         event_time: validatedData.eventTime,
         location: validatedData.location,
         location_secret: validatedData.locationSecret,
+        enable_dating_pool: validatedData.enableDatingPool ?? false,
         promo_code: [],
         announcements: [],
       })
@@ -787,6 +823,11 @@ export async function getPartyTickBySlug(slug: string) {
     data.location = "Secret until 1 day before on ticket page"
   }
 
+  const enableDatingPool = Boolean(data.enable_dating_pool)
+  const datingLockMinutes = data.dating_lock_minutes ?? 60
+  const lockThresholdMs = eventDateTime.getTime() - datingLockMinutes * 60 * 1000
+  const datingPoolLocked = enableDatingPool && Date.now() >= lockThresholdMs
+
   return {
     id: data.id,
     name: data.name,
@@ -803,6 +844,9 @@ export async function getPartyTickBySlug(slug: string) {
     event_date: data.event_date,
     event_time: data.event_time,
     location: data.location,
+    enable_dating_pool: enableDatingPool,
+    dating_lock_minutes: datingLockMinutes,
+    dating_pool_locked: datingPoolLocked,
   }
 }
 
@@ -816,6 +860,11 @@ export async function getPartyBySlug(slug: string) {
 
   const dtg : string = `${data.event_date}T${data.event_time}`;
   const eventDateTime: Date = new Date(dtg);
+
+  const enableDatingPool = Boolean(data.enable_dating_pool)
+  const datingLockMinutes = data.dating_lock_minutes ?? 60
+  const lockThresholdMs = eventDateTime.getTime() - datingLockMinutes * 60 * 1000
+  const datingPoolLocked = enableDatingPool && Date.now() >= lockThresholdMs
 
   if (data.location_secret) {
     data.location = "Secret until 1 day before on ticket page"
@@ -837,6 +886,9 @@ export async function getPartyBySlug(slug: string) {
     event_date: data.event_date,
     event_time: data.event_time,
     location: data.location,
+    enable_dating_pool: enableDatingPool,
+    dating_lock_minutes: datingLockMinutes,
+    dating_pool_locked: datingPoolLocked,
   }
 }
 
@@ -1247,4 +1299,3 @@ export async function getTicketByToken(partySlug: string, token: string) {
     return null
   }
 }
-

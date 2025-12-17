@@ -25,6 +25,7 @@ interface FormData {
   eventTime: string
   location: string
   locationSecret: boolean
+  enableDatingPool: boolean
 }
 
 export function CreatePartyForm() {
@@ -49,6 +50,7 @@ export function CreatePartyForm() {
       eventTime: "",
       location: "",
       locationSecret: false,
+      enableDatingPool: false,
     },
   })
 
@@ -74,11 +76,12 @@ export function CreatePartyForm() {
         zelleInfo: formData.zelleInfo,
         adminUsername: formData.adminUsername,
         adminPassword: formData.adminPassword,
-        eventDate: formData.eventDate,
-        eventTime: formData.eventTime,
-        location: formData.location,
-        locationSecret: formData.locationSecret,
-      }
+      eventDate: formData.eventDate,
+      eventTime: formData.eventTime,
+      location: formData.location,
+      locationSecret: formData.locationSecret,
+      enableDatingPool: formData.enableDatingPool,
+    }
 
       const result = await createParty(partyData)
 
@@ -264,6 +267,19 @@ export function CreatePartyForm() {
                 onCheckedChange={(checked) => setValue("allowWaitlist", checked)}
               />
             </div>
+
+            <div className="flex flex-row items-center justify-between rounded-lg border p-4 bg-zinc-900">
+              <div className="space-y-0.5">
+                <label className="text-base font-medium">Enable Dating Feature</label>
+                <p className="text-sm text-muted-foreground">
+                  Allow attendees to opt into matchmaking for this party.
+                </p>
+              </div>
+              <Switch
+                checked={watch("enableDatingPool")}
+                onCheckedChange={(checked) => setValue("enableDatingPool", checked)}
+              />
+            </div>
           </div>
           <div className="space-y-4">
             <div className="flex flex-row items-center justify-between rounded-lg border p-4 bg-zinc-900">
@@ -371,4 +387,3 @@ export function CreatePartyForm() {
     </Card>
   );
 }
-
