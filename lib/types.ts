@@ -18,6 +18,8 @@ export interface Party {
   enable_dating_pool?: boolean
   dating_lock_minutes?: number
   dating_pool_locked?: boolean
+  enableSchedule: boolean
+  schedule: string[]
 }
 
 export interface RegistrationFormProps {

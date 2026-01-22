@@ -25,6 +25,7 @@ const registrationSchema = z.object({
   }),
   andrewID: z.string().min(3),
   organization: z.string().min(1), // Changed from enum to string to be more flexible
+  timeSlot: z.string().min(1).optional(),
   paymentMethod: z.enum(["venmo", "zelle"]),
   paymentConfirmed: z.enum(["yes", "no"]),
   promoCode: z.string().optional(),
@@ -150,6 +151,40 @@ export async function getOrgAllocation(partySlug: string) {
   } catch (error) {
     console.error("Error getting org allocation:", error)
     return []
+  }
+}
+
+//Gets Timeslot selections, separating the different timeslots selected into confirmed and pending
+export async function getTimeslotSelections(
+  partySlug: string,
+): Promise<{ confirmed: Record<string, number>; pending: Record<string, number> }> {
+  try {
+    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const { data, error } = await supabase
+      .from(tableName)
+      .select("timeslot, status")
+      .in("status", ["confirmed", "pending"])
+
+    if (error) {
+      console.error("Error fetching timeslot selections:", error)
+      return { confirmed: {}, pending: {} }
+    }
+
+    const buckets: { confirmed: Record<string, number>; pending: Record<string, number> } = {
+      confirmed: {},
+      pending: {},
+    }
+
+    data?.forEach((row) => {
+      const slot = row.timeslot || "Unspecified"
+      const target = row.status === "confirmed" ? buckets.confirmed : buckets.pending
+      target[slot] = (target[slot] || 0) + 1
+    })
+
+    return buckets
+  } catch (error) {
+    console.error("Error getting timeslot selections:", error)
+    return { confirmed: {}, pending: {} }
   }
 }
 
@@ -602,6 +637,8 @@ const partySchema = z.object({
   location: z.string().min(1),
   locationSecret: z.boolean(),
   enableDatingPool: z.boolean().optional().default(false),
+  enableScheduler: z.boolean().optional().default(false),
+  schedule: z.string().min(1)
 })
 
 export async function addPromoCode(partySlug: string, code: string): Promise<{ success: boolean; message?: string; promoCodes?: string[] }> {
@@ -720,6 +757,12 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
       .map((org) => org.trim())
       .filter((org) => org.length > 0)
 
+    // Convert Schedule string to array
+    const schedule = validatedData.schedule
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+
     // Insert the party into the database
     const { data: party, error: insertError } = await supabase
       .from("parties")
@@ -741,6 +784,8 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
         enable_dating_pool: validatedData.enableDatingPool ?? false,
         promo_code: [],
         announcements: [],
+        enable_schedule: validatedData.enableScheduler,
+        schedule: schedule,
       })
       .select()
       .single()
@@ -889,6 +934,8 @@ export async function getPartyBySlug(slug: string) {
     enable_dating_pool: enableDatingPool,
     dating_lock_minutes: datingLockMinutes,
     dating_pool_locked: datingPoolLocked,
+    enableSchedule: data.enable_schedule,
+    schedule: data.schedule,
   }
 }
 
@@ -912,6 +959,7 @@ export async function addRegistration(
     tier_name: registration.tierName,
     tier_price: registration.tierPrice,
     confirmation_token: registration.confirmation_token,
+    timeslot: registration.timeSlot,
   }
 
   const { data, error } = await supabase.from(tableName).insert([dbRegistration]).select().single()

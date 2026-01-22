@@ -97,6 +97,9 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
         organization: z.enum(party.organizations as [string, ...string[]], {
           required_error: "Please select your organization.",
         }),
+        timeSlot: z.enum(party.schedule as [string, ...string[]], {
+          required_error: "Please select your desired timeslot.",
+        }),
         promoCode: z.string().optional(),
         joinDatingPool: z.boolean().default(false),
         genderIdentity: z.string().optional(),
@@ -694,6 +697,36 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                 </FormItem>
               )}
             />
+
+            {party.enableSchedule && <FormField
+              control={form.control}
+              name="timeSlot"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Timeslot</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="grid grid-cols-2 gap-4 sm:grid-cols-4"
+                    >
+                      {party.schedule.map((s) => (
+                        <FormItem
+                          key={s}
+                          className="flex items-center space-x-2 space-y-0"
+                        >
+                          <FormControl>
+                            <RadioGroupItem value={s} />
+                          </FormControl>
+                          <FormLabel className="font-normal">{s}</FormLabel>
+                        </FormItem>
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />}
 
             {currentTierPrice > 0 && (
               <>

@@ -20,6 +20,7 @@ import {
 import {
   getRegistrations,
   getOrgAllocation,
+  getTimeslotSelections,
   removeFromWaitlist,
   promoteFromWaitlist,
   removeFromList,
@@ -44,6 +45,7 @@ interface DashboardData {
   orgAllocation: any[]
   priceTiers: PriceTier[]
   orgLimits: Record<string, number>
+  timeslotSelections: { confirmed: Record<string, number>; pending: Record<string, number> }
 }
 
 interface DashboardProps {
@@ -87,21 +89,7 @@ const RegistrationRow = ({ reg, actions, columns = 8, colorClass = "" }) => (
       )}
     </div>
     <div className="capitalize">{reg.payment_method}</div>
-    {columns === 8 && (
-      <div>
-        <Badge
-          className={
-            reg.status === "confirmed"
-              ? "bg-green-900/50 text-green-300 border-green-700"
-              : reg.status === "pending"
-              ? "bg-yellow-900/50 text-yellow-300 border-yellow-700"
-              : "bg-red-900/50 text-red-300 border-red-700"
-          }
-        >
-          {reg.status}
-        </Badge>
-      </div>
-    )}
+    <div className="capitalize">{reg.timeslot}</div>
     <div className="flex gap-2">{actions}</div>
   </div>
 )
@@ -113,6 +101,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   const [filteredOrgs, setFilteredOrgs] = useState<string[]>([])
   const [registrations, setRegistrations] = useState<Registration[]>(initialData.registrations)
   const [orgAllocation, setOrgAllocation] = useState<any[]>(initialData.orgAllocation)
+  const [timeslotSelections, setTimeslotSelections] = useState(initialData.timeslotSelections)
   const [showScanner, setShowScanner] = useState(false)
   const [showOrgLimitsModal, setShowOrgLimitsModal] = useState(false)
   const [showPriceTiersModal, setShowPriceTiersModal] = useState(false)
@@ -150,10 +139,11 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   const fetchData = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const [newRegistrations, newOrgAllocation, newPriceTiers] = await Promise.all([
+      const [newRegistrations, newOrgAllocation, newPriceTiers, newTimeslotSelections] = await Promise.all([
         getRegistrations(partySlug),
         getOrgAllocation(partySlug),
         getPriceTiers(partySlug),
+        getTimeslotSelections(partySlug),
       ]);
 
       // Get organization limits from orgAllocation data
@@ -166,6 +156,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
       setOrgAllocation(newOrgAllocation);
       setPriceTiers(newPriceTiers);
       setOrgLimits(newOrgLimits);
+      setTimeslotSelections(newTimeslotSelections);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast({
@@ -386,6 +377,19 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   const totalMoney = useMemo(() => confirmedRegistrations.reduce((sum, reg) => sum + reg.price, 0), [confirmedRegistrations]);
   const venmoMoney = useMemo(() => venmoList.reduce((sum, reg) => sum + reg.price, 0), [venmoList]);
   const zelleMoney = useMemo(() => zelleList.reduce((sum, reg) => sum + reg.price, 0), [zelleList]);
+  const timeslotData = useMemo(() => {
+    const slots = new Set<string>([
+      ...(party.schedule || []),
+      ...Object.keys(timeslotSelections.confirmed || {}),
+      ...Object.keys(timeslotSelections.pending || {}),
+    ])
+
+    return Array.from(slots).map((slot) => ({
+      name: slot,
+      confirmed: timeslotSelections.confirmed?.[slot] || 0,
+      pending: timeslotSelections.pending?.[slot] || 0,
+    }))
+  }, [party.schedule, timeslotSelections]);
 
   // Filtering logic
   const filterRegs = useCallback((regs) => regs.filter((reg) => {
@@ -599,6 +603,44 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
         </CardContent>
       </Card>
 
+      {party.enableSchedule && timeslotData.length > 0 && (
+        <Card className="bg-zinc-950 border-zinc-800">
+          <CardHeader>
+            <CardTitle className="text-white">Timeslot Selection</CardTitle>
+            <CardDescription className="text-white">Confirmed vs pending selections per slot</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-200">
+              <ChartContainer
+                config={{
+                  confirmed: {
+                    label: "Confirmed",
+                    color: "purple",
+                  },
+                  pending: {
+                    label: "Pending",
+                    color: "pink",
+                  },
+                }}
+              >
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={timeslotData}
+                    layout="vertical"
+                  >
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={80} />
+                    <Tooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="confirmed" stackId="a" fill="purple" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="pending" stackId="a" fill="pink" radius={[0, 0, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <Input
           placeholder="Search by name or Andrew ID..."
@@ -645,7 +687,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
               <div>Organization</div>
               <div>Tier</div>
               <div>Payment</div>
-              <div>Status</div>
+              <div>Timeslot</div>
               <div>Actions</div>
             </div>
             <div className="divide-y divide-zinc-800">
@@ -701,7 +743,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
               <div>Organization</div>
               <div>Tier</div>
               <div>Payment</div>
-              <div>Status</div>
+              <div>Timeslot</div>
               <div>Actions</div>
             </div>
             <div className="divide-y divide-zinc-800">
@@ -755,6 +797,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
               <div>Organization</div>
               <div>Tier</div>
               <div>Payment</div>
+              <div>Timeslot</div>
               <div>Actions</div>
             </div>
             <div className="divide-y divide-zinc-800">
@@ -838,4 +881,3 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
     </div>
   )
 }
-
