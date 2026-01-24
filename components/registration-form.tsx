@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -40,6 +40,13 @@ interface RegistrationFormProps {
   partySlug: string;
 }
 
+type TimeslotBreakdown = {
+  confirmed: number;
+  pending: number;
+};
+
+const TIMESLOT_CAPACITY = 20;
+
 export function MiniPieChart({ data }: { data: any[] }) {
   const COLORS = ["#ef4444", "#f97316", "#22c55e"];
 
@@ -67,6 +74,9 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
   const [currentTierCap, setCurrentTierCap] = useState(0);
   const [priceTiers, setPriceTiers] = useState<any[]>([]);
   const [currentTierIndex, setCurrentTierIndex] = useState(0);
+  const [timeslotBreakdown, setTimeslotBreakdown] = useState<
+    Record<string, TimeslotBreakdown>
+  >({});
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -217,30 +227,45 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
     fetchPriceTiers();
   }, [partySlug, registrationCount]);
 
+  useEffect(() => {
+    if (!party.enableSchedule) return;
+
+    let active = true;
+
+    const fetchTimeslotBreakdowns = async () => {
+      try {
+        const results = await Promise.all(
+          party.schedule.map(async (slot) => {
+            const res = await getTimeslotBreakdown(partySlug, slot);
+            return [slot, res] as const;
+          })
+        );
+
+        if (!active) return;
+
+        const breakdownMap: Record<string, TimeslotBreakdown> = {};
+        for (const [slot, res] of results) {
+          breakdownMap[slot] = res;
+        }
+
+        setTimeslotBreakdown(breakdownMap);
+      } catch (error) {
+        console.error("Error fetching timeslot breakdown:", error);
+      }
+    };
+
+    fetchTimeslotBreakdowns();
+
+    return () => {
+      active = false;
+    };
+  }, [party.enableSchedule, party.schedule, partySlug]);
+
   function TimeslotPie({
-    partySlug,
-    timeslot,
+    data,
   }: {
-    partySlug: string;
-    timeslot: string;
+    data: TimeslotBreakdown | null;
   }) {
-    const [data, setData] = useState<{
-      confirmed: number;
-      pending: number;
-    } | null>(null);
-
-    useEffect(() => {
-      let mounted = true;
-
-      getTimeslotBreakdown(partySlug, timeslot).then((res) => {
-        if (mounted) setData(res);
-      });
-
-      return () => {
-        mounted = false;
-      };
-    }, [partySlug, timeslot]);
-
     if (!data) {
       return (
         <div>
@@ -249,7 +274,10 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
       );
     }
 
-    const green = 20 - data.confirmed - data.pending;
+    const green = Math.max(
+      TIMESLOT_CAPACITY - data.confirmed - data.pending,
+      0
+    );
 
     const pieData = [
       { name: "Confirmed", value: data.confirmed },
@@ -802,26 +830,46 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                       defaultValue={field.value}
                       className="grid grid-cols-2 gap-4 sm:grid-cols-4"
                     >
-                      {party.schedule.map((s) => (
-                        <FormItem
-                          key={s}
-                          className="flex items-center space-x-2 space-y-0"
-                        >
-                          <FormControl>
-                            <RadioGroupItem
-                              value={s}
-                              className="
-                                border-white
-                                text-white
-                                data-[state=checked]:bg-white
-                                data-[state=checked]:text-black
-                              "
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">{s}</FormLabel>
-                          <TimeslotPie partySlug={partySlug} timeslot={s} />
-                        </FormItem>
-                      ))}
+                      {party.schedule.map((s) => {
+                        const breakdown = timeslotBreakdown[s] ?? null;
+                        const isFull = breakdown
+                          ? breakdown.confirmed + breakdown.pending >=
+                            TIMESLOT_CAPACITY
+                          : false;
+
+                        return (
+                          <FormItem
+                            key={s}
+                            className={`flex items-center space-x-2 space-y-0 ${
+                              isFull ? "opacity-60" : ""
+                            }`}
+                          >
+                            <FormControl>
+                              <RadioGroupItem
+                                value={s}
+                                disabled={!!isFull}
+                                className="
+                                  border-white
+                                  text-white
+                                  data-[state=checked]:bg-white
+                                  data-[state=checked]:text-black
+                                  data-[disabled]:border-zinc-600
+                                  data-[disabled]:text-zinc-600
+                                  data-[disabled]:cursor-not-allowed
+                                "
+                              />
+                            </FormControl>
+                            <FormLabel
+                              className={`font-normal ${
+                                isFull ? "text-muted-foreground" : ""
+                              }`}
+                            >
+                              {s}
+                            </FormLabel>
+                            <TimeslotPie data={breakdown} />
+                          </FormItem>
+                        );
+                      })}
                     </RadioGroup>
                   </FormControl>
                   <FormMessage />
