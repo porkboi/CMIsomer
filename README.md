@@ -36,7 +36,7 @@ lib/                        # Utilities
 public/                     # Static assets
 ```
 
-``````mermaid
+```mermaid
 graph TD
     User[User / Organizer] -->|Browser| NextApp[Next.js App Router]
 
