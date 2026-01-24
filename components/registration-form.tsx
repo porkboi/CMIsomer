@@ -751,7 +751,15 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                           className="flex items-center space-x-2 space-y-0"
                         >
                           <FormControl>
-                            <RadioGroupItem value={org} />
+                            <RadioGroupItem
+                              value={org}
+                              className="
+                                border-white
+                                text-white
+                                data-[state=checked]:bg-white
+                                data-[state=checked]:text-black
+                              "
+                            />
                           </FormControl>
                           <FormLabel className="font-normal">{org}</FormLabel>
                         </FormItem>
@@ -800,7 +808,15 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                           className="flex items-center space-x-2 space-y-0"
                         >
                           <FormControl>
-                            <RadioGroupItem value={s} />
+                            <RadioGroupItem
+                              value={s}
+                              className="
+                                border-white
+                                text-white
+                                data-[state=checked]:bg-white
+                                data-[state=checked]:text-black
+                              "
+                            />
                           </FormControl>
                           <FormLabel className="font-normal">{s}</FormLabel>
                           <TimeslotPie partySlug={partySlug} timeslot={s} />
