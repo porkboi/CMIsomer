@@ -225,6 +225,33 @@ export function CreatePartyForm() {
               {errors.eventTime && <p className="text-sm text-red-500 mt-1">{errors.eventTime.message}</p>}
             </div>
 
+            <div className="flex flex-row items-center justify-between rounded-lg border p-4 bg-zinc-900">
+              <div className="space-y-0.5">
+                <label className="text-base font-medium">Enable Scheduler Feature</label>
+                <p className="text-sm text-muted-foreground">
+                  Allow attendees to schedule their desired times to attend a multi-timeslot event
+                </p>
+              </div>
+              <Switch
+                checked={watch("enableScheduler")}
+                onCheckedChange={(checked) => setValue("enableScheduler", checked)}
+              />
+            </div>
+
+            {watch("enableScheduler") && <div>
+              <label className="text-sm font-medium">Timeslots</label>
+              <Input
+                {...register("schedule", {
+                  required: "Schedule is required",
+                  minLength: { value: 2, message: "Schedule must be at least 2 characters" },
+                })}
+                placeholder="Schedule, Separated, By, Comma"
+                className = "bg-zinc-900"
+              />
+              <p className="text-sm text-muted-foreground mt-1">Enter Schedule separated by commas.</p>
+              {errors.schedule && <p className="text-sm text-red-500">{errors.schedule.message}</p>}
+            </div>}
+
             <div>
               <label className="text-sm font-medium">Location</label>
               <div className="flex flex-row items-center justify-between rounded-lg border p-4 bg-zinc-900">
@@ -286,33 +313,6 @@ export function CreatePartyForm() {
                 onCheckedChange={(checked) => setValue("enableDatingPool", checked)}
               />
             </div>
-
-            <div className="flex flex-row items-center justify-between rounded-lg border p-4 bg-zinc-900">
-              <div className="space-y-0.5">
-                <label className="text-base font-medium">Enable Scheduler Feature</label>
-                <p className="text-sm text-muted-foreground">
-                  Allow attendees to schedule their desired times to attend a multi-timeslot event
-                </p>
-              </div>
-              <Switch
-                checked={watch("enableScheduler")}
-                onCheckedChange={(checked) => setValue("enableScheduler", checked)}
-              />
-            </div>
-
-            {watch("enableScheduler") && <div>
-              <label className="text-sm font-medium">Timeslots</label>
-              <Input
-                {...register("schedule", {
-                  required: "Schedule is required",
-                  minLength: { value: 2, message: "Schedule must be at least 2 characters" },
-                })}
-                placeholder="Schedule, Separated, By, Comma"
-                className = "bg-zinc-900"
-              />
-              <p className="text-sm text-muted-foreground mt-1">Enter Schedule separated by commas.</p>
-              {errors.schedule && <p className="text-sm text-red-500">{errors.schedule.message}</p>}
-            </div>}
           </div>
           <div className="space-y-4">
             <div className="flex flex-row items-center justify-between rounded-lg border p-4 bg-zinc-900">

@@ -201,7 +201,6 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   }
 
   const handleRemoveFromList = async (id: number) => {
-    console.log(id)
     const result = await removeFromList(partySlug, id)
     if (result.success) {
       toast({

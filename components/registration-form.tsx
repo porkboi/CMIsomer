@@ -28,15 +28,37 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { submitRegistration, getPriceTiers, redeemPromoCode, submitDatingEntry } from "@/lib/actions";
+import { submitRegistration, getPriceTiers, redeemPromoCode, submitDatingEntry, getTimeslotBreakdown } from "@/lib/actions";
 import { Party } from "@/lib/types";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PieChart, Pie, Cell } from "recharts";
 
 interface RegistrationFormProps {
   party: Party;
   partySlug: string;
+}
+
+export function MiniPieChart({ data }: { data: any[] }) {
+  const COLORS = ["#ef4444", "#f97316", "#22c55e"];
+
+  return (
+    <PieChart width={24} height={24}>
+      <Pie
+        data={data}
+        dataKey="value"
+        cx="50%"
+        cy="50%"
+        outerRadius={8}
+        isAnimationActive={false}
+      >
+        {data.map((_, i) => (
+          <Cell key={i} fill={COLORS[i]} />
+        ))}
+      </Pie>
+    </PieChart>
+  );
 }
 
 export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
@@ -194,6 +216,49 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
     fetchRegistrationCount();
     fetchPriceTiers();
   }, [partySlug, registrationCount]);
+
+  function TimeslotPie({
+    partySlug,
+    timeslot,
+  }: {
+    partySlug: string;
+    timeslot: string;
+  }) {
+    const [data, setData] = useState<{
+      confirmed: number;
+      pending: number;
+    } | null>(null);
+
+    useEffect(() => {
+      let mounted = true;
+
+      getTimeslotBreakdown(partySlug, timeslot).then((res) => {
+        if (mounted) setData(res);
+      });
+
+      return () => {
+        mounted = false;
+      };
+    }, [partySlug, timeslot]);
+
+    if (!data) {
+      return (
+        <div>
+          <div className="h-6 w-6 rounded-full bg-muted animate-pulse" />
+        </div>
+      );
+    }
+
+    const green = 20 - data.confirmed - data.pending;
+
+    const pieData = [
+      { name: "Confirmed", value: data.confirmed },
+      { name: "Pending", value: data.pending },
+      { name: "Open", value: green },
+    ];
+
+    return <MiniPieChart data={pieData} />;
+  }
 
   // Payment component functions
   const renderPaymentMethodSelector = () => (
@@ -703,7 +768,26 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
               name="timeSlot"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Timeslot</FormLabel>
+                  <FormLabel className="flex items-center gap-3">
+                    <span>Timeslot</span>
+
+                    <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <span className="h-2 w-2 rounded-sm bg-green-500" />
+                        Open
+                      </span>
+
+                      <span className="flex items-center gap-1">
+                        <span className="h-2 w-2 rounded-sm bg-orange-500" />
+                        Pending
+                      </span>
+
+                      <span className="flex items-center gap-1">
+                        <span className="h-2 w-2 rounded-sm bg-red-500" />
+                        Confirmed
+                      </span>
+                    </span>
+                  </FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
@@ -719,6 +803,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                             <RadioGroupItem value={s} />
                           </FormControl>
                           <FormLabel className="font-normal">{s}</FormLabel>
+                          <TimeslotPie partySlug={partySlug} timeslot={s} />
                         </FormItem>
                       ))}
                     </RadioGroup>

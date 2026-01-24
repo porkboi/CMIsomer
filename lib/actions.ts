@@ -154,6 +154,32 @@ export async function getOrgAllocation(partySlug: string) {
   }
 }
 
+export async function getTimeslotBreakdown(
+  partySlug: string,
+  timeslot: string,
+): Promise<{confirmed: number, pending: number}> {
+  try {
+    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const { data, error } = await supabase
+      .from(tableName)
+      .select("status")
+      .eq("timeslot",timeslot)
+
+    if (error) {
+      console.error("Error fetching timeslot counts:", error)
+      return {confirmed: -1, pending: -1}
+    }
+
+    const confirmedList = data.filter((row) => row.status === "confirmed")
+    const pendingList = data.filter((row) => row.status === "pending")
+
+    return {confirmed: confirmedList.length, pending: pendingList.length}
+  } catch (error) {
+    console.error("Error getting timeslot counts:", error)
+    return {confirmed: -1, pending: -1}
+  }
+}
+
 //Gets Timeslot selections, separating the different timeslots selected into confirmed and pending
 export async function getTimeslotSelections(
   partySlug: string,
@@ -884,7 +910,6 @@ export async function getPartyTickBySlug(slug: string) {
     venmo_username: data.venmo_username,
     zelle_info: data.zelle_info,
     admin_username: data.admin_username,
-    // admin_password: data.admin_password, //Removed for security
     created_at: data.created_at,
     event_date: data.event_date,
     event_time: data.event_time,
@@ -892,6 +917,7 @@ export async function getPartyTickBySlug(slug: string) {
     enable_dating_pool: enableDatingPool,
     dating_lock_minutes: datingLockMinutes,
     dating_pool_locked: datingPoolLocked,
+    enable_schedule: data.enable_schedule,
   }
 }
 
@@ -1341,6 +1367,7 @@ export async function getTicketByToken(partySlug: string, token: string) {
       tierPrice: data.tier_price,
       price: data.price,
       qrCode: data.qr_code,
+      timeSlot : data.timeslot,
     }
   } catch (error) {
     console.error("Error getting ticket by token:", error)
