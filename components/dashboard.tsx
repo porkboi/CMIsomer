@@ -507,19 +507,6 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
 
         <Card className="bg-zinc-950 border-zinc-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">Confirmed</CardTitle>
-            <UserCheck className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{confirmedRegistrations.length}</div>
-            <p className="text-xs text-zinc-400">
-              {Math.round((confirmedRegistrations.length / maxCapacity) * 100)}% of capacity
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-zinc-950 border-zinc-800">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-white">Checked In</CardTitle>
             <UserCheck className="h-4 w-4 text-green-500" />
           </CardHeader>
@@ -528,17 +515,6 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
             <p className="text-xs text-zinc-400">
               {Math.round(checkedIn.length/confirmedRegistrations.length)*100}% of confirmed
             </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-zinc-950 border-zinc-800">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">Waitlisted</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{waitlistedRegistrations.length}</div>
-            <p className="text-xs text-zinc-400">May be admitted if spots open up</p>
           </CardContent>
         </Card>
 
