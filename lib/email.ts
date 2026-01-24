@@ -7,11 +7,12 @@ type EmailParams = {
   message: string
   confirmation_link?: string
   party_name?: string
+  pos: boolean
 }
 
 export async function sendEmail(params: EmailParams): Promise<{ success: boolean; message: string }> {
   try {
-    const serviceId = process.env.EMAILJS_SERVICE_ID
+    const serviceId = !params.pos ? process.env.EMAILJS_SERVICE_ID : process.env.EMAILJS_SERVICE_ID_SCH
     const templateId = process.env.EMAILJS_TEMPLATE_ID
     const publicKey = process.env.EMAILJS_PUBLIC_KEY
     const privateKey = process.env.EMAILJS_PRIVATE_KEY

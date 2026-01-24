@@ -1319,6 +1319,7 @@ export async function confirmAttendance(
       message: `Your registration for ${party.name} has been confirmed! Please use the link below to access your ticket and QR code. You will need to show this QR code at the entrance.`,
       confirmation_link: confirmationLink,
       party_name: party.name,
+      pos: data.enable_schedule,
     })
 
     if (!emailResult.success) {
