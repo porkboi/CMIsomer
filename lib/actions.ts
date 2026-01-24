@@ -1291,8 +1291,6 @@ export async function confirmAttendance(
 
     console.log("here")
 
-    const schedOk = registration.enable_schedule
-
     if (fetchError) {
       console.error("Error fetching registration:", fetchError)
       return { success: false, message: "Fetch Error" }
@@ -1339,6 +1337,12 @@ export async function confirmAttendance(
       return { success: false, message: "Party not found" }
     }
 
+    const { data : schedOk } = await supabase.from("parties").select("enable_schedule").eq("slug", partySlug).single()
+
+    if (!schedOk) {
+      return { success: false, message: "Party not found" }
+    }
+
     // Send email to the user using EmailJS
     const emailTo = `${andrewID}@andrew.cmu.edu`
     const confirmationLink = `https://cm-isomer.vercel.app/party/${partySlug}/ticket?token=${token}`
@@ -1350,7 +1354,7 @@ export async function confirmAttendance(
       message: `Your registration for ${party.name} has been confirmed! Please use the link below to access your ticket and QR code. You will need to show this QR code at the entrance.`,
       confirmation_link: confirmationLink,
       party_name: party.name,
-      pos: schedOk,
+      pos: schedOk.enable_schedule,
     })
 
     if (!emailResult.success) {
