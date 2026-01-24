@@ -1241,6 +1241,35 @@ export async function updateMaxCapacity(
   }
 }
 
+export async function setWaitlistStatus(
+  partySlug: string,
+  allowWaitlist: boolean,
+): Promise<{ success: boolean; message: string }> {
+  if (!(await isAuthenticated(partySlug))) {
+    return { success: false, message: "Unauthorized" }
+  }
+
+  try {
+    const { error } = await supabase
+      .from("parties")
+      .update({ allow_waitlist: allowWaitlist })
+      .eq("slug", partySlug)
+
+    if (error) {
+      console.error("Error updating waitlist status:", error)
+      return { success: false, message: "Failed to update waitlist status" }
+    }
+
+    return {
+      success: true,
+      message: allowWaitlist ? "Waitlist opened" : "Waitlist closed",
+    }
+  } catch (error) {
+    console.error("Error updating waitlist status:", error)
+    return { success: false, message: "An unexpected error occurred" }
+  }
+}
+
 // Add this new server action to send confirmation emails
 export async function confirmAttendance(
   partySlug: string,

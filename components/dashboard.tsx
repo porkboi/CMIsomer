@@ -32,6 +32,7 @@ import {
   addPromoCode,
   confirmAttendance,
   checkInGuest,
+  setWaitlistStatus,
 } from "@/lib/actions"
 import { OrgLimitsModal } from "./org-limits-modal"
 import { PriceTiersModal, type PriceTier } from "./price-tiers-modal"
@@ -111,11 +112,13 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   const [showMaxCapacityModal, setShowMaxCapacityModal] = useState(false)
   const [showPartyModal, setShowPartyModal] = useState(false)
   const [newPromo, setNewPromo] = useState<string>("")
+  const [allowWaitlist, setAllowWaitlist] = useState<boolean>(party.allow_waitlist)
   const { toast } = useToast()
   const generatePromoCode = (length = 5) => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     return Array.from({ length }).map(() => chars[Math.floor(Math.random() * chars.length)]).join("")
   }
+
   const handleGeneratePromo = useCallback(async () => {
     const code = generatePromoCode(5)
     setNewPromo(code)
@@ -134,6 +137,27 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
       toast({ title: "Error", description: "Unable to create promo code", variant: "destructive" })
     }
   }, [partySlug, toast, addPromoCode])
+
+  const handleCloseWaitlist = useCallback(async () => {
+    try {
+      const result = await setWaitlistStatus(partySlug, false)
+      if (!result?.success) {
+        toast({
+          title: "Failed to close waitlist",
+          description: result?.message || "Server error",
+          variant: "destructive",
+        })
+        return
+      }
+      setAllowWaitlist(false)
+      toast({
+        title: "Waitlist closed",
+        description: "New waitlist signups are disabled.",
+      })
+    } catch (error) {
+      toast({ title: "Error", description: "Unable to update waitlist status", variant: "destructive" })
+    }
+  }, [partySlug, toast])
 
   // Data fetching logic
   const fetchData = useCallback(async () => {
@@ -549,10 +573,23 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
         >
           Generate Promo
         </button>
+        <div className="w-28 h-10 bg-zinc-900 text-white flex items-center justify-center rounded border border-zinc-700 font-mono">
+            {newPromo || "—"}
+        </div>
       </div>
 
-      <div className="w-28 h-10 bg-zinc-900 text-white flex items-center justify-center rounded border border-zinc-700 font-mono">
-          {newPromo || "—"}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleCloseWaitlist}
+          disabled={!allowWaitlist}
+          className="px-3 py-1 rounded bg-red-600 hover:bg-amber-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Close Waitlist
+        </button>
+        <div className="w-28 h-10 bg-zinc-900 text-white flex items-center justify-center rounded border border-zinc-700 font-mono">
+          {allowWaitlist ? "Open" : "Closed"}
+        </div>
       </div>
 
       <Card className="bg-zinc-950 border-zinc-800">
