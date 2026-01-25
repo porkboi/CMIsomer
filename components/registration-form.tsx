@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -28,15 +28,44 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { submitRegistration, getPriceTiers, redeemPromoCode, submitDatingEntry } from "@/lib/actions";
+import { submitRegistration, getPriceTiers, redeemPromoCode, submitDatingEntry, getTimeslotBreakdown } from "@/lib/actions";
 import { Party } from "@/lib/types";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PieChart, Pie, Cell } from "recharts";
 
 interface RegistrationFormProps {
   party: Party;
   partySlug: string;
+}
+
+type TimeslotBreakdown = {
+  confirmed: number;
+  pending: number;
+};
+
+const TIMESLOT_CAPACITY = 20;
+
+export function MiniPieChart({ data }: { data: any[] }) {
+  const COLORS = ["#ef4444", "#f97316", "#22c55e"];
+
+  return (
+    <PieChart width={24} height={24}>
+      <Pie
+        data={data}
+        dataKey="value"
+        cx="50%"
+        cy="50%"
+        outerRadius={8}
+        isAnimationActive={false}
+      >
+        {data.map((_, i) => (
+          <Cell key={i} fill={COLORS[i]} />
+        ))}
+      </Pie>
+    </PieChart>
+  );
 }
 
 export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
@@ -45,6 +74,9 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
   const [currentTierCap, setCurrentTierCap] = useState(0);
   const [priceTiers, setPriceTiers] = useState<any[]>([]);
   const [currentTierIndex, setCurrentTierIndex] = useState(0);
+  const [timeslotBreakdown, setTimeslotBreakdown] = useState<
+    Record<string, TimeslotBreakdown>
+  >({});
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -96,6 +128,9 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
             : z.string().optional(),
         organization: z.enum(party.organizations as [string, ...string[]], {
           required_error: "Please select your organization.",
+        }),
+        timeSlot: z.enum(party.schedule as [string, ...string[]], {
+          required_error: "Please select your desired timeslot.",
         }),
         promoCode: z.string().optional(),
         joinDatingPool: z.boolean().default(false),
@@ -191,6 +226,67 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
     fetchRegistrationCount();
     fetchPriceTiers();
   }, [partySlug, registrationCount]);
+
+  useEffect(() => {
+    if (!party.enableSchedule) return;
+
+    let active = true;
+
+    const fetchTimeslotBreakdowns = async () => {
+      try {
+        const results = await Promise.all(
+          party.schedule.map(async (slot) => {
+            const res = await getTimeslotBreakdown(partySlug, slot);
+            return [slot, res] as const;
+          })
+        );
+
+        if (!active) return;
+
+        const breakdownMap: Record<string, TimeslotBreakdown> = {};
+        for (const [slot, res] of results) {
+          breakdownMap[slot] = res;
+        }
+
+        setTimeslotBreakdown(breakdownMap);
+      } catch (error) {
+        console.error("Error fetching timeslot breakdown:", error);
+      }
+    };
+
+    fetchTimeslotBreakdowns();
+
+    return () => {
+      active = false;
+    };
+  }, [party.enableSchedule, party.schedule, partySlug]);
+
+  function TimeslotPie({
+    data,
+  }: {
+    data: TimeslotBreakdown | null;
+  }) {
+    if (!data) {
+      return (
+        <div>
+          <div className="h-6 w-6 rounded-full bg-muted animate-pulse" />
+        </div>
+      );
+    }
+
+    const green = Math.max(
+      TIMESLOT_CAPACITY - data.confirmed - data.pending,
+      0
+    );
+
+    const pieData = [
+      { name: "Confirmed", value: data.confirmed },
+      { name: "Pending", value: data.pending },
+      { name: "Open", value: green },
+    ];
+
+    return <MiniPieChart data={pieData} />;
+  }
 
   // Payment component functions
   const renderPaymentMethodSelector = () => (
@@ -683,7 +779,15 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                           className="flex items-center space-x-2 space-y-0"
                         >
                           <FormControl>
-                            <RadioGroupItem value={org} />
+                            <RadioGroupItem
+                              value={org}
+                              className="
+                                border-white
+                                text-white
+                                data-[state=checked]:bg-white
+                                data-[state=checked]:text-black
+                              "
+                            />
                           </FormControl>
                           <FormLabel className="font-normal">{org}</FormLabel>
                         </FormItem>
@@ -694,6 +798,84 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                 </FormItem>
               )}
             />
+
+            {party.enableSchedule && <FormField
+              control={form.control}
+              name="timeSlot"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-3">
+                    <span>Timeslot</span>
+
+                    <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <span className="h-2 w-2 rounded-sm bg-green-500" />
+                        Open
+                      </span>
+
+                      <span className="flex items-center gap-1">
+                        <span className="h-2 w-2 rounded-sm bg-orange-500" />
+                        Pending
+                      </span>
+
+                      <span className="flex items-center gap-1">
+                        <span className="h-2 w-2 rounded-sm bg-red-500" />
+                        Confirmed
+                      </span>
+                    </span>
+                  </FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="grid grid-cols-2 gap-4 sm:grid-cols-4"
+                    >
+                      {party.schedule.map((s) => {
+                        const breakdown = timeslotBreakdown[s] ?? null;
+                        const isFull = breakdown
+                          ? breakdown.confirmed + breakdown.pending >=
+                            TIMESLOT_CAPACITY
+                          : false;
+
+                        return (
+                          <FormItem
+                            key={s}
+                            className={`flex items-center space-x-2 space-y-0 ${
+                              isFull ? "opacity-60" : ""
+                            }`}
+                          >
+                            <FormControl>
+                              <RadioGroupItem
+                                value={s}
+                                disabled={!!isFull}
+                                className="
+                                  border-white
+                                  text-white
+                                  data-[state=checked]:bg-white
+                                  data-[state=checked]:text-black
+                                  data-[disabled]:border-zinc-600
+                                  data-[disabled]:text-zinc-600
+                                  data-[disabled]:cursor-not-allowed
+                                "
+                              />
+                            </FormControl>
+                            <FormLabel
+                              className={`font-normal ${
+                                isFull ? "text-muted-foreground" : ""
+                              }`}
+                            >
+                              {s}
+                            </FormLabel>
+                            <TimeslotPie data={breakdown} />
+                          </FormItem>
+                        );
+                      })}
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />}
 
             {currentTierPrice > 0 && (
               <>

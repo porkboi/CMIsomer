@@ -80,18 +80,18 @@ export default async function TicketPage({ params, searchParams }: PageProps) {
                     <p className="font-medium">{ticket.organization}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                {!party.enable_schedule && <div className="flex items-center gap-3">
                   <Calendar className="h-5 w-5 text-purple-500 shrink-0" />
                   <div>
                     <p className="text-sm text-zinc-400">Date</p>
                     <p className="font-medium">{formatEventDate(party.event_date)}</p>
                   </div>
-                </div>
+                </div>}
                 <div className="flex items-center gap-3">
                   <Clock className="h-5 w-5 text-purple-500 shrink-0" />
                   <div>
-                    <p className="text-sm text-zinc-400">Time</p>
-                    <p className="font-medium">{party.event_time || "TBA"}</p>
+                    <p className="text-sm text-zinc-400">{party.enable_schedule ? "Timeslot" : "Time"}</p>
+                    <p className="font-medium">{party.enable_schedule ? ticket.timeSlot : party.event_time || "TBA"}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

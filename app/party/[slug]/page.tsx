@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dashboard } from "@/components/dashboard";
 import { LoginForm } from "@/components/login-form";
 import { isAuthenticated } from "@/lib/auth";
-import { getPartyBySlug, getRegistrations, getOrgAllocation, getPriceTiers } from "@/lib/actions";
+import { getPartyBySlug, getRegistrations, getOrgAllocation, getPriceTiers, getTimeslotSelections } from "@/lib/actions";
 import { Party } from "@/lib/types";
 
 // Constants
@@ -132,10 +132,11 @@ async function fetchPartyData(slug: string): Promise<{
 // Dashboard data fetching utility
 async function fetchDashboardData(slug: string) {
   try {
-    const [registrations, orgAllocation, priceTiers] = await Promise.all([
+    const [registrations, orgAllocation, priceTiers, timeslotSelections] = await Promise.all([
       getRegistrations(slug),
       getOrgAllocation(slug),
       getPriceTiers(slug),
+      getTimeslotSelections(slug),
     ]);
 
     // Get organization limits from orgAllocation data
@@ -149,6 +150,7 @@ async function fetchDashboardData(slug: string) {
       orgAllocation,
       priceTiers,
       orgLimits,
+      timeslotSelections,
     };
   } catch (error) {
     console.error('Error fetching dashboard data:', error);

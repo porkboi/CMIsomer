@@ -25,6 +25,7 @@ const registrationSchema = z.object({
   }),
   andrewID: z.string().min(3),
   organization: z.string().min(1), // Changed from enum to string to be more flexible
+  timeSlot: z.string().min(1).optional(),
   paymentMethod: z.enum(["venmo", "zelle"]),
   paymentConfirmed: z.enum(["yes", "no"]),
   promoCode: z.string().optional(),
@@ -150,6 +151,66 @@ export async function getOrgAllocation(partySlug: string) {
   } catch (error) {
     console.error("Error getting org allocation:", error)
     return []
+  }
+}
+
+export async function getTimeslotBreakdown(
+  partySlug: string,
+  timeslot: string,
+): Promise<{confirmed: number, pending: number}> {
+  try {
+    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const { data, error } = await supabase
+      .from(tableName)
+      .select("status")
+      .eq("timeslot",timeslot)
+
+    if (error) {
+      console.error("Error fetching timeslot counts:", error)
+      return {confirmed: -1, pending: -1}
+    }
+
+    const confirmedList = data.filter((row) => row.status === "confirmed")
+    const pendingList = data.filter((row) => row.status === "pending")
+
+    return {confirmed: confirmedList.length, pending: pendingList.length}
+  } catch (error) {
+    console.error("Error getting timeslot counts:", error)
+    return {confirmed: -1, pending: -1}
+  }
+}
+
+//Gets Timeslot selections, separating the different timeslots selected into confirmed and pending
+export async function getTimeslotSelections(
+  partySlug: string,
+): Promise<{ confirmed: Record<string, number>; pending: Record<string, number> }> {
+  try {
+    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const { data, error } = await supabase
+      .from(tableName)
+      .select("timeslot, status")
+      .in("status", ["confirmed", "pending"])
+
+    if (error) {
+      console.error("Error fetching timeslot selections:", error)
+      return { confirmed: {}, pending: {} }
+    }
+
+    const buckets: { confirmed: Record<string, number>; pending: Record<string, number> } = {
+      confirmed: {},
+      pending: {},
+    }
+
+    data?.forEach((row) => {
+      const slot = row.timeslot || "Unspecified"
+      const target = row.status === "confirmed" ? buckets.confirmed : buckets.pending
+      target[slot] = (target[slot] || 0) + 1
+    })
+
+    return buckets
+  } catch (error) {
+    console.error("Error getting timeslot selections:", error)
+    return { confirmed: {}, pending: {} }
   }
 }
 
@@ -602,6 +663,8 @@ const partySchema = z.object({
   location: z.string().min(1),
   locationSecret: z.boolean(),
   enableDatingPool: z.boolean().optional().default(false),
+  enableScheduler: z.boolean().optional().default(false),
+  schedule: z.string().min(1)
 })
 
 export async function addPromoCode(partySlug: string, code: string): Promise<{ success: boolean; message?: string; promoCodes?: string[] }> {
@@ -720,6 +783,12 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
       .map((org) => org.trim())
       .filter((org) => org.length > 0)
 
+    // Convert Schedule string to array
+    const schedule = validatedData.schedule
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+
     // Insert the party into the database
     const { data: party, error: insertError } = await supabase
       .from("parties")
@@ -741,6 +810,8 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
         enable_dating_pool: validatedData.enableDatingPool ?? false,
         promo_code: [],
         announcements: [],
+        enable_schedule: validatedData.enableScheduler,
+        schedule: schedule,
       })
       .select()
       .single()
@@ -839,7 +910,6 @@ export async function getPartyTickBySlug(slug: string) {
     venmo_username: data.venmo_username,
     zelle_info: data.zelle_info,
     admin_username: data.admin_username,
-    // admin_password: data.admin_password, //Removed for security
     created_at: data.created_at,
     event_date: data.event_date,
     event_time: data.event_time,
@@ -847,6 +917,7 @@ export async function getPartyTickBySlug(slug: string) {
     enable_dating_pool: enableDatingPool,
     dating_lock_minutes: datingLockMinutes,
     dating_pool_locked: datingPoolLocked,
+    enable_schedule: data.enable_schedule,
   }
 }
 
@@ -889,6 +960,8 @@ export async function getPartyBySlug(slug: string) {
     enable_dating_pool: enableDatingPool,
     dating_lock_minutes: datingLockMinutes,
     dating_pool_locked: datingPoolLocked,
+    enableSchedule: data.enable_schedule,
+    schedule: data.schedule,
   }
 }
 
@@ -912,6 +985,7 @@ export async function addRegistration(
     tier_name: registration.tierName,
     tier_price: registration.tierPrice,
     confirmation_token: registration.confirmation_token,
+    timeslot: registration.timeSlot,
   }
 
   const { data, error } = await supabase.from(tableName).insert([dbRegistration]).select().single()
@@ -1167,6 +1241,35 @@ export async function updateMaxCapacity(
   }
 }
 
+export async function setWaitlistStatus(
+  partySlug: string,
+  allowWaitlist: boolean,
+): Promise<{ success: boolean; message: string }> {
+  if (!(await isAuthenticated(partySlug))) {
+    return { success: false, message: "Unauthorized" }
+  }
+
+  try {
+    const { error } = await supabase
+      .from("parties")
+      .update({ allow_waitlist: allowWaitlist })
+      .eq("slug", partySlug)
+
+    if (error) {
+      console.error("Error updating waitlist status:", error)
+      return { success: false, message: "Failed to update waitlist status" }
+    }
+
+    return {
+      success: true,
+      message: allowWaitlist ? "Waitlist opened" : "Waitlist closed",
+    }
+  } catch (error) {
+    console.error("Error updating waitlist status:", error)
+    return { success: false, message: "An unexpected error occurred" }
+  }
+}
+
 // Add this new server action to send confirmation emails
 export async function confirmAttendance(
   partySlug: string,
@@ -1234,6 +1337,12 @@ export async function confirmAttendance(
       return { success: false, message: "Party not found" }
     }
 
+    const { data : schedOk } = await supabase.from("parties").select("enable_schedule").eq("slug", partySlug).single()
+
+    if (!schedOk) {
+      return { success: false, message: "Party not found" }
+    }
+
     // Send email to the user using EmailJS
     const emailTo = `${andrewID}@andrew.cmu.edu`
     const confirmationLink = `https://cm-isomer.vercel.app/party/${partySlug}/ticket?token=${token}`
@@ -1245,6 +1354,7 @@ export async function confirmAttendance(
       message: `Your registration for ${party.name} has been confirmed! Please use the link below to access your ticket and QR code. You will need to show this QR code at the entrance.`,
       confirmation_link: confirmationLink,
       party_name: party.name,
+      pos: schedOk.enable_schedule,
     })
 
     if (!emailResult.success) {
@@ -1293,6 +1403,7 @@ export async function getTicketByToken(partySlug: string, token: string) {
       tierPrice: data.tier_price,
       price: data.price,
       qrCode: data.qr_code,
+      timeSlot : data.timeslot,
     }
   } catch (error) {
     console.error("Error getting ticket by token:", error)

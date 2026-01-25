@@ -20,6 +20,7 @@ import {
 import {
   getRegistrations,
   getOrgAllocation,
+  getTimeslotSelections,
   removeFromWaitlist,
   promoteFromWaitlist,
   removeFromList,
@@ -31,6 +32,7 @@ import {
   addPromoCode,
   confirmAttendance,
   checkInGuest,
+  setWaitlistStatus,
 } from "@/lib/actions"
 import { OrgLimitsModal } from "./org-limits-modal"
 import { PriceTiersModal, type PriceTier } from "./price-tiers-modal"
@@ -44,6 +46,7 @@ interface DashboardData {
   orgAllocation: any[]
   priceTiers: PriceTier[]
   orgLimits: Record<string, number>
+  timeslotSelections: { confirmed: Record<string, number>; pending: Record<string, number> }
 }
 
 interface DashboardProps {
@@ -87,21 +90,7 @@ const RegistrationRow = ({ reg, actions, columns = 8, colorClass = "" }) => (
       )}
     </div>
     <div className="capitalize">{reg.payment_method}</div>
-    {columns === 8 && (
-      <div>
-        <Badge
-          className={
-            reg.status === "confirmed"
-              ? "bg-green-900/50 text-green-300 border-green-700"
-              : reg.status === "pending"
-              ? "bg-yellow-900/50 text-yellow-300 border-yellow-700"
-              : "bg-red-900/50 text-red-300 border-red-700"
-          }
-        >
-          {reg.status}
-        </Badge>
-      </div>
-    )}
+    <div className="capitalize">{reg.timeslot}</div>
     <div className="flex gap-2">{actions}</div>
   </div>
 )
@@ -113,6 +102,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   const [filteredOrgs, setFilteredOrgs] = useState<string[]>([])
   const [registrations, setRegistrations] = useState<Registration[]>(initialData.registrations)
   const [orgAllocation, setOrgAllocation] = useState<any[]>(initialData.orgAllocation)
+  const [timeslotSelections, setTimeslotSelections] = useState(initialData.timeslotSelections)
   const [showScanner, setShowScanner] = useState(false)
   const [showOrgLimitsModal, setShowOrgLimitsModal] = useState(false)
   const [showPriceTiersModal, setShowPriceTiersModal] = useState(false)
@@ -122,11 +112,13 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   const [showMaxCapacityModal, setShowMaxCapacityModal] = useState(false)
   const [showPartyModal, setShowPartyModal] = useState(false)
   const [newPromo, setNewPromo] = useState<string>("")
+  const [allowWaitlist, setAllowWaitlist] = useState<boolean>(party.allow_waitlist)
   const { toast } = useToast()
   const generatePromoCode = (length = 5) => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     return Array.from({ length }).map(() => chars[Math.floor(Math.random() * chars.length)]).join("")
   }
+
   const handleGeneratePromo = useCallback(async () => {
     const code = generatePromoCode(5)
     setNewPromo(code)
@@ -146,14 +138,36 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
     }
   }, [partySlug, toast, addPromoCode])
 
+  const handleCloseWaitlist = useCallback(async () => {
+    try {
+      const result = await setWaitlistStatus(partySlug, false)
+      if (!result?.success) {
+        toast({
+          title: "Failed to close waitlist",
+          description: result?.message || "Server error",
+          variant: "destructive",
+        })
+        return
+      }
+      setAllowWaitlist(false)
+      toast({
+        title: "Waitlist closed",
+        description: "New waitlist signups are disabled.",
+      })
+    } catch (error) {
+      toast({ title: "Error", description: "Unable to update waitlist status", variant: "destructive" })
+    }
+  }, [partySlug, toast])
+
   // Data fetching logic
   const fetchData = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const [newRegistrations, newOrgAllocation, newPriceTiers] = await Promise.all([
+      const [newRegistrations, newOrgAllocation, newPriceTiers, newTimeslotSelections] = await Promise.all([
         getRegistrations(partySlug),
         getOrgAllocation(partySlug),
         getPriceTiers(partySlug),
+        getTimeslotSelections(partySlug),
       ]);
 
       // Get organization limits from orgAllocation data
@@ -166,6 +180,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
       setOrgAllocation(newOrgAllocation);
       setPriceTiers(newPriceTiers);
       setOrgLimits(newOrgLimits);
+      setTimeslotSelections(newTimeslotSelections);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast({
@@ -210,7 +225,6 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   }
 
   const handleRemoveFromList = async (id: number) => {
-    console.log(id)
     const result = await removeFromList(partySlug, id)
     if (result.success) {
       toast({
@@ -386,6 +400,19 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   const totalMoney = useMemo(() => confirmedRegistrations.reduce((sum, reg) => sum + reg.price, 0), [confirmedRegistrations]);
   const venmoMoney = useMemo(() => venmoList.reduce((sum, reg) => sum + reg.price, 0), [venmoList]);
   const zelleMoney = useMemo(() => zelleList.reduce((sum, reg) => sum + reg.price, 0), [zelleList]);
+  const timeslotData = useMemo(() => {
+    const slots = new Set<string>([
+      ...(party.schedule || []),
+      ...Object.keys(timeslotSelections.confirmed || {}),
+      ...Object.keys(timeslotSelections.pending || {}),
+    ])
+
+    return Array.from(slots).map((slot) => ({
+      name: slot,
+      confirmed: timeslotSelections.confirmed?.[slot] || 0,
+      pending: timeslotSelections.pending?.[slot] || 0,
+    }))
+  }, [party.schedule, timeslotSelections]);
 
   // Filtering logic
   const filterRegs = useCallback((regs) => regs.filter((reg) => {
@@ -480,19 +507,6 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
 
         <Card className="bg-zinc-950 border-zinc-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">Confirmed</CardTitle>
-            <UserCheck className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{confirmedRegistrations.length}</div>
-            <p className="text-xs text-zinc-400">
-              {Math.round((confirmedRegistrations.length / maxCapacity) * 100)}% of capacity
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-zinc-950 border-zinc-800">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-white">Checked In</CardTitle>
             <UserCheck className="h-4 w-4 text-green-500" />
           </CardHeader>
@@ -501,17 +515,6 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
             <p className="text-xs text-zinc-400">
               {Math.round(checkedIn.length/confirmedRegistrations.length)*100}% of confirmed
             </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-zinc-950 border-zinc-800">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white">Waitlisted</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{waitlistedRegistrations.length}</div>
-            <p className="text-xs text-zinc-400">May be admitted if spots open up</p>
           </CardContent>
         </Card>
 
@@ -546,10 +549,23 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
         >
           Generate Promo
         </button>
+        <div className="w-28 h-10 bg-zinc-900 text-white flex items-center justify-center rounded border border-zinc-700 font-mono">
+            {newPromo || "—"}
+        </div>
       </div>
 
-      <div className="w-28 h-10 bg-zinc-900 text-white flex items-center justify-center rounded border border-zinc-700 font-mono">
-          {newPromo || "—"}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleCloseWaitlist}
+          disabled={!allowWaitlist}
+          className="px-3 py-1 rounded bg-red-600 hover:bg-amber-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Close Waitlist
+        </button>
+        <div className="w-28 h-10 bg-zinc-900 text-white flex items-center justify-center rounded border border-zinc-700 font-mono">
+          {allowWaitlist ? "Open" : "Closed"}
+        </div>
       </div>
 
       <Card className="bg-zinc-950 border-zinc-800">
@@ -599,6 +615,44 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
         </CardContent>
       </Card>
 
+      {party.enableSchedule && timeslotData.length > 0 && (
+        <Card className="bg-zinc-950 border-zinc-800">
+          <CardHeader>
+            <CardTitle className="text-white">Timeslot Selection</CardTitle>
+            <CardDescription className="text-white">Confirmed vs pending selections per slot</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-200">
+              <ChartContainer
+                config={{
+                  confirmed: {
+                    label: "Confirmed",
+                    color: "purple",
+                  },
+                  pending: {
+                    label: "Pending",
+                    color: "pink",
+                  },
+                }}
+              >
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={timeslotData}
+                    layout="vertical"
+                  >
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={80} />
+                    <Tooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="confirmed" stackId="a" fill="purple" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="pending" stackId="a" fill="pink" radius={[0, 0, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <Input
           placeholder="Search by name or Andrew ID..."
@@ -645,7 +699,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
               <div>Organization</div>
               <div>Tier</div>
               <div>Payment</div>
-              <div>Status</div>
+              <div>Timeslot</div>
               <div>Actions</div>
             </div>
             <div className="divide-y divide-zinc-800">
@@ -701,7 +755,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
               <div>Organization</div>
               <div>Tier</div>
               <div>Payment</div>
-              <div>Status</div>
+              <div>Timeslot</div>
               <div>Actions</div>
             </div>
             <div className="divide-y divide-zinc-800">
@@ -755,6 +809,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
               <div>Organization</div>
               <div>Tier</div>
               <div>Payment</div>
+              <div>Timeslot</div>
               <div>Actions</div>
             </div>
             <div className="divide-y divide-zinc-800">
@@ -838,4 +893,3 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
     </div>
   )
 }
-
