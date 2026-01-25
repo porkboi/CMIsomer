@@ -131,7 +131,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
         }),
         timeSlot: z.enum(party.schedule as [string, ...string[]], {
           required_error: "Please select your desired timeslot.",
-        }),
+        }).optional(),
         promoCode: z.string().optional(),
         joinDatingPool: z.boolean().default(false),
         genderIdentity: z.string().optional(),
