@@ -113,6 +113,9 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
           .min(2, { message: "Andrew ID must be at least 2 characters." })
           .refine((val) => !val.includes(" "), {
             message: "Andrew ID cannot contain spaces.",
+          })
+          .refine((val) => !val.includes("@"), {
+            message: "Andrew ID, not your email.",
           }),
         paymentMethod:
           currentTierPrice > 0
