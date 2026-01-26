@@ -3,7 +3,37 @@ import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function AboutPage() {
+type Contributor = {
+  login?: string;
+};
+
+async function fetchContributors(): Promise<string[]> {
+  try {
+    const response = await fetch("https://api.github.com/repos/porkboi/CMIsomer/contributors", {
+      headers: {
+        Accept: "application/vnd.github+json",
+        "User-Agent": "CMIsomer-about-page",
+      },
+      next: { revalidate: 3600 },
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload = (await response.json()) as Contributor[];
+
+    return payload
+      .map((contributor) => contributor.login?.trim())
+      .filter((login): login is string => Boolean(login));
+  } catch {
+    return [];
+  }
+}
+
+export default async function AboutPage() {
+  const contributors = await fetchContributors();
+
   return (
     <div className="min-h-screen bg-zinc-900 text-white">
       <div className="container mx-auto px-4 py-12">
@@ -22,7 +52,7 @@ export default function AboutPage() {
           <div className="rounded-lg overflow-hidden border border-zinc-800 shadow-xl">
             <div className="relative w-full h-96">
               <Image
-                src="/placeholder.jpg"
+                src="https://techportal.in/wp-content/uploads/2023/12/CMULarge-e1467683012612.webp"
                 alt="CMU Campus"
                 fill
                 className="object-cover"
@@ -105,10 +135,9 @@ export default function AboutPage() {
                     <line x1="3" y1="10" x2="21" y2="10"></line>
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold mb-2">Smart Waitlist</h3>
+                <h3 className="text-xl font-bold mb-2">Multi-slot Scheduling</h3>
                 <p className="text-zinc-400">
-                  Automatically manage waitlists and notify guests when spots become available, ensuring maximum
-                  attendance and minimizing no-shows.
+                  Automatically manage schedules across different timeslots.
                 </p>
               </CardContent>
             </Card>
@@ -144,51 +173,24 @@ export default function AboutPage() {
 
         {/* Team Section */}
         <div className="mb-16">
-          <h2 className="text-3xl font-bold mb-8 text-center text-purple-400">Meet the Team</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-32 h-32 rounded-full overflow-hidden mx-auto mb-4 border-2 border-purple-500">
-                <div className="relative w-full h-full">
-                  <Image
-                    src="https://media.licdn.com/dms/image/v2/D5603AQGOWfEBP6FGMQ/profile-displayphoto-shrink_200_200/B56ZeFsZhsHUAc-/0/1750294701661?e=2147483647&v=beta&t=6p5nbCXxoXReeSlZk_qpCr50N5zjnc9Pl1l4eGN8D4I"
-                    alt="Team Member"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-              <h3 className="text-xl font-bold">Christian Ang</h3>
-              <p className="text-purple-400">Lead Developer</p>
+          <h2 className="text-3xl font-bold mb-6 text-center text-purple-400">Contributors</h2>
+          {contributors.length ? (
+            <div className="flex flex-wrap justify-center gap-3">
+              {contributors.map((handle) => (
+                <a
+                  key={handle}
+                  href={`https://github.com/${handle}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-2 rounded-full border border-purple-500 text-purple-200 hover:bg-purple-600 hover:text-white transition-colors"
+                >
+                  @{handle}
+                </a>
+              ))}
             </div>
-            <div className="text-center">
-              <div className="w-32 h-32 rounded-full overflow-hidden mx-auto mb-4 border-2 border-purple-500">
-                <div className="relative w-full h-full">
-                  <Image
-                    src="https://media.licdn.com/dms/image/v2/D5603AQE_kCNuLg3iuQ/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1723618544174?e=2147483647&v=beta&t=zYkSChlYV7kZzvAt5WCcLlx7mxMOMf3Ihu_Pc3Z_Bo0"
-                    alt="Team Member"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-              <h3 className="text-xl font-bold">Ellyse Lai</h3>
-              <p className="text-purple-400">UI/UX Designer</p>
-            </div>
-            <div className="text-center">
-              <div className="w-32 h-32 rounded-full overflow-hidden mx-auto mb-4 border-2 border-purple-500">
-                <div className="relative w-full h-full">
-                  <Image
-                    src="/placeholder-user.jpg"
-                    alt="Team Member"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-              <h3 className="text-xl font-bold">Tartan Cultural League</h3>
-              <p className="text-purple-400">Project Sponsors</p>
-            </div>
-          </div>
+          ) : (
+            <p className="text-center text-zinc-400">Contributors coming soon.</p>
+          )}
         </div>
 
         {/* Contact & FAQ Section */}
@@ -205,19 +207,13 @@ export default function AboutPage() {
                     <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-xs">
                       @
                     </div>
-                    <span>cmisomer@andrew.cmu.edu</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-xs">
-                      #
-                    </div>
-                    <span>UC 314 - Tartan Cultural League Office</span>
+                    <span>@cmu_tcl on Instagram</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-xs">
                       !
                     </div>
-                    <span>Request support: @CMITechTeam on Slack</span>
+                    <span>Request support: @kentuckyfriedchristian_ on Instagram, @p0rkboi on Discord</span>
                   </li>
                 </ul>
               </CardContent>
