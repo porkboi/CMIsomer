@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from "recharts"
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 import { Users, UserCheck, Clock, Filter, RefreshCw, Scan, Settings, DollarSign, Users2, Pencil } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -67,6 +67,44 @@ interface Registration {
   tierPrice?: number
   price: number
   checked_in: boolean
+  created_at?: string
+}
+
+// Group registrations into hourly buckets based on created_at
+// Buckets registrations per hour and returns cumulative totals
+const bucketRegistrationsByHour = (regs: Registration[]) => {
+  const bucketMs = 60 * 60 * 1000 // 1 hour
+  const buckets: Record<number, number> = {}
+
+  regs.forEach((reg) => {
+    if (!reg.created_at) return
+    const ts = new Date(reg.created_at).getTime()
+    if (Number.isNaN(ts)) return
+    const bucketStart = Math.floor(ts / bucketMs) * bucketMs
+    buckets[bucketStart] = (buckets[bucketStart] || 0) + 1
+  })
+
+  const sortedBuckets = Object.entries(buckets)
+    .map(([bucketStart, count]) => ({
+      bucket: Number(bucketStart),
+      count,
+    }))
+    .sort((a, b) => a.bucket - b.bucket)
+
+  let runningTotal = 0
+
+  return sortedBuckets.map(({ bucket, count }) => {
+    runningTotal += count
+    const date = new Date(bucket)
+    const label = date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      hour12: true,
+    })
+
+    return { bucket, time: label, cumulative: runningTotal }
+  })
 }
 
 // Helper components for repeated UI blocks
@@ -413,6 +451,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
       pending: timeslotSelections.pending?.[slot] || 0,
     }))
   }, [party.schedule, timeslotSelections]);
+  const registrationTrend = useMemo(() => bucketRegistrationsByHour(registrations), [registrations]);
 
   // Filtering logic
   const filterRegs = useCallback((regs) => regs.filter((reg) => {
@@ -612,6 +651,47 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
               </ResponsiveContainer>
             </ChartContainer>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-zinc-950 border-zinc-800">
+        <CardHeader>
+          <CardTitle className="text-white">Registrations Over Time</CardTitle>
+          <CardDescription className="text-white">Cumulative total registrations</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer
+            config={{
+              registrations: { label: "Registrations", color: "#a855f7" },
+            }}
+            className="h-[320px]"
+          >
+            <LineChart data={registrationTrend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+              <XAxis dataKey="time" tick={{ fill: "#a1a1aa" }} interval="preserveStartEnd" />
+              <YAxis tick={{ fill: "#a1a1aa" }} allowDecimals={false} />
+              <Tooltip content={<ChartTooltipContent />} />
+              <Line
+                type="monotone"
+                dataKey="cumulative"
+                stroke="var(--color-registrations)"
+                strokeWidth={2}
+                dot={(props) =>
+                  props.index % 10 === 0 ? (
+                    <circle
+                      cx={props.cx}
+                      cy={props.cy}
+                      r={3}
+                      stroke="#fff"
+                      strokeWidth={1}
+                      fill="var(--color-registrations)"
+                    />
+                  ) : null
+                }
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
+          </ChartContainer>
         </CardContent>
       </Card>
 
