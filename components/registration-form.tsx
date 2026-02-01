@@ -307,13 +307,19 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
             >
               <FormItem className="flex items-center space-x-3 space-y-0">
                 <FormControl>
-                  <RadioGroupItem value="venmo" />
+                  <RadioGroupItem value="venmo" className="border-white
+                                text-white
+                                data-[state=checked]:bg-white
+                                data-[state=checked]:text-black"/>
                 </FormControl>
                 <FormLabel className="font-normal">Venmo</FormLabel>
               </FormItem>
               <FormItem className="flex items-center space-x-3 space-y-0">
                 <FormControl>
-                  <RadioGroupItem value="zelle" />
+                  <RadioGroupItem value="zelle" className="border-white
+                                text-white
+                                data-[state=checked]:bg-white
+                                data-[state=checked]:text-black"/>
                 </FormControl>
                 <FormLabel className="font-normal">Zelle</FormLabel>
               </FormItem>
@@ -371,13 +377,19 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
             >
               <FormItem className="flex items-center space-x-2 space-y-0">
                 <FormControl>
-                  <RadioGroupItem value="yes" />
+                  <RadioGroupItem value="yes" className="border-white
+                                text-white
+                                data-[state=checked]:bg-white
+                                data-[state=checked]:text-black"/>
                 </FormControl>
                 <FormLabel className="font-normal">Yes</FormLabel>
               </FormItem>
               <FormItem className="flex items-center space-x-2 space-y-0">
                 <FormControl>
-                  <RadioGroupItem value="no" />
+                  <RadioGroupItem value="no" className="border-white
+                                text-white
+                                data-[state=checked]:bg-white
+                                data-[state=checked]:text-black"/>
                 </FormControl>
                 <FormLabel className="font-normal">No</FormLabel>
               </FormItem>
