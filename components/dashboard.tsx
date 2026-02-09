@@ -452,6 +452,13 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
     }))
   }, [party.schedule, timeslotSelections]);
   const registrationTrend = useMemo(() => bucketRegistrationsByHour(registrations), [registrations]);
+  const formatRegistrationTime = (value: number | string) =>
+    new Date(Number(value)).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      hour12: true,
+    })
 
   // Filtering logic
   const filterRegs = useCallback((regs) => regs.filter((reg) => {
@@ -668,17 +675,25 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
           >
             <LineChart data={registrationTrend}>
               <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-              <XAxis dataKey="time" tick={{ fill: "#a1a1aa" }} interval="preserveStartEnd" />
+              <XAxis
+                type="number"
+                dataKey="bucket"
+                scale="time"
+                domain={["dataMin", "dataMax"]}
+                tick={{ fill: "#a1a1aa" }}
+                tickFormatter={formatRegistrationTime}
+              />
               <YAxis tick={{ fill: "#a1a1aa" }} allowDecimals={false} />
-              <Tooltip content={<ChartTooltipContent />} />
+              <Tooltip content={<ChartTooltipContent labelFormatter={formatRegistrationTime} />} />
               <Line
-                type="monotone"
+                type="basis"
                 dataKey="cumulative"
                 stroke="var(--color-registrations)"
                 strokeWidth={2}
                 dot={(props) =>
                   props.index % 10 === 0 ? (
                     <circle
+                      key={`reg-dot-${props.payload?.bucket ?? "na"}-${props.index}`}
                       cx={props.cx}
                       cy={props.cy}
                       r={3}
