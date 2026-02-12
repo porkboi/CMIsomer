@@ -512,7 +512,6 @@ export async function buildWrappedScript(partyId: string, viewerAndrewID?: strin
         },
         unlocked: {
           title: "Your MBTI personality reactor",
-          subtitle: "A trait-level breakdown of your match's personality profile.",
           mbtiPersonality: match.mbti || "N/A",
         },
       },

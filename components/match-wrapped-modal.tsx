@@ -590,26 +590,26 @@ function BlueprintMajorMinorBubble({ items }: { items: StatItem[] }) {
   const totalCount = Math.max(topItems.reduce((sum, item) => sum + item.count, 0), 1);
   const palette = ["#67e8f9", "#22d3ee", "#06b6d4", "#0891b2"];
   return (
-    <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 w-[78%] max-w-[420px] -translate-x-1/2 -translate-y-1/2 px-2 text-cyan-100">
-      <p className="text-xs uppercase tracking-[0.2em] text-cyan-100">Major/Minor Breakdown</p>
-      <div className="mt-3 h-4 overflow-hidden rounded-full border border-cyan-100/35 bg-cyan-100/10">
+    <div className="pointer-events-none absolute left-1/2 top-[58%] z-20 w-[min(78vw,24rem)] -translate-x-1/2 -translate-y-1/2 px-2 text-cyan-100 sm:top-[60%] sm:w-[min(66%,22rem)]">
+      <p className="text-[clamp(10px,1.4vw,12px)] uppercase tracking-[0.2em] text-cyan-100">Major/Minor Breakdown</p>
+      <div className="mt-[clamp(0.4rem,1.2vh,0.75rem)] h-[clamp(0.5rem,1.8vh,1rem)] overflow-hidden rounded-full border border-cyan-100/35 bg-cyan-100/10">
         <div className="flex h-full">
           {topItems.map((item, idx) => (
             <div key={`seg-${item.label}`} className="h-full" style={{ width: `${(item.count / totalCount) * 100}%`, backgroundColor: palette[idx] ?? "#67e8f9" }} />
           ))}
         </div>
       </div>
-      <div className="mt-4 space-y-3">
+      <div className="mt-[clamp(0.5rem,1.6vh,1rem)] space-y-[clamp(0.3rem,1.3vh,0.75rem)]">
         {topItems.map((item, idx) => (
           <div key={item.label}>
-            <div className="flex items-center justify-between gap-2 text-xs">
+            <div className="flex items-center justify-between gap-2 text-[clamp(10px,1.4vw,12px)]">
               <span className="inline-flex min-w-0 items-center gap-2">
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: palette[idx] ?? "#67e8f9" }} />
+                <span className="h-[clamp(8px,1.5vw,10px)] w-[clamp(8px,1.5vw,10px)] shrink-0 rounded-full" style={{ backgroundColor: palette[idx] ?? "#67e8f9" }} />
                 <span className="truncate pr-1">{item.label}</span>
               </span>
               <span className="shrink-0 text-cyan-50">{Math.round((item.count / totalCount) * 100)}%</span>
             </div>
-            <div className="mt-1.5 h-2.5 rounded-full bg-cyan-100/20">
+            <div className="mt-[clamp(0.2rem,0.8vh,0.4rem)] h-[clamp(6px,1.3vh,10px)] rounded-full bg-cyan-100/20">
               <div className="h-full rounded" style={{ width: `${(item.count / maxCount) * 100}%`, backgroundColor: palette[idx] ?? "#67e8f9" }} />
             </div>
           </div>
@@ -691,88 +691,83 @@ function ReactorMbtiOverlay({ mbtiDistribution, viewerName }: { mbtiDistribution
 
   return (
     <div className="pointer-events-none absolute inset-0 z-20">
-      <div className="absolute inset-0 flex items-center justify-center px-4 pt-50 sm:pt-14">
-        <div className="grid w-full max-w-[620px] grid-cols-1 items-center gap-4 text-emerald-100 sm:grid-cols-[200px_1fr] sm:gap-6">
-          <div className="relative h-[200px] w-[200px] justify-self-center">
-            <svg viewBox="0 0 120 120" className="h-full w-full">
-              {rings.map((ring, idx) => {
-                const radius = ringRadii[idx] ?? 15;
-                const axisTotal = Math.max(ring.left.value + ring.right.value, 1);
-                const leftProp = ring.left.value / axisTotal;
-                const rightProp = ring.right.value / axisTotal;
-                const startAngle = ringAngles[idx] ?? baseAngle;
-                const leftEndAngle = startAngle + leftProp * 360;
-                const rightEndAngle = startAngle + 360;
-                const leftPath = describeArcPath(60, 60, radius, startAngle, leftEndAngle);
-                const rightPath = describeArcPath(60, 60, radius, leftEndAngle, rightEndAngle);
-                return (
-                  <g key={ring.axis}>
-                    {leftProp > 0 && (
-                      <motion.path
-                        d={leftPath}
-                        fill="none"
-                        stroke={ring.left.color}
-                        strokeWidth="6"
-                        strokeLinecap="butt"
-                        initial={{ pathLength: 0, opacity: 0.7 }}
-                        animate={{ pathLength: 1, opacity: 1 }}
-                        transition={{ duration: 0.6, delay: idx * 0.08, ease: "easeOut" }}
-                      />
-                    )}
-                    {rightProp > 0 && (
-                      <motion.path
-                        d={rightPath}
-                        fill="none"
-                        stroke={ring.right.color}
-                        strokeWidth="6"
-                        strokeLinecap="butt"
-                        initial={{ pathLength: 0, opacity: 0.7 }}
-                        animate={{ pathLength: 1, opacity: 1 }}
-                        transition={{ duration: 0.6, delay: 0.05 + idx * 0.08, ease: "easeOut" }}
-                      />
-                    )}
-                  </g>
-                );
-              })}
-            </svg>
-            <svg viewBox="0 0 120 120" className="absolute inset-0 h-full w-full z-30">
-              <path d={curvePath} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="0.5" transform="rotate(90 60 60)" />
-              <motion.path
-                d={curvePath}
-                fill="none"
-                stroke="rgba(255,255,255,0.95)"
-                strokeWidth="0.7"
-                strokeLinecap="round"
-                strokeDasharray="2.2 2.2"
-                transform="rotate(0 60 60)"
-                animate={{ strokeDashoffset: [0, -18] }}
-                transition={{ duration: 3.8, repeat: Infinity, ease: "linear" }}
-              />
-            </svg>
-          </div>
-          <div className="w-full space-y-2 text-sm">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-emerald-200">MBTI Trait Breakdown</p>
-            {rings.map((ring) => (
-              <div key={ring.axis} className="flex items-center justify-between gap-3 rounded-full border border-emerald-200/25 bg-black/20 px-3 py-1.5">
-                <span className="text-[12px] tracking-wide text-emerald-100/90">{ring.axis}</span>
-                <div className="flex items-center gap-2 text-[12px]">
-                  <span className="inline-flex items-center gap-1">
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ring.left.color }} />
-                    {ring.left.label} {ring.left.value}/{validTotal}
-                  </span>
-                  <span className="text-emerald-100/60">|</span>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ring.right.color }} />
-                    {ring.right.label} {ring.right.value}/{validTotal}
-                  </span>
-                </div>
-              </div>
-            ))}
-            {invalidTotal > 0 && <p className="text-[10px] text-emerald-100/70">Dropped {invalidTotal} invalid MBTI entries.</p>}
-          </div>
-        </div>
+      <div className="absolute left-1/2 top-1/2 h-[clamp(140px,28vw,220px)] w-[clamp(140px,28vw,220px)] -translate-x-1/2 -translate-y-1/2">
+        <svg viewBox="0 0 120 120" className="h-full w-full">
+          {rings.map((ring, idx) => {
+            const radius = ringRadii[idx] ?? 15;
+            const axisTotal = Math.max(ring.left.value + ring.right.value, 1);
+            const leftProp = ring.left.value / axisTotal;
+            const rightProp = ring.right.value / axisTotal;
+            const startAngle = ringAngles[idx] ?? baseAngle;
+            const leftEndAngle = startAngle + leftProp * 360;
+            const rightEndAngle = startAngle + 360;
+            const leftPath = describeArcPath(60, 60, radius, startAngle, leftEndAngle);
+            const rightPath = describeArcPath(60, 60, radius, leftEndAngle, rightEndAngle);
+            return (
+              <g key={ring.axis}>
+                {leftProp > 0 && (
+                  <motion.path
+                    d={leftPath}
+                    fill="none"
+                    stroke={ring.left.color}
+                    strokeWidth="6"
+                    strokeLinecap="butt"
+                    initial={{ pathLength: 0, opacity: 0.7 }}
+                    animate={{ pathLength: 1, opacity: 1 }}
+                    transition={{ duration: 0.6, delay: idx * 0.08, ease: "easeOut" }}
+                  />
+                )}
+                {rightProp > 0 && (
+                  <motion.path
+                    d={rightPath}
+                    fill="none"
+                    stroke={ring.right.color}
+                    strokeWidth="6"
+                    strokeLinecap="butt"
+                    initial={{ pathLength: 0, opacity: 0.7 }}
+                    animate={{ pathLength: 1, opacity: 1 }}
+                    transition={{ duration: 0.6, delay: 0.05 + idx * 0.08, ease: "easeOut" }}
+                  />
+                )}
+              </g>
+            );
+          })}
+        </svg>
+        <svg viewBox="0 0 120 120" className="absolute inset-0 z-30 h-full w-full">
+          <path d={curvePath} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="0.5" transform="rotate(90 60 60)" />
+          <motion.path
+            d={curvePath}
+            fill="none"
+            stroke="rgba(255,255,255,0.95)"
+            strokeWidth="0.7"
+            strokeLinecap="round"
+            strokeDasharray="2.2 2.2"
+            transform="rotate(0 60 60)"
+            animate={{ strokeDashoffset: [0, -18] }}
+            transition={{ duration: 3.8, repeat: Infinity, ease: "linear" }}
+          />
+        </svg>
       </div>
-
+      <div className="absolute inset-x-2 bottom-3 mx-auto w-[min(84vw,32rem)] space-y-[clamp(0.3rem,1vh,0.5rem)] text-[clamp(11px,1.6vw,14px)] text-emerald-100 sm:w-[min(80vw,34rem)]">
+        <p className="text-[clamp(10px,1.3vw,11px)] uppercase tracking-[0.14em] text-emerald-200">MBTI Trait Breakdown</p>
+        {rings.map((ring) => (
+          <div key={ring.axis} className="flex items-center justify-between gap-2 rounded-full border border-emerald-200/25 bg-black/20 px-[clamp(0.55rem,1.5vw,0.75rem)] py-[clamp(0.25rem,0.8vh,0.4rem)]">
+            <span className="text-[clamp(11px,1.4vw,12px)] tracking-wide text-emerald-100/90">{ring.axis}</span>
+            <div className="flex items-center gap-2 text-[clamp(10px,1.35vw,12px)]">
+              <span className="inline-flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ring.left.color }} />
+                {ring.left.label} {ring.left.value}/{validTotal}
+              </span>
+              <span className="text-emerald-100/60">|</span>
+              <span className="inline-flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ring.right.color }} />
+                {ring.right.label} {ring.right.value}/{validTotal}
+              </span>
+            </div>
+          </div>
+        ))}
+        {invalidTotal > 0 && <p className="text-[10px] text-emerald-100/70">Dropped {invalidTotal} invalid MBTI entries.</p>}
+      </div>
     </div>
   );
 }
@@ -790,12 +785,18 @@ export default function MatchWrappedModal({
   const [justUnlockedId, setJustUnlockedId] = useState<string | null>(null);
   const [shareState, setShareState] = useState<ShareState>("idle");
   const [tclTransitioning, setTclTransitioning] = useState(false);
+  const [reactorTransitioning, setReactorTransitioning] = useState(false);
+  const [spectrumTransitioning, setSpectrumTransitioning] = useState(false);
   const [hometownTagRemoved, setHometownTagRemoved] = useState(false);
   const [pushFromBottom, setPushFromBottom] = useState(false);
   const [lockedBounce, setLockedBounce] = useState(false);
   const previousScriptRef = useRef(initialScript);
   const touchStartY = useRef<number | null>(null);
   const tclTransitionTimeoutRef = useRef<number | null>(null);
+  const reactorTransitionStepTimeoutRef = useRef<number | null>(null);
+  const reactorTransitionEndTimeoutRef = useRef<number | null>(null);
+  const spectrumTransitionStepTimeoutRef = useRef<number | null>(null);
+  const spectrumTransitionEndTimeoutRef = useRef<number | null>(null);
   const lockedBounceTimeoutRef = useRef<number | null>(null);
 
   const cards = script.cards;
@@ -897,6 +898,7 @@ export default function MatchWrappedModal({
   }, []);
 
   const goNext = useCallback(() => {
+    if (reactorTransitioning || spectrumTransitioning) return;
     if (!unlocked) {
       triggerLockedBounce();
       return;
@@ -905,6 +907,38 @@ export default function MatchWrappedModal({
     if (hometownSwipeRequired && index < cards.length - 1) {
       setPushFromBottom(true);
       setIndex((value) => Math.min(value + 1, cards.length - 1));
+      return;
+    }
+    if (cards[index]?.type === "reactorSim" && index < cards.length - 1) {
+      setReactorTransitioning(true);
+      if (reactorTransitionStepTimeoutRef.current) {
+        window.clearTimeout(reactorTransitionStepTimeoutRef.current);
+      }
+      if (reactorTransitionEndTimeoutRef.current) {
+        window.clearTimeout(reactorTransitionEndTimeoutRef.current);
+      }
+      reactorTransitionStepTimeoutRef.current = window.setTimeout(() => {
+        setIndex((value) => Math.min(value + 1, cards.length - 1));
+      }, 420);
+      reactorTransitionEndTimeoutRef.current = window.setTimeout(() => {
+        setReactorTransitioning(false);
+      }, 980);
+      return;
+    }
+    if (cards[index]?.type === "constellationBuild" && cards[index + 1]?.type === "spectrumSplit") {
+      setSpectrumTransitioning(true);
+      if (spectrumTransitionStepTimeoutRef.current) {
+        window.clearTimeout(spectrumTransitionStepTimeoutRef.current);
+      }
+      if (spectrumTransitionEndTimeoutRef.current) {
+        window.clearTimeout(spectrumTransitionEndTimeoutRef.current);
+      }
+      spectrumTransitionStepTimeoutRef.current = window.setTimeout(() => {
+        setIndex((value) => Math.min(value + 1, cards.length - 1));
+      }, 460);
+      spectrumTransitionEndTimeoutRef.current = window.setTimeout(() => {
+        setSpectrumTransitioning(false);
+      }, 1050);
       return;
     }
     if (cards[index]?.type === "neonFlashTransition" && index < cards.length - 1) {
@@ -919,11 +953,12 @@ export default function MatchWrappedModal({
       return;
     }
     setIndex((value) => Math.min(value + 1, cards.length - 1));
-  }, [canProceedFromCurrentCard, cards, hometownSwipeRequired, index, triggerLockedBounce, unlocked]);
+  }, [canProceedFromCurrentCard, cards, hometownSwipeRequired, index, reactorTransitioning, spectrumTransitioning, triggerLockedBounce, unlocked]);
 
   const goBack = useCallback(() => {
+    if (reactorTransitioning || spectrumTransitioning) return;
     setIndex((value) => Math.max(value - 1, 0));
-  }, []);
+  }, [reactorTransitioning, spectrumTransitioning]);
 
   const onTouchStart = useCallback((event: TouchEvent<HTMLDivElement>) => {
     touchStartY.current = event.changedTouches[0]?.clientY ?? null;
@@ -993,6 +1028,18 @@ export default function MatchWrappedModal({
     return () => {
       if (tclTransitionTimeoutRef.current) {
         window.clearTimeout(tclTransitionTimeoutRef.current);
+      }
+      if (reactorTransitionStepTimeoutRef.current) {
+        window.clearTimeout(reactorTransitionStepTimeoutRef.current);
+      }
+      if (reactorTransitionEndTimeoutRef.current) {
+        window.clearTimeout(reactorTransitionEndTimeoutRef.current);
+      }
+      if (spectrumTransitionStepTimeoutRef.current) {
+        window.clearTimeout(spectrumTransitionStepTimeoutRef.current);
+      }
+      if (spectrumTransitionEndTimeoutRef.current) {
+        window.clearTimeout(spectrumTransitionEndTimeoutRef.current);
       }
       if (lockedBounceTimeoutRef.current) {
         window.clearTimeout(lockedBounceTimeoutRef.current);
@@ -1095,6 +1142,74 @@ export default function MatchWrappedModal({
                 {currentCard.type === "reactorSim" && <ReactorMbtiOverlay mbtiDistribution={mbtiDistribution} viewerName={script.meta.viewerName} />}
                 <KineticBackground type={currentCard.type} unlocked={unlocked} />
                 <AnimatePresence>
+                  {reactorTransitioning && (
+                    <motion.div
+                      className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center overflow-hidden"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <motion.div
+                        className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.24),rgba(34,211,238,0.14),rgba(0,0,0,0)_68%)]"
+                        animate={{ opacity: [0.2, 0.75, 0.15] }}
+                        transition={{ duration: 0.9, ease: "easeInOut" }}
+                      />
+                      {[0, 1, 2, 3].map((ringIdx) => (
+                        <motion.div
+                          key={`reactor-zoom-ring-${ringIdx}`}
+                          className="absolute rounded-full border"
+                          style={{
+                            width: 120 + ringIdx * 42,
+                            height: 120 + ringIdx * 42,
+                            borderColor: ["#22c55e", "#38bdf8", "#a78bfa", "#f472b6"][ringIdx] ?? "#22c55e",
+                          }}
+                          initial={{ scale: 0.9, opacity: 0.7 }}
+                          animate={{ scale: 6.8, opacity: 0 }}
+                          transition={{ duration: 0.95, ease: [0.18, 0.84, 0.35, 1], delay: ringIdx * 0.05 }}
+                        />
+                      ))}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-br from-black/10 via-zinc-900/35 to-black/50"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: [0.05, 0.55, 0.2] }}
+                        transition={{ duration: 1, ease: "easeInOut" }}
+                      />
+                    </motion.div>
+                  )}
+                  {spectrumTransitioning && (
+                    <motion.div
+                      className="pointer-events-none absolute inset-0 z-40 overflow-hidden"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <motion.div
+                        className="absolute inset-0 bg-[linear-gradient(115deg,#ef4444,#f97316,#facc15,#22c55e,#06b6d4,#3b82f6,#a855f7,#ec4899)]"
+                        style={{ backgroundSize: "220% 220%" }}
+                        animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                        transition={{ duration: 1.2, ease: "easeInOut" }}
+                      />
+                      {Array.from({ length: 8 }).map((_, idx) => (
+                        <motion.div
+                          key={`spectrum-curtain-${idx}`}
+                          className="absolute top-0 h-full"
+                          style={{
+                            left: `${idx * 12.5}%`,
+                            width: "12.5%",
+                            background: `linear-gradient(180deg, rgba(255,255,255,${0.14 + (idx % 2) * 0.08}), rgba(255,255,255,0.02))`,
+                          }}
+                          initial={{ y: "100%" }}
+                          animate={{ y: ["100%", "0%", "-100%"] }}
+                          transition={{ duration: 0.95, ease: [0.22, 0.79, 0.33, 1], delay: idx * 0.04 }}
+                        />
+                      ))}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-black/30"
+                        animate={{ opacity: [0.2, 0.6, 0.25] }}
+                        transition={{ duration: 1.05, ease: "easeInOut" }}
+                      />
+                    </motion.div>
+                  )}
                   {tclTransitioning && (
                     <motion.div
                       className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center"
@@ -1135,16 +1250,43 @@ export default function MatchWrappedModal({
                   }`}
                   initial={{ opacity: 0, y: pushFromBottom ? 90 : 12, scale: 0.98 }}
                   animate={{
-                    opacity: tclTransitioning && currentCard.type === "neonFlashTransition" ? 0 : 1,
-                    y: lockedBounce ? [0, -14, 0] : 0,
+                    opacity:
+                      (tclTransitioning && currentCard.type === "neonFlashTransition") ||
+                      (reactorTransitioning && currentCard.type === "reactorSim") ||
+                      (spectrumTransitioning && currentCard.type === "constellationBuild")
+                        ? 0
+                        : 1,
+                    y:
+                      lockedBounce
+                        ? [0, -14, 0]
+                        : spectrumTransitioning && currentCard.type === "constellationBuild"
+                          ? -24
+                          : spectrumTransitioning && currentCard.type === "spectrumSplit"
+                            ? [18, 0]
+                            : 0,
                     scale:
                       tclTransitioning && currentCard.type === "neonFlashTransition"
                         ? 1.55
-                        : justUnlockedId === currentCard.id
-                          ? [1, 1.02, 1]
-                          : 1,
+                        : reactorTransitioning && currentCard.type === "reactorSim"
+                          ? 1.08
+                          : spectrumTransitioning && currentCard.type === "constellationBuild"
+                            ? 0.86
+                            : spectrumTransitioning && currentCard.type === "spectrumSplit"
+                              ? [0.78, 1.03, 1]
+                          : justUnlockedId === currentCard.id
+                            ? [1, 1.02, 1]
+                            : 1,
+                    borderRadius: spectrumTransitioning && currentCard.type === "spectrumSplit" ? ["2rem", "0.75rem"] : "0.75rem",
                   }}
-                  transition={{ duration: tclTransitioning && currentCard.type === "neonFlashTransition" ? 0.35 : 0.35, ease: "easeInOut" }}
+                  transition={{
+                    duration:
+                      tclTransitioning && currentCard.type === "neonFlashTransition"
+                        ? 0.35
+                        : spectrumTransitioning
+                          ? 0.55
+                          : 0.35,
+                    ease: "easeInOut",
+                  }}
                 >
                   {currentCard.id === "full-reveal" && unlocked ? (
                     <FinalRevealStoryCard payload={displayPayload} shareState={shareState} onShare={() => void handleInstagramShare()} />
