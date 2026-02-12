@@ -2,7 +2,7 @@
 
 import { type TouchEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Instagram, Sparkles, X } from "lucide-react";
+import { ArrowUp, Instagram, Lock, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { WrappedScript } from "@/lib/match-wrapped";
 import mockData from "@/mockData.json";
@@ -27,6 +27,7 @@ type RingDatum = {
   left: RingSlice;
   right: RingSlice;
 };
+type ShareState = "idle" | "opened" | "fallback" | "error";
 
 function polarToCartesian(cx: number, cy: number, radius: number, angleDeg: number) {
   const radians = ((angleDeg - 90) * Math.PI) / 180;
@@ -378,6 +379,7 @@ function GenericContent({
 }) {
   const isNeonFlash = cardType === "neonFlashTransition";
   const isHobbiesSlide = cardType === "constellationBuild";
+  const isCompatibilitySlide = cardType === "spectrumSplit";
   return (
     <>
       {"title" in payload && <EmphasisHeadline text={String(payload.title)} variant={isNeonFlash ? "neonFlash" : "default"} />}
@@ -410,7 +412,7 @@ function GenericContent({
         </p>
       )}
       {"compatibilityScore" in payload && (
-        <div className="mt-4 max-w-sm">
+        <div className={`mt-4 max-w-sm ${isCompatibilitySlide ? "mx-auto" : ""}`}>
           <p className="text-xs uppercase tracking-[0.14em] text-zinc-300 font-serif">Your signal score</p>
           <div className="mt-2 h-3 w-full rounded bg-white/20">
             <motion.div
@@ -424,7 +426,7 @@ function GenericContent({
         </div>
       )}
       {"axes" in payload && Array.isArray(payload.axes) && (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className={`mt-3 flex flex-wrap gap-2 ${isCompatibilitySlide ? "justify-center" : ""}`}>
           {payload.axes.map((axis) => (
             <span key={String(axis)} className="rounded-full border border-zinc-300/35 bg-black/35 px-2 py-1 text-xs text-zinc-100">
               {String(axis)}
@@ -433,7 +435,7 @@ function GenericContent({
         </div>
       )}
       {"tags" in payload && Array.isArray(payload.tags) && payload.tags.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className={`mt-4 flex flex-wrap gap-2 ${isHobbiesSlide ? "justify-center" : ""}`}>
           {payload.tags.map((tag) => (
             <span key={String(tag)} className={`rounded-full bg-emerald-500/25 px-3 py-1 text-emerald-100 ${isHobbiesSlide ? "text-xs sm:text-sm" : "text-sm"}`}>
               {String(tag)}
@@ -463,27 +465,156 @@ function GenericContent({
   );
 }
 
-function BlueprintMajorMinorBubble({ items }: { items: StatItem[] }) {
-  const topMajorMinor = items[0];
-  const maxCount = Math.max(...items.map((item) => item.count), 1);
+function HometownBaggageReveal({
+  hometown,
+  revealed,
+  onReveal,
+}: {
+  hometown: string;
+  revealed: boolean;
+  onReveal: () => void;
+}) {
   return (
-    <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 w-[84%] max-w-[380px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-cyan-100/55 bg-[#071c34db] px-4 py-3 text-cyan-100 shadow-[0_12px_45px_rgba(6,24,56,0.45)] backdrop-blur-[2px]">
-      <p className="text-[10px] uppercase tracking-[0.16em] text-cyan-200">Major/Minor Breakdown</p>
-      <div className="mt-2 space-y-1.5">
-        {items.slice(0, 4).map((item) => (
+    <div className="mt-8 flex flex-col items-center">
+      <div className="relative h-44 w-full max-w-sm">
+        <div className="absolute inset-x-2 top-4 h-32 rounded-[28px] bg-zinc-200 shadow-[0_10px_24px_rgba(0,0,0,0.35)]" />
+        <div className="absolute left-2 right-[27%] top-4 h-8 rounded-tl-[28px] rounded-tr-[18px] bg-orange-500" />
+        <div className="absolute left-[74%] right-2 top-4 h-8 rounded-tl-[18px] rounded-tr-[28px] bg-orange-500" />
+        <div className="absolute left-2 right-[27%] top-28 h-8 rounded-bl-[28px] rounded-br-[18px] bg-orange-500" />
+        <div className="absolute left-[74%] right-2 top-28 h-8 rounded-bl-[18px] rounded-br-[28px] bg-orange-500" />
+        <div className="absolute left-[72.6%] top-13 h-1 w-[1px] bg-zinc-300" />
+        <div className="absolute left-[72.6%] top-[58px] h-1 w-[1px] bg-zinc-300" />
+        <div className="absolute left-[72.6%] top-[68px] h-1 w-[1px] bg-zinc-300" />
+        <div className="absolute left-[72.6%] top-[78px] h-1 w-[1px] bg-zinc-300" />
+        <div className="absolute left-[72.6%] top-[88px] h-1 w-[1px] bg-zinc-300" />
+        <div className="absolute left-12 top-[62px] text-[58px] leading-none text-slate-800">✈</div>
+        <div className="absolute left-[39%] top-[56px] h-3 w-[110px] bg-zinc-400/80" />
+        <div className="absolute left-[39%] top-[74px] h-3 w-[110px] bg-zinc-400/80" />
+        <div className="absolute left-[39%] top-[92px] h-3 w-[110px] bg-zinc-400/80" />
+        <div className="absolute left-[78%] top-[54px] h-4 w-3 bg-zinc-400/80" />
+        <div className="absolute left-[86%] top-[54px] h-4 w-3 bg-zinc-400/80" />
+        <div className="absolute left-[78%] top-[78px] h-4 w-3 bg-zinc-400/80" />
+        <div className="absolute left-[86%] top-[78px] h-4 w-3 bg-zinc-400/80" />
+        <motion.button
+          type="button"
+          className="absolute right-[16%] top-[44px] z-10 h-[72px] w-[88px] rounded-2xl border border-zinc-300 bg-white px-2 py-2 text-left shadow-[0_8px_16px_rgba(0,0,0,0.35)]"
+          onClick={() => {
+            if (!revealed) onReveal();
+          }}
+          whileTap={revealed ? undefined : { scale: 0.95, rotate: -3 }}
+          animate={revealed ? { x: 0, y: 0, rotate: -4, opacity: 0, scale: 0.96 } : { x: 0, y: 0, rotate: -4, opacity: 1, scale: 1 }}
+          transition={{ type: "spring", stiffness: 280, damping: 22 }}
+          aria-label="Tap flight ticket to reveal hometown"
+        >
+          <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-black">Tap Me</p>
+          <p className="mt-1 text-[8px] uppercase tracking-[0.08em] text-zinc-500">Reveal Hometown</p>
+          <div className="mt-1 h-1.5 w-full bg-zinc-300" />
+        </motion.button>
+        <AnimatePresence>
+          {revealed && (
+            <motion.div
+              className="absolute inset-x-4 bottom-14 rounded-xl border border-emerald-100/55 bg-black/45 px-3 py-2 text-center"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+            >
+              <p className="text-[10px] uppercase tracking-[0.16em] text-emerald-200">Hometown</p>
+              <p className="mt-1 text-lg font-black text-emerald-100">{hometown}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+      {!revealed && <p className="mt-2 text-xs font-medium text-zinc-100">You need to tap the flight ticket to reveal the hometown and continue.</p>}
+    </div>
+  );
+}
+
+function FinalRevealStoryCard({
+  payload,
+  shareState,
+  onShare,
+}: {
+  payload: Payload;
+  shareState: ShareState;
+  onShare: () => void;
+}) {
+  const name = typeof payload.name === "string" ? payload.name : "Your match";
+  const profileItems =
+    "profile" in payload && Array.isArray(payload.profile)
+      ? payload.profile.filter((item): item is { label: string; value: string } => {
+          if (!item || typeof item !== "object") return false;
+          const label = "label" in item ? item.label : null;
+          const value = "value" in item ? item.value : null;
+          return typeof label === "string" && typeof value === "string";
+        })
+      : [];
+
+  return (
+    <motion.div
+      className="relative max-h-[72vh] overflow-y-auto rounded-3xl border border-white/45 bg-[linear-gradient(160deg,#ff9f1c,#ff4d6d,#8eecf5)] p-4 sm:p-6 text-zinc-950 shadow-[0_18px_55px_rgba(0,0,0,0.35)]"
+      style={{ backgroundSize: "180% 180%" }}
+      animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+      transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+    >
+      <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-white/25 blur-2xl" />
+      <div className="pointer-events-none absolute -bottom-20 -left-14 h-48 w-48 rounded-full bg-fuchsia-200/35 blur-2xl" />
+      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-900/80">Your final reveal</p>
+      <h3 className="mt-2 text-3xl font-black leading-tight text-zinc-950 sm:text-4xl">{name}</h3>
+      <p className="mt-2 text-sm text-zinc-900/85">Everything you unlocked is here in one story-ready card.</p>
+
+      <div className="mt-4 grid gap-2">
+        {profileItems.map((item) => (
+          <div key={`${item.label}-${item.value}`} className="rounded-xl border border-white/25 bg-zinc-900/60 px-3 py-2 backdrop-blur-[1px]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-300">{item.label}</p>
+            <p className="mt-1 text-sm font-medium text-white">{item.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-5 flex items-center gap-3">
+        <Button type="button" onClick={onShare} className="bg-zinc-950 text-white hover:bg-zinc-800">
+          <Instagram className="mr-2 h-4 w-4" />
+          Share to Instagram Story
+        </Button>
+        {shareState === "opened" && <p className="text-sm font-semibold text-zinc-900">Opening Instagram app...</p>}
+        {shareState === "fallback" && <p className="text-sm font-semibold text-zinc-900">Instagram app unavailable. Opened web fallback.</p>}
+        {shareState === "error" && <p className="text-sm font-semibold text-zinc-900">Could not open Instagram right now.</p>}
+      </div>
+    </motion.div>
+  );
+}
+
+function BlueprintMajorMinorBubble({ items }: { items: StatItem[] }) {
+  const topItems = items.slice(0, 4);
+  const maxCount = Math.max(...topItems.map((item) => item.count), 1);
+  const totalCount = Math.max(topItems.reduce((sum, item) => sum + item.count, 0), 1);
+  const palette = ["#67e8f9", "#22d3ee", "#06b6d4", "#0891b2"];
+  return (
+    <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 w-[78%] max-w-[420px] -translate-x-1/2 -translate-y-1/2 px-2 text-cyan-100">
+      <p className="text-xs uppercase tracking-[0.2em] text-cyan-100">Major/Minor Breakdown</p>
+      <div className="mt-3 h-4 overflow-hidden rounded-full border border-cyan-100/35 bg-cyan-100/10">
+        <div className="flex h-full">
+          {topItems.map((item, idx) => (
+            <div key={`seg-${item.label}`} className="h-full" style={{ width: `${(item.count / totalCount) * 100}%`, backgroundColor: palette[idx] ?? "#67e8f9" }} />
+          ))}
+        </div>
+      </div>
+      <div className="mt-4 space-y-3">
+        {topItems.map((item, idx) => (
           <div key={item.label}>
-            <div className="flex items-center justify-between text-[10px]">
-              <span className="truncate pr-2">{item.label}</span>
-              <span>{item.count}</span>
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className="inline-flex min-w-0 items-center gap-2">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: palette[idx] ?? "#67e8f9" }} />
+                <span className="truncate pr-1">{item.label}</span>
+              </span>
+              <span className="shrink-0 text-cyan-50">{Math.round((item.count / totalCount) * 100)}%</span>
             </div>
-            <div className="mt-0.5 h-1 rounded bg-cyan-100/20">
-              <div className="h-full rounded bg-cyan-200/85" style={{ width: `${(item.count / maxCount) * 100}%` }} />
+            <div className="mt-1.5 h-2.5 rounded-full bg-cyan-100/20">
+              <div className="h-full rounded" style={{ width: `${(item.count / maxCount) * 100}%`, backgroundColor: palette[idx] ?? "#67e8f9" }} />
             </div>
           </div>
         ))}
       </div>
-      {topMajorMinor && <p className="mt-2 text-[12px] text-cyan-100">That&apos;s {topMajorMinor.count} people.</p>}
-      <div className="absolute -bottom-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 border-b border-r border-cyan-100/55 bg-[#071c34db]" />
     </div>
   );
 }
@@ -657,16 +788,26 @@ export default function MatchWrappedModal({
   const [index, setIndex] = useState(0);
   const [now, setNow] = useState<Date>(new Date(initialScript.meta.now));
   const [justUnlockedId, setJustUnlockedId] = useState<string | null>(null);
-  const [shareState, setShareState] = useState<"idle" | "shared" | "copied" | "error">("idle");
-  const [neonZooming, setNeonZooming] = useState(false);
+  const [shareState, setShareState] = useState<ShareState>("idle");
+  const [tclTransitioning, setTclTransitioning] = useState(false);
+  const [hometownTagRemoved, setHometownTagRemoved] = useState(false);
+  const [pushFromBottom, setPushFromBottom] = useState(false);
+  const [lockedBounce, setLockedBounce] = useState(false);
   const previousScriptRef = useRef(initialScript);
   const touchStartY = useRef<number | null>(null);
-  const neonZoomTimeoutRef = useRef<number | null>(null);
+  const tclTransitionTimeoutRef = useRef<number | null>(null);
+  const lockedBounceTimeoutRef = useRef<number | null>(null);
 
   const cards = script.cards;
   const currentCard = cards[index];
   const unlocked = isCardUnlocked(script, currentCard);
   const payload = (unlocked ? currentCard.data.unlocked : currentCard.data.locked || currentCard.data.unlocked) as Payload;
+  const hometownSwipeRequired = currentCard.id === "hometown" && unlocked;
+  const canProceedFromCurrentCard = !hometownSwipeRequired || hometownTagRemoved;
+  const displayPayload = useMemo(() => {
+    if (!hometownSwipeRequired || hometownTagRemoved) return payload;
+    return { ...payload, value: "You need to tap the flight ticket to reveal the hometown." };
+  }, [hometownSwipeRequired, hometownTagRemoved, payload]);
 
   // Server-authoritative script refresh at boundaries / polling intervals.
   const refreshScript = useCallback(async () => {
@@ -733,20 +874,52 @@ export default function MatchWrappedModal({
     setShareState("idle");
   }, [index]);
 
+  useEffect(() => {
+    if (currentCard.id !== "hometown" || !unlocked) {
+      setHometownTagRemoved(false);
+    }
+  }, [currentCard.id, unlocked]);
+
+  useEffect(() => {
+    if (!pushFromBottom) return;
+    const timeout = window.setTimeout(() => setPushFromBottom(false), 20);
+    return () => window.clearTimeout(timeout);
+  }, [index, pushFromBottom]);
+
+  const triggerLockedBounce = useCallback(() => {
+    setLockedBounce(true);
+    if (lockedBounceTimeoutRef.current) {
+      window.clearTimeout(lockedBounceTimeoutRef.current);
+    }
+    lockedBounceTimeoutRef.current = window.setTimeout(() => {
+      setLockedBounce(false);
+    }, 360);
+  }, []);
+
   const goNext = useCallback(() => {
+    if (!unlocked) {
+      triggerLockedBounce();
+      return;
+    }
+    if (!canProceedFromCurrentCard) return;
+    if (hometownSwipeRequired && index < cards.length - 1) {
+      setPushFromBottom(true);
+      setIndex((value) => Math.min(value + 1, cards.length - 1));
+      return;
+    }
     if (cards[index]?.type === "neonFlashTransition" && index < cards.length - 1) {
-      setNeonZooming(true);
-      if (neonZoomTimeoutRef.current) {
-        window.clearTimeout(neonZoomTimeoutRef.current);
+      setTclTransitioning(true);
+      if (tclTransitionTimeoutRef.current) {
+        window.clearTimeout(tclTransitionTimeoutRef.current);
       }
-      neonZoomTimeoutRef.current = window.setTimeout(() => {
+      tclTransitionTimeoutRef.current = window.setTimeout(() => {
         setIndex((value) => Math.min(value + 1, cards.length - 1));
-        setNeonZooming(false);
-      }, 360);
+        setTclTransitioning(false);
+      }, 700);
       return;
     }
     setIndex((value) => Math.min(value + 1, cards.length - 1));
-  }, [cards, index]);
+  }, [canProceedFromCurrentCard, cards, hometownSwipeRequired, index, triggerLockedBounce, unlocked]);
 
   const goBack = useCallback(() => {
     setIndex((value) => Math.max(value - 1, 0));
@@ -772,26 +945,33 @@ export default function MatchWrappedModal({
     [goBack, goNext]
   );
 
-  // Web share first, clipboard + Instagram fallback second.
+  // Instagram deeplink first, web fallback second.
   const handleInstagramShare = useCallback(async () => {
-    const name = typeof payload.name === "string" ? payload.name : "my match";
-    const shareText = `I just unlocked my CM Isomer match with ${name}.`;
-    const shareUrl = window.location.href;
+    const instagramDeepLink = "instagram://story-camera";
+    const fallbackUrl = "https://www.instagram.com/create/story/";
+    let didFallback = false;
 
     try {
-      if (navigator.share) {
-        await navigator.share({ title: "CM Isomer Match Wrapped", text: shareText, url: shareUrl });
-        setShareState("shared");
-        return;
-      }
-
-      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
-      setShareState("copied");
-      window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+      window.location.href = instagramDeepLink;
+      window.setTimeout(() => {
+        if (document.visibilityState === "visible") {
+          didFallback = true;
+          window.open(fallbackUrl, "_blank", "noopener,noreferrer");
+          setShareState("fallback");
+        }
+      }, 900);
+      window.setTimeout(() => {
+        if (!didFallback) setShareState("opened");
+      }, 400);
     } catch {
-      setShareState("error");
+      try {
+        window.open(fallbackUrl, "_blank", "noopener,noreferrer");
+        setShareState("fallback");
+      } catch {
+        setShareState("error");
+      }
     }
-  }, [payload.name]);
+  }, []);
 
   const progressDots = useMemo(() => cards.map((card) => card.id), [cards]);
   const mbtiDistribution = useMemo(
@@ -811,8 +991,11 @@ export default function MatchWrappedModal({
 
   useEffect(() => {
     return () => {
-      if (neonZoomTimeoutRef.current) {
-        window.clearTimeout(neonZoomTimeoutRef.current);
+      if (tclTransitionTimeoutRef.current) {
+        window.clearTimeout(tclTransitionTimeoutRef.current);
+      }
+      if (lockedBounceTimeoutRef.current) {
+        window.clearTimeout(lockedBounceTimeoutRef.current);
       }
     };
   }, []);
@@ -837,20 +1020,23 @@ export default function MatchWrappedModal({
 
   return (
     <>
-      {/* Entry CTA anchored to ticket page top-right */}
-      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+      <div className="mb-4 mt-2 flex flex-col items-center">
+        <Button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="h-16 w-16 rounded-full bg-emerald-500 p-0 text-black shadow-lg hover:bg-emerald-400"
+          aria-label="View your match live"
+        >
+          <Sparkles className="h-6 w-6" />
+        </Button>
         <motion.div
-          className="mb-2 flex items-center justify-end gap-2 text-xs font-semibold text-emerald-200 sm:text-sm"
+          className="mt-2 flex items-center justify-center gap-2 text-xs font-semibold text-emerald-200 sm:text-sm"
           animate={{ x: [0, 4, 0] }}
           transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
         >
           <span>Explore your match wrapped</span>
-          <ArrowRight className="h-4 w-4" />
+          <ArrowUp className="h-4 w-4" />
         </motion.div>
-        <Button type="button" onClick={() => setOpen(true)} className="bg-emerald-500 text-black hover:bg-emerald-400 font-semibold shadow-lg text-xs sm:text-sm">
-          <Sparkles className="mr-2 h-4 w-4" />
-          View your match live
-        </Button>
       </div>
 
       <AnimatePresence>
@@ -886,19 +1072,21 @@ export default function MatchWrappedModal({
                 onTouchEnd={onTouchEnd}
                 style={{ touchAction: "pan-y" }}
               >
-                <div className="pointer-events-none absolute left-3 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-2">
+                <div className="pointer-events-none absolute right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-2">
                   {progressDots.map((dotId, dotIndex) => {
                     const isActive = dotIndex === index;
+                    const dotCard = cards[dotIndex];
+                    const isLockedDot = !!dotCard?.gate && !isCardUnlocked(script, dotCard);
                     return (
                       <motion.span
                         key={dotId}
                         className={`flex h-4 w-4 items-center justify-center rounded-full border transition-colors ${
-                          isActive ? "border-zinc-300/45 bg-zinc-300/15" : "border-transparent bg-transparent"
+                          isActive ? "border-zinc-300/45 bg-zinc-300/15" : isLockedDot ? "border-amber-300/55 bg-amber-200/15" : "border-transparent bg-transparent"
                         }`}
                         animate={{ scale: isActive ? 1.05 : 1 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-zinc-100" : "bg-zinc-500/75"}`} />
+                        {isLockedDot ? <Lock className="h-2.5 w-2.5 text-amber-200/90" /> : <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-zinc-100" : "bg-zinc-500/75"}`} />}
                       </motion.span>
                     );
                   })}
@@ -906,37 +1094,72 @@ export default function MatchWrappedModal({
                 {currentCard.type === "blueprintDraftReveal" && <BlueprintMajorMinorBubble items={majorMinorPopularity} />}
                 {currentCard.type === "reactorSim" && <ReactorMbtiOverlay mbtiDistribution={mbtiDistribution} viewerName={script.meta.viewerName} />}
                 <KineticBackground type={currentCard.type} unlocked={unlocked} />
+                <AnimatePresence>
+                  {tclTransitioning && (
+                    <motion.div
+                      className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <motion.div
+                        className="text-7xl font-black tracking-[0.2em] text-transparent sm:text-9xl"
+                        style={{
+                          backgroundImage: "linear-gradient(135deg,#fde047,#fb7185,#38bdf8,#fde047)",
+                          WebkitBackgroundClip: "text",
+                          backgroundSize: "200% 200%",
+                          textShadow: "0 0 25px rgba(255,255,255,0.35)",
+                        }}
+                        animate={{ rotate: [0, 360], scale: [0.7, 1.1, 0.85], backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
+                        transition={{ duration: 0.7, ease: "easeInOut" }}
+                      >
+                        TCL
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 <motion.div
                   key={`${currentCard.id}-${unlocked ? "unlocked" : "locked"}`}
                   className={`relative z-10 rounded-lg p-4 backdrop-blur-[1px] ${
-                    currentCard.type === "neonFlashTransition" ? "bg-black/20 border border-white/25 shadow-[0_0_35px_rgba(255,255,255,0.2)]" : "bg-black/45"
-                  } ${currentCard.type === "neonFlashTransition" ? "absolute left-1/2 top-1/2 flex h-[72vw] max-h-[430px] w-[72vw] max-w-[430px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-3xl text-center sm:h-[58vh] sm:w-[58vh]" : ""}`}
-                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                    currentCard.type === "neonFlashTransition"
+                      ? "bg-black/20 border border-white/25 shadow-[0_0_35px_rgba(255,255,255,0.2)]"
+                      : currentCard.id === "full-reveal"
+                        ? "bg-transparent border-transparent p-0 shadow-none backdrop-blur-0"
+                        : "bg-black/45"
+                  } ${
+                    currentCard.type === "neonFlashTransition"
+                      ? "absolute left-1/2 top-1/2 flex h-[72vw] max-h-[430px] w-[72vw] max-w-[430px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-3xl text-center sm:h-[58vh] sm:w-[58vh]"
+                      : currentCard.type === "constellationBuild" || currentCard.type === "spectrumSplit" || currentCard.id === "match-loading"
+                        ? "absolute left-1/2 top-1/2 w-[90%] max-w-[560px] -translate-x-1/2 -translate-y-1/2 text-center"
+                        : ""
+                  }`}
+                  initial={{ opacity: 0, y: pushFromBottom ? 90 : 12, scale: 0.98 }}
                   animate={{
-                    opacity: neonZooming && currentCard.type === "neonFlashTransition" ? 0 : 1,
-                    y: 0,
+                    opacity: tclTransitioning && currentCard.type === "neonFlashTransition" ? 0 : 1,
+                    y: lockedBounce ? [0, -14, 0] : 0,
                     scale:
-                      neonZooming && currentCard.type === "neonFlashTransition"
+                      tclTransitioning && currentCard.type === "neonFlashTransition"
                         ? 1.55
                         : justUnlockedId === currentCard.id
                           ? [1, 1.02, 1]
                           : 1,
                   }}
-                  transition={{ duration: neonZooming && currentCard.type === "neonFlashTransition" ? 0.35 : 0.35, ease: "easeInOut" }}
+                  transition={{ duration: tclTransitioning && currentCard.type === "neonFlashTransition" ? 0.35 : 0.35, ease: "easeInOut" }}
                 >
-                  <GenericContent payload={payload} unlocked={unlocked} now={now} cardType={currentCard.type} />
-
-                  {currentCard.id === "full-reveal" && unlocked && (
-                    <div className="mt-5 flex items-center gap-3">
-                      <Button type="button" onClick={() => void handleInstagramShare()} className="bg-pink-500 text-black hover:bg-pink-400">
-                        <Instagram className="mr-2 h-4 w-4" />
-                        Share to Instagram
-                      </Button>
-                      {shareState === "shared" && <p className="text-sm text-emerald-200">Shared.</p>}
-                      {shareState === "copied" && <p className="text-sm text-emerald-200">Caption copied. Instagram opened.</p>}
-                      {shareState === "error" && <p className="text-sm text-rose-200">Could not share right now.</p>}
-                    </div>
+                  {currentCard.id === "full-reveal" && unlocked ? (
+                    <FinalRevealStoryCard payload={displayPayload} shareState={shareState} onShare={() => void handleInstagramShare()} />
+                  ) : (
+                    <GenericContent payload={displayPayload} unlocked={unlocked} now={now} cardType={currentCard.type} />
                   )}
+                  {hometownSwipeRequired && (
+                    <HometownBaggageReveal
+                      hometown={typeof payload.value === "string" ? payload.value : "Undisclosed"}
+                      revealed={hometownTagRemoved}
+                      onReveal={() => setHometownTagRemoved(true)}
+                    />
+                  )}
+                  {hometownSwipeRequired && !hometownTagRemoved && <p className="mt-3 text-xs text-amber-200">You need to tap the ticket to unlock the next slide.</p>}
+
                 </motion.div>
               </div>
 

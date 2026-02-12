@@ -75,13 +75,13 @@ type ParticipantRow = {
 
 type MatchRow = Record<string, unknown>;
 
-const DEFAULT_VIEWER_NAME = "Isaac Au";
+const DEFAULT_VIEWER_NAME = "You";
 
 const SCHEDULE: UnlockSchedule = {
-  majorMinorAt: "2026-02-09T23:59:00-05:00",
-  hometownAt: "2026-02-09T23:59:00-05:00",
-  hobbiesAt: "2026-02-09T23:59:00-05:00",
-  fullAt: "2026-02-09T23:59:00-05:00",
+  majorMinorAt: "2026-02-13T21:00:00-05:00",
+  hometownAt: "2026-02-13T21:30:00-05:00",
+  hobbiesAt: "2026-02-13T22:00:00-05:00",
+  fullAt: "2026-02-13T23:00:00-05:00",
 };
 
 const VIEWER_ANDREW_KEYS = ["harvested_andrewIDs", "harvested_andrewids", "harvested_andrew_id", "andrew_id", "andrewID", "andrewid"];
@@ -353,8 +353,6 @@ export async function hasWrappedMatch(viewerAndrewID?: string): Promise<boolean>
       .select("harvested_andrewIDs")
       .eq("harvested_andrewIDs", normalizedViewerAndrewID)
       .limit(1);
-    
-    console.log(normalizedViewerAndrewID, data)
 
     if (error) {
       throw error;
@@ -546,8 +544,12 @@ export async function buildWrappedScript(partyId: string, viewerAndrewID?: strin
             { label: "Age", value: match.age || "N/A" },
             { label: "Gender", value: match.gender || "N/A" },
             { label: "Preferences", value: match.preferences || "N/A" },
+            { label: "Major/Minor", value: match.majorMinor || "Undisclosed" },
+            { label: "Hometown", value: match.hometown || "Undisclosed" },
+            { label: "Hobbies", value: match.hobbies || "Undisclosed" },
             { label: "Organizations", value: match.organizations || "N/A" },
             { label: "MBTI Personality", value: match.mbti || "N/A" },
+            { label: "Compatibility Score", value: `${overlapScore}%` },
             { label: "Ideal Date", value: match.idealDate || "N/A" },
             { label: "Ideal Type Archetype", value: match.idealTypeArchetype || "N/A" },
           ],

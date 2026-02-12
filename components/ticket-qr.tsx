@@ -13,29 +13,22 @@ interface TicketQRProps {
   onCheckedIn?: () => void;
 }
 
-function withTimestamp(src: string, tick: number): string {
-  if (!src || src === "/placeholder.svg") return src;
-  return src.includes("?") ? `${src}&t=${tick}` : `${src}?t=${tick}`;
-}
-
 export default function TicketQR({
   partySlug,
   token,
   initialQr,
   width = 200,
   height = 200,
-  onCheckedIn,
 }: TicketQRProps) {
   const [qr, setQr] = useState<string>(initialQr || "/placeholder.svg");
-  const [tick, setTick] = useState<number>(Date.now());
   const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     async function fetchTicket() {
+      const tableName = `registrations_${partySlug.replace(/-/g, "_")}`;
       const { data, error } = await supabase
-        .from("tickets")
+        .from(tableName)
         .select("*")
-        .eq("party_slug", partySlug)
         .eq("confirmation_token", token)
         .single();
 
@@ -47,7 +40,6 @@ export default function TicketQR({
       if (data && data.qr_code) {
         setQr(data.qr_code);
       }
-      setTick(Date.now());
     }
 
     // Initial fetch on mount.

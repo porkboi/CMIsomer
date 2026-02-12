@@ -27,6 +27,9 @@ export default function TicketMatchLiveHost({
 
   return (
     <>
+      <AutoRefresh disabled={matchWrappedOpen}>
+        <TicketQR partySlug={partySlug} token={token} initialQr={initialQr} width={200} height={200} />
+      </AutoRefresh>
       {showMatchWrapped && wrappedScript && (
         <MatchWrappedModal
           partyId={partySlug}
@@ -35,9 +38,6 @@ export default function TicketMatchLiveHost({
           onOpenChange={setMatchWrappedOpen}
         />
       )}
-      <AutoRefresh disabled={matchWrappedOpen}>
-        <TicketQR partySlug={partySlug} token={token} initialQr={initialQr} width={200} height={200} />
-      </AutoRefresh>
     </>
   );
 }
