@@ -623,7 +623,7 @@ function FinalRevealStoryCard({
               </p>
               <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm font-semibold text-zinc-100">
                 <li>FIND YOUR DATE</li>
-                <li>GO ON A DATE (now to whenever)</li>
+                <li>GO ON A DATE (2/14 9am to whenever)</li>
                 <li>Hope you are the first 20 couples.</li>
                 <li>Submit a photo of your date WITH YOUR FACES IN IT to @meetcutcmu</li>
               </ol>
