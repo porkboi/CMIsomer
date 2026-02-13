@@ -78,10 +78,10 @@ type MatchRow = Record<string, unknown>;
 const DEFAULT_VIEWER_NAME = "You";
 
 const SCHEDULE: UnlockSchedule = {
-  majorMinorAt: "2026-02-13T22:00:00-05:00",
-  hometownAt: "2026-02-13T22:30:00-05:00",
-  hobbiesAt: "2026-02-13T23:00:00-05:00",
-  fullAt: "2026-02-13T23:30:00-05:00",
+  majorMinorAt: "2026-02-11T22:00:00-05:00",
+  hometownAt: "2026-02-11T22:30:00-05:00",
+  hobbiesAt: "2026-02-11T23:00:00-05:00",
+  fullAt: "2026-02-11T23:30:00-05:00",
 };
 
 const VIEWER_ANDREW_KEYS = ["harvested_andrewIDs", "harvested_andrewids", "harvested_andrew_id", "andrew_id", "andrewID", "andrewid"];
@@ -89,7 +89,27 @@ const MATCHED_ANDREW_KEYS = ["matched_andrewID", "matched_andrewid", "matched_an
 const NAME_KEYS = ["name", "Name"];
 
 function normalizeName(value: string): string {
-  return value.trim().toLowerCase();
+  return value.trim().toLowerCase().normalize("NFKC");
+}
+
+function hashStringToUint32(value: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i++) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function getDeterministicCompatibilityScore(viewerName: string, matchName: string): number {
+  const normalizedViewer = normalizeName(viewerName);
+  const normalizedMatch = normalizeName(matchName);
+  const [firstName, secondName] =
+    normalizedViewer <= normalizedMatch
+      ? [normalizedViewer, normalizedMatch]
+      : [normalizedMatch, normalizedViewer];
+  const seed = `${firstName}|${secondName}`;
+  return 91 + (hashStringToUint32(seed) % 9);
 }
 
 function normalizeAndrewID(value: string): string {
@@ -397,20 +417,7 @@ export async function buildWrappedScript(partyId: string, viewerAndrewID?: strin
   const now = nowInput ?? new Date();
   const schedule = getUnlockSchedule();
   const gateState = computeGateState(now, schedule);
-  const overlapScore = (() => {
-    const viewerHobbies = new Set(
-      (viewer.hobbies || "")
-        .split(",")
-        .map((value) => value.trim().toLowerCase())
-        .filter(Boolean)
-    );
-    const matchHobbies = (match.hobbies || "")
-      .split(",")
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-    const shared = matchHobbies.filter((item) => viewerHobbies.has(item)).length;
-    return Math.min(98, 40 + shared * 14);
-  })();
+  const overlapScore = getDeterministicCompatibilityScore(viewer.name, match.name);
 
   const cards: WrappedCard[] = [
     {
