@@ -1078,7 +1078,7 @@ export default function MatchWrappedModal({
   );
   const pickupLine = useMemo(() => {
     const lines = [
-      '"You have big eyes small face whats yo Wechat"',
+      "You have big eyes small face whats yo Wechat",
       "Are you French? Because Eiffel for you.",
       "Do you have a name, or can I just call you mine? (Too soon? I'll pace myself.)",
       "Are you made of sugar? Because you just raised my blood pressure.",
