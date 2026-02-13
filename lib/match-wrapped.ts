@@ -78,10 +78,10 @@ type MatchRow = Record<string, unknown>;
 const DEFAULT_VIEWER_NAME = "You";
 
 const SCHEDULE: UnlockSchedule = {
-  majorMinorAt: "2026-02-13T21:00:00-05:00",
-  hometownAt: "2026-02-13T21:30:00-05:00",
-  hobbiesAt: "2026-02-13T22:00:00-05:00",
-  fullAt: "2026-02-13T23:00:00-05:00",
+  majorMinorAt: "2026-02-11T21:00:00-05:00",
+  hometownAt: "2026-02-11T21:30:00-05:00",
+  hobbiesAt: "2026-02-11T22:00:00-05:00",
+  fullAt: "2026-02-11T23:00:00-05:00",
 };
 
 const VIEWER_ANDREW_KEYS = ["harvested_andrewIDs", "harvested_andrewids", "harvested_andrew_id", "andrew_id", "andrewID", "andrewid"];

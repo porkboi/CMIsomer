@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import AutoRefresh from "@/components/auto-refresh";
 import TicketQR from "@/components/ticket-qr";
 import MatchWrappedModal from "@/components/match-wrapped-modal";
 import type { WrappedScript } from "@/lib/match-wrapped";
@@ -27,9 +26,14 @@ export default function TicketMatchLiveHost({
 
   return (
     <>
-      <AutoRefresh disabled={matchWrappedOpen}>
-        <TicketQR partySlug={partySlug} token={token} initialQr={initialQr} width={200} height={200} />
-      </AutoRefresh>
+      <TicketQR
+        partySlug={partySlug}
+        token={token}
+        initialQr={initialQr}
+        width={200}
+        height={200}
+        pollingEnabled={!matchWrappedOpen}
+      />
       {showMatchWrapped && wrappedScript && (
         <MatchWrappedModal
           partyId={partySlug}

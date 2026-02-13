@@ -2,7 +2,7 @@
 
 import { type TouchEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowUp, Instagram, Lock, Sparkles, X } from "lucide-react";
+import { ArrowDown, Instagram, Lock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { WrappedScript } from "@/lib/match-wrapped";
 import mockData from "@/mockData.json";
@@ -538,6 +538,7 @@ function FinalRevealStoryCard({
   shareState: ShareState;
   onShare: () => void;
 }) {
+  const [showWhatsNext, setShowWhatsNext] = useState(false);
   const name = typeof payload.name === "string" ? payload.name : "Your match";
   const profileItems =
     "profile" in payload && Array.isArray(payload.profile)
@@ -571,15 +572,67 @@ function FinalRevealStoryCard({
         ))}
       </div>
 
-      <div className="mt-5 flex items-center gap-3">
-        <Button type="button" onClick={onShare} className="bg-zinc-950 text-white hover:bg-zinc-800">
-          <Instagram className="mr-2 h-4 w-4" />
-          Share to Instagram Story
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button type="button" onClick={onShare} className="bg-zinc-950 text-white hover:bg-zinc-800">
+            <Instagram className="mr-2 h-4 w-4" />
+            Share to Instagram Story
+          </Button>
+          {shareState === "opened" && <p className="text-sm font-semibold text-zinc-900">Opening Instagram app...</p>}
+          {shareState === "fallback" && <p className="text-sm font-semibold text-zinc-900">Instagram app unavailable. Opened web fallback.</p>}
+          {shareState === "error" && <p className="text-sm font-semibold text-zinc-900">Could not open Instagram right now.</p>}
+        </div>
+        <Button
+          type="button"
+          onClick={() => setShowWhatsNext(true)}
+          className="ml-auto animate-pulse border border-zinc-950 bg-black text-white hover:bg-zinc-800"
+        >
+          Whats next
         </Button>
-        {shareState === "opened" && <p className="text-sm font-semibold text-zinc-900">Opening Instagram app...</p>}
-        {shareState === "fallback" && <p className="text-sm font-semibold text-zinc-900">Instagram app unavailable. Opened web fallback.</p>}
-        {shareState === "error" && <p className="text-sm font-semibold text-zinc-900">Could not open Instagram right now.</p>}
       </div>
+
+      <AnimatePresence>
+        {showWhatsNext && (
+          <motion.div
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowWhatsNext(false)}
+          >
+            <motion.div
+              className="relative w-full max-w-lg rounded-2xl border border-white/30 bg-zinc-950 p-5 text-white shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
+              initial={{ y: 18, scale: 0.97, opacity: 0 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              exit={{ y: 10, scale: 0.98, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setShowWhatsNext(false)}
+                className="absolute right-3 top-3 rounded-full border border-zinc-600 p-1.5 text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+                aria-label="Close whats next instructions"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <h4 className="pr-8 text-2xl font-black tracking-tight text-amber-200">Whats next</h4>
+              <p className="mt-4 text-sm font-semibold">Congratulations!</p>
+              <p className="mt-3 text-sm leading-relaxed text-zinc-200">
+                Thank you for joutneying with us on this novel experience at CMU. I know what you are thinking: How do I get the $50? Well...
+              </p>
+              <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm font-semibold text-zinc-100">
+                <li>FIND YOUR DATE</li>
+                <li>GO ON A DATE (now to whenever)</li>
+                <li>Hope you are the first 20 couples.</li>
+                <li>Submit a photo of your date WITH YOUR FACES IN IT to @meetcutcmu</li>
+              </ol>
+              <p className="mt-5 text-sm text-zinc-100">Happy Valentines Day</p>
+              <p className="mt-1 text-sm text-zinc-300">- the meetcut and tcl team &lt;3</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
@@ -1023,6 +1076,20 @@ export default function MatchWrappedModal({
         .map((entry) => ({ label: `${entry.major} + ${entry.minor}`, count: Math.round(entry.percentage) })),
     []
   );
+  const pickupLine = useMemo(() => {
+    const lines = [
+      '"You have big eyes small face whats yo Wechat"',
+      "Are you French? Because Eiffel for you.",
+      "Do you have a name, or can I just call you mine? (Too soon? I'll pace myself.)",
+      "Are you made of sugar? Because you just raised my blood pressure.",
+      "I was going to play it cool, but then you showed up and ruined my entire strategy.",
+      "Is your name Google? Because you have everything I've been searching for... and a few ads I didn't expect.",
+      "I'm not saying you're the reason I forgot how to speak... but I just said \"hi\" in three different accents.",
+      "Are you a parking ticket? Because you've got \"fine\" written all over you.",
+      "I'm not a photographer, but I can definitely picture us arguing about where to eat.",
+    ];
+    return lines[hashStringToUint32(viewerAndrewID) % lines.length];
+  }, [viewerAndrewID]);
 
   useEffect(() => {
     return () => {
@@ -1068,22 +1135,27 @@ export default function MatchWrappedModal({
   return (
     <>
       <div className="mb-4 mt-2 flex flex-col items-center">
-        <Button
+        <motion.div
+          className="mb-2 inline-flex items-center justify-center gap-2 rounded-full border border-emerald-200/65 bg-zinc-900/80 px-4 py-1.5 text-xs font-semibold text-emerald-200 sm:text-sm"
+          animate={{ y: [0, -3, 0] }}
+          transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <span>Click the message to explore your match</span>
+          <ArrowDown className="h-4 w-4" />
+        </motion.div>
+        <motion.button
           type="button"
           onClick={() => setOpen(true)}
-          className="h-16 w-16 rounded-full bg-emerald-500 p-0 text-black shadow-lg hover:bg-emerald-400"
-          aria-label="View your match live"
+          className="group relative w-full rounded-[24px] bg-[#0a84ff] px-4 py-3 text-left text-white shadow-[0_14px_30px_rgba(10,132,255,0.35)] transition hover:bg-[#2e96ff]"
+          initial={{ scale: 0.98 }}
+          animate={{ scale: [1, 1.02, 1] }}
+          transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+          aria-label="Open match wrapped"
         >
-          <Sparkles className="h-6 w-6" />
-        </Button>
-        <motion.div
-          className="mt-2 flex items-center justify-center gap-2 text-xs font-semibold text-emerald-200 sm:text-sm"
-          animate={{ x: [0, 4, 0] }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <span>Explore your match wrapped</span>
-          <ArrowUp className="h-4 w-4" />
-        </motion.div>
+          <span className="block text-[10px] font-semibold uppercase tracking-[0.15em] text-blue-100/95">New message</span>
+          <p className="mt-1 pr-6 text-sm font-medium leading-relaxed text-white sm:text-base">{pickupLine}</p>
+          <span className="absolute -bottom-2 left-6 h-5 w-5 rotate-45 rounded-[5px] bg-[#0a84ff] transition group-hover:bg-[#2e96ff]" />
+        </motion.button>
       </div>
 
       <AnimatePresence>

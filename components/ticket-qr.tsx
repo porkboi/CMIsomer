@@ -10,6 +10,8 @@ interface TicketQRProps {
   initialQr: string;
   width?: number;
   height?: number;
+  pollingEnabled?: boolean;
+  pollingMs?: number;
   onCheckedIn?: () => void;
 }
 
@@ -19,42 +21,57 @@ export default function TicketQR({
   initialQr,
   width = 200,
   height = 200,
+  pollingEnabled = true,
+  pollingMs = 1000,
 }: TicketQRProps) {
   const [qr, setQr] = useState<string>(initialQr || "/placeholder.svg");
   const intervalRef = useRef<number | null>(null);
+  const requestInFlightRef = useRef(false);
 
   useEffect(() => {
+    if (!pollingEnabled) return;
+    let isMounted = true;
+
     async function fetchTicket() {
-      const tableName = `registrations_${partySlug.replace(/-/g, "_")}`;
-      const { data, error } = await supabase
-        .from(tableName)
-        .select("*")
-        .eq("confirmation_token", token)
-        .single();
+      if (requestInFlightRef.current) return;
+      requestInFlightRef.current = true;
 
-      if (error) {
-        console.log("Error fetching ticket:", error);
-        return;
-      }
+      try {
+        const tableName = `registrations_${partySlug.replace(/-/g, "_")}`;
+        const { data, error } = await supabase
+          .from(tableName)
+          .select("*")
+          .eq("confirmation_token", token)
+          .single();
 
-      if (data && data.qr_code) {
-        setQr(data.qr_code);
+        if (error) {
+          console.log("Error fetching ticket:", error);
+          return;
+        }
+
+        if (isMounted && data && data.qr_code) {
+          setQr(data.qr_code);
+        }
+      } finally {
+        requestInFlightRef.current = false;
       }
     }
 
     // Initial fetch on mount.
     fetchTicket();
 
-    // Poll every second.
-    intervalRef.current = window.setInterval(fetchTicket, 1000);
+    // Poll on a fixed cadence without reloading the page.
+    intervalRef.current = window.setInterval(fetchTicket, pollingMs);
 
     return () => {
+      isMounted = false;
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      requestInFlightRef.current = false;
     };
-  }, [partySlug, token]);
+  }, [partySlug, token, pollingEnabled, pollingMs]);
 
   return (
     <div className="bg-white p-4 rounded-lg mb-6">
