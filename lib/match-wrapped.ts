@@ -329,12 +329,38 @@ function toMatchRows(csvRows: string[][]): MatchRow[] {
     });
 }
 
-async function loadMatchRows(): Promise<MatchRow[]> {
-  const { data, error } = await supabase.from("test_matches").select("*");
+async function loadMatchRowByAndrewId(andrewId: string): Promise<MatchRow | undefined> {
+  const normalized = normalizeAndrewID(andrewId);
+  if (!normalized) return undefined;
+
+  const { data, error } = await supabase
+    .from("test_matches")
+    .select("*")
+    .eq("harvested_andrewIDs", normalized)
+    .limit(1);
+
   if (error) {
     throw error;
   }
-  return (data as MatchRow[]) || [];
+
+  return data?.[0] as MatchRow | undefined;
+}
+
+async function loadMatchRowByName(name: string): Promise<MatchRow | undefined> {
+  const trimmed = name.trim();
+  if (!trimmed) return undefined;
+
+  const { data, error } = await supabase
+    .from("test_matches")
+    .select("*")
+    .eq("name", trimmed)
+    .limit(1);
+
+  if (error) {
+    throw error;
+  }
+
+  return data?.[0] as MatchRow | undefined;
 }
 
 function fallbackParticipant(name: string): ParticipantRow {
@@ -358,10 +384,18 @@ function fallbackParticipant(name: string): ParticipantRow {
   };
 }
 
-function findByName(rows: MatchRow[], name: string): MatchRow | undefined {
-  const normalized = normalizeName(name);
-  if (!normalized) return undefined;
-  return rows.find((row) => normalizeName(getValue(row, NAME_KEYS)) === normalized);
+function projectMatchForGate(match: ParticipantRow, gateState: GateState): ParticipantRow {
+  if (gateState.fullUnlocked) {
+    return match;
+  }
+
+  return {
+    ...fallbackParticipant("Your match"),
+    andrewId: match.andrewId,
+    majorMinor: gateState.majorMinorUnlocked ? match.majorMinor : "Undisclosed",
+    hometown: gateState.hometownUnlocked ? match.hometown : "Undisclosed",
+    hobbies: gateState.hobbiesUnlocked ? match.hobbies : "Undisclosed",
+  };
 }
 
 export async function hasWrappedMatch(viewerAndrewID?: string): Promise<boolean> {
@@ -386,27 +420,29 @@ export async function hasWrappedMatch(viewerAndrewID?: string): Promise<boolean>
 }
 
 export async function buildWrappedScript(partyId: string, viewerAndrewID?: string, nowInput?: Date): Promise<WrappedScript> {
+  const now = nowInput ?? new Date();
+  const schedule = getUnlockSchedule();
+  const gateState = computeGateState(now, schedule);
   const normalizedViewerAndrewID = normalizeAndrewID(viewerAndrewID || "");
 
   let viewer = fallbackParticipant(DEFAULT_VIEWER_NAME);
-  let match = fallbackParticipant("Your match");
+  let fullMatch = fallbackParticipant("Your match");
 
   try {
-    const rows = await loadMatchRows();
-    const viewerRow = findRowByAndrewId(rows, normalizedViewerAndrewID);
+    const viewerRow = await loadMatchRowByAndrewId(normalizedViewerAndrewID);
 
     if (viewerRow) {
       viewer = toParticipantFromMatchRow(viewerRow);
 
       const matchedAndrewId = normalizeAndrewID(getValue(viewerRow, MATCHED_ANDREW_KEYS));
-      const matchedByAndrewRow = matchedAndrewId ? findRowByAndrewId(rows, matchedAndrewId) : undefined;
-      const matchedByNameRow = !matchedByAndrewRow ? findByName(rows, getValue(viewerRow, ["match", "Match"])) : undefined;
+      const matchedByAndrewRow = matchedAndrewId ? await loadMatchRowByAndrewId(matchedAndrewId) : undefined;
+      const matchedByNameRow = !matchedByAndrewRow ? await loadMatchRowByName(getValue(viewerRow, ["match", "Match"])) : undefined;
       const matchRow = matchedByAndrewRow || matchedByNameRow;
 
       if (matchRow) {
-        match = toParticipantFromMatchRow(matchRow);
+        fullMatch = toParticipantFromMatchRow(matchRow);
       } else if (matchedAndrewId) {
-        match = fallbackParticipant(matchedAndrewId);
+        fullMatch = fallbackParticipant(matchedAndrewId);
       }
     }
   } catch (error) {
@@ -414,10 +450,9 @@ export async function buildWrappedScript(partyId: string, viewerAndrewID?: strin
     throw error;
   }
 
-  const now = nowInput ?? new Date();
-  const schedule = getUnlockSchedule();
-  const gateState = computeGateState(now, schedule);
-  const overlapScore = getDeterministicCompatibilityScore(viewer.name, match.name);
+  const match = projectMatchForGate(fullMatch, gateState);
+  const overlapSeedName = gateState.fullUnlocked ? fullMatch.name : fullMatch.andrewId || "your-match";
+  const overlapScore = getDeterministicCompatibilityScore(viewer.name, overlapSeedName);
 
   const cards: WrappedCard[] = [
     {
