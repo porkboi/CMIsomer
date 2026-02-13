@@ -1,0 +1,32 @@
+{
+  "mbtiDistribution": [
+    { "type": "ENTP", "percentage": 8 },
+    { "type": "ENFP", "percentage": 7 },
+    { "type": "ENTJ", "percentage": 7 },
+    { "type": "INTJ", "percentage": 7 },
+    { "type": "ENFJ", "percentage": 5 },
+    { "type": "INFP", "percentage": 5 },
+    { "type": "ISTJ", "percentage": 3 },
+    { "type": "ESTP", "percentage": 3 },
+    { "type": "ESTJ", "percentage": 3 },
+    { "type": "ISFJ", "percentage": 3 },
+    { "type": "INFJ", "percentage": 3 },
+    { "type": "INTP", "percentage": 3 },
+    { "type": "ESFJ", "percentage": 2 },
+    { "type": "ISTP", "percentage": 2 },
+    { "type": "ISFP", "percentage": 2 },
+    { "type": "ESFP", "percentage": 1 }
+  ],
+  "majorMinorPopularity": [
+    { "major": "Electrical and Computer Engineering", "minor": "STEM", "percentage": 17 },
+    { "major": "Computer Science", "minor": "STEM", "percentage": 17 },
+    { "major": "Business Administration", "minor": "Business", "percentage": 13 },
+    { "major": "Statistics and Machine Learning", "minor": "STEM", "percentage": 7 },
+    { "major": "Information Systems", "minor": "STEM", "percentage": 5 },
+    { "major": "Mechanical Engineering", "minor": "STEM", "percentage": 3 },
+    { "major": "Materials Science and Engineering", "minor": "STEM", "percentage": 3 },
+    { "major": "Architecture", "minor": "Arts", "percentage": 3 },
+    { "major": "Design", "minor": "Arts", "percentage": 2 },
+    { "major": "Public Policy", "minor": "STEM", "percentage": 2 }
+  ]
+}

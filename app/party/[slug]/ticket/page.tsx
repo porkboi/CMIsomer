@@ -1,11 +1,11 @@
 import { notFound, redirect } from "next/navigation";
-import { getPartyTickBySlug, getTicketByToken, getCheckedInCount } from "@/lib/actions";
+import { getPartyTickBySlug, getTicketByToken } from "@/lib/actions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import TicketQR from "@/components/ticket-qr";
 import { Ticket, User, Calendar, MapPin, Clock } from "lucide-react";
 import { WalletButtons } from "@/components/wallet-buttons";
 import { formatEventDate } from "@/lib/utils";
-import AutoRefresh from "@/components/auto-refresh";
+import { buildWrappedScript, hasWrappedMatch, MATCH_WRAPPED_PARTY_SLUG } from "@/lib/match-wrapped";
+import TicketMatchLiveHost from "@/components/ticket-match-live-host";
 
 // This page is now server-rendered.
 interface PageProps {
@@ -24,14 +24,15 @@ export default async function TicketPage({ params, searchParams }: PageProps) {
   const ticket = await getTicketByToken(slug, token);
   if (!ticket) redirect(`/party/${slug}?error=invalid_token`);
 
-  const { checkedInCount, maxCapacity } = await getCheckedInCount(slug);
+  const canShowMatchWrapped = slug === MATCH_WRAPPED_PARTY_SLUG && (await hasWrappedMatch(ticket.andrewID));
+  const wrappedScript = canShowMatchWrapped ? await buildWrappedScript(slug, ticket.andrewID) : null;
 
   return (
     <div
       className="min-h-screen bg-zinc-900 text-white"
       style={{ color: "#fff", WebkitTextFillColor: "#fff" }}
     >
-      <div className="container bg-zinc-800 mx-auto px-4 py-8">
+      <div className="container relative bg-zinc-800 mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold bg-linear-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text text-center mb-8">
           Your Ticket for {party.name}
         </h1>
@@ -47,16 +48,14 @@ export default async function TicketPage({ params, searchParams }: PageProps) {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 flex flex-col items-center">
-              {/* AutoRefresh and TicketQR are client components */}
-              <AutoRefresh>
-                <TicketQR
-                  partySlug={slug}
-                  token={token}
-                  initialQr={ticket.qrCode}
-                  width={200}
-                  height={200}
-                />
-              </AutoRefresh>
+              <TicketMatchLiveHost
+                partySlug={slug}
+                token={token}
+                initialQr={ticket.qrCode}
+                showMatchWrapped={canShowMatchWrapped}
+                viewerAndrewID={ticket.andrewID}
+                wrappedScript={wrappedScript}
+              />
               <WalletButtons />
               <div className="w-full space-y-4">
                 <div className="flex items-center gap-3">
