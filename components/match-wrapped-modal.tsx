@@ -1114,12 +1114,9 @@ export default function MatchWrappedModal({
     };
   }, []);
 
-  // Mobile scroll lock: prevent page scroll behind fullscreen modal.
+  // Prevent page scroll behind the modal while it is open.
   useEffect(() => {
     if (!open) return;
-    if (typeof window === "undefined") return;
-    const isMobile = window.matchMedia("(max-width: 639px)").matches;
-    if (!isMobile) return;
 
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
