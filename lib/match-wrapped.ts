@@ -58,6 +58,7 @@ type ParticipantRow = {
   andrewId: string;
   name: string;
   age: string;
+  phoneNumber: string;
   gender: string;
   preferences: string;
   majorMinor: string;
@@ -162,6 +163,7 @@ function toParticipantFromMatchRow(row: MatchRow): ParticipantRow {
     andrewId: getAndrewIdCandidates(row)[0] || normalizeAndrewID(getValue(row, ["andrew_id", "andrewID"])),
     name: getValue(row, NAME_KEYS),
     age: getValue(row, ["age", "Age"]),
+    phoneNumber: getValue(row, ["phone_number", "phone number", "Phone Number"]),
     gender: getValue(row, ["gender", "Gender"]),
     preferences: getValue(row, ["preferred_gender", "preferences", "Preferences"]),
     majorMinor: getValue(row, ["major", "major_minor", "Major/Minor"]),
@@ -234,6 +236,10 @@ function toParticipantRows(csvRows: string[][]): ParticipantRow[] {
   const idx = {
     name: index("Name"),
     age: index("Age"),
+    phoneNumber: header.findIndex((h) => {
+      const normalized = h.trim().toLowerCase();
+      return normalized === "phone_number" || normalized === "phone number";
+    }),
     gender: index("Gender"),
     preferences: index("Preferences"),
     majorMinor: index("Major/Minor"),
@@ -255,6 +261,7 @@ function toParticipantRows(csvRows: string[][]): ParticipantRow[] {
       andrewId: normalizeAndrewID(asString(get(row, index("Email Address")).split("@")[0])),
       name: get(row, idx.name),
       age: get(row, idx.age),
+      phoneNumber: get(row, idx.phoneNumber),
       gender: get(row, idx.gender),
       preferences: get(row, idx.preferences),
       majorMinor: get(row, idx.majorMinor),
@@ -342,6 +349,7 @@ function fallbackParticipant(name: string): ParticipantRow {
     andrewId: "",
     name,
     age: "N/A",
+    phoneNumber: "N/A",
     gender: "N/A",
     preferences: "N/A",
     majorMinor: "Undisclosed",
@@ -548,6 +556,7 @@ export async function buildWrappedScript(partyId: string, viewerAndrewID?: strin
           name: match.name || "Your match",
           profile: [
             { label: "Age", value: match.age || "N/A" },
+            { label: "Phone Number", value: match.phoneNumber || "N/A" },
             { label: "Gender", value: match.gender || "N/A" },
             { label: "Preferences", value: match.preferences || "N/A" },
             { label: "Major/Minor", value: match.majorMinor || "Undisclosed" },
