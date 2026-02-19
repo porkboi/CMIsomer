@@ -1241,6 +1241,94 @@ export async function updateMaxCapacity(
   }
 }
 
+const updatePartyDetailsSchema = z.object({
+  name: z.string().min(2),
+  date: z.string().min(1),
+  location: z.string().min(1),
+})
+
+export async function updatePartyDetails(
+  partySlug: string,
+  partyData: { name: string; date: string; location: string },
+): Promise<{ success: boolean; message: string }> {
+  if (!(await isAuthenticated(partySlug))) {
+    return { success: false, message: "Unauthorized" }
+  }
+
+  try {
+    const validated = updatePartyDetailsSchema.parse(partyData)
+    const { error } = await supabase
+      .from("parties")
+      .update({
+        name: validated.name,
+        event_date: validated.date,
+        location: validated.location,
+      })
+      .eq("slug", partySlug)
+
+    if (error) {
+      console.error("Error updating party details:", error)
+      return { success: false, message: "Failed to update party details" }
+    }
+
+    return { success: true, message: "Party details updated successfully" }
+  } catch (error) {
+    console.error("Error updating party details:", error)
+    return { success: false, message: "An unexpected error occurred" }
+  }
+}
+
+const updateRegistrationSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(2),
+  andrew_id: z.string().min(2),
+  age: z.number().int().min(18),
+  organization: z.string().min(1),
+  payment_method: z.string().min(1),
+  timeslot: z.string().optional().default(""),
+  status: z.enum(["confirmed", "pending", "waitlist"]),
+  price: z.number().min(0),
+})
+
+type UpdateRegistrationPayload = z.infer<typeof updateRegistrationSchema>
+
+export async function updateRegistrationEntry(
+  partySlug: string,
+  payload: UpdateRegistrationPayload,
+): Promise<{ success: boolean; message: string }> {
+  if (!(await isAuthenticated(partySlug))) {
+    return { success: false, message: "Unauthorized" }
+  }
+
+  try {
+    const validated = updateRegistrationSchema.parse(payload)
+    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const { error } = await supabase
+      .from(tableName)
+      .update({
+        name: validated.name,
+        andrew_id: validated.andrew_id,
+        age: validated.age,
+        organization: validated.organization,
+        payment_method: validated.payment_method,
+        timeslot: validated.timeslot || null,
+        status: validated.status,
+        price: validated.price,
+      })
+      .eq("id", validated.id)
+
+    if (error) {
+      console.error("Error updating registration:", error)
+      return { success: false, message: "Failed to update registration" }
+    }
+
+    return { success: true, message: "Registration updated successfully" }
+  } catch (error) {
+    console.error("Error updating registration:", error)
+    return { success: false, message: "An unexpected error occurred" }
+  }
+}
+
 export async function setWaitlistStatus(
   partySlug: string,
   allowWaitlist: boolean,
