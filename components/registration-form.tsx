@@ -110,12 +110,12 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
           ),
         andrewID: z
           .string()
-          .min(2, { message: "Andrew ID must be at least 2 characters." })
+          .min(2, { message: "Andrew/Pitt ID must be at least 2 characters." })
           .refine((val) => !val.includes(" "), {
-            message: "Andrew ID cannot contain spaces.",
+            message: "Andrew/Pitt ID cannot contain spaces.",
           })
           .refine((val) => !val.includes("@"), {
-            message: "Andrew ID, not your email.",
+            message: "Andrew/Pitt ID, not your email.",
           }),
         paymentMethod:
           currentTierPrice > 0
@@ -327,7 +327,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
           </FormControl>{" "}
           <FormDescription>
             Please send the above quoted amount using one of these methods, and
-            include your andrewID in the description:
+            include your andrewID/pittID in the description:
             <br />
             <span className="font-medium">Venmo:</span> {party.venmo_username}
             <br />
@@ -670,7 +670,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
               name="andrewID"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Andrew ID</FormLabel>
+                  <FormLabel>Andrew/Pitt ID</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="jdoe"
@@ -781,7 +781,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
               name="organization"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Organization</FormLabel>
+                  <FormLabel>Organization: Please note to choose the correct college for ticket emailing purposes.</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}

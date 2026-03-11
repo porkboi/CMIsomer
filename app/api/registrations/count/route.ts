@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { registrationTableName } from "@/lib/table-names"
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const tableName = registrationTableName(partySlug)
     const { count, error } = await supabase
       .from(tableName)
       .select("*", { count: "exact", head: true })
@@ -27,4 +28,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 })
   }
 }
-
