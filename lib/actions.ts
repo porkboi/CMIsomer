@@ -11,6 +11,7 @@ import {
 } from "./db-client"
 import { isAuthenticated } from "./auth"
 import { createSlug } from "@/lib/utils"
+import { orgLimitsTableName, registrationTableName, registrationTableSuffix } from "@/lib/table-names"
 import { supabase } from "@/lib/supabase"
 import type { PriceTier } from "@/components/price-tiers-modal"
 import { sendEmail } from "./email"
@@ -66,7 +67,7 @@ export type DatingEntry = z.infer<typeof datingEntrySchema>
 
 // Get all registrations
 export async function getRegistrations(partySlug: string): Promise<Registration[]> {
-  const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+  const tableName = registrationTableName(partySlug)
 
   try {
     const { data, error } = await supabase.from(tableName).select("*").order("created_at", { ascending: false })
@@ -91,7 +92,7 @@ export async function getOrgAllocation(partySlug: string) {
     const confirmed = registrations.filter((reg) => reg.status === "confirmed")
 
     // Get organization limits
-    const tableName = `org_limits_${partySlug.replace(/-/g, "_")}`
+    const tableName = orgLimitsTableName(partySlug)
 
     // Check if the limits table exists
     const { data:tableExists, error } = await supabase
@@ -159,7 +160,7 @@ export async function getTimeslotBreakdown(
   timeslot: string,
 ): Promise<{confirmed: number, pending: number}> {
   try {
-    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const tableName = registrationTableName(partySlug)
     const { data, error } = await supabase
       .from(tableName)
       .select("status")
@@ -185,7 +186,7 @@ export async function getTimeslotSelections(
   partySlug: string,
 ): Promise<{ confirmed: Record<string, number>; pending: Record<string, number> }> {
   try {
-    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const tableName = registrationTableName(partySlug)
     const { data, error } = await supabase
       .from(tableName)
       .select("timeslot, status")
@@ -529,7 +530,7 @@ export async function removeFromList(partySlug: string, id: number) {
   }
 
   try {
-    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const tableName = registrationTableName(partySlug)
     await supabase.from(tableName).delete().eq("id", id)
     return { success: true, message: "Registration removed successfully" }
   } catch (error) {
@@ -544,7 +545,7 @@ export async function removeFromWaitlist(partySlug: string, andrewID: string) {
   }
 
   try {
-    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const tableName = registrationTableName(partySlug)
     await supabase.from(tableName).delete().eq("andrewID", andrewID)
     return { success: true, message: "Registration removed successfully" }
   } catch (error) {
@@ -558,7 +559,7 @@ export async function promoteFromWaitlist(partySlug: string, andrewID: string) {
   }
 
   try {
-    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const tableName = registrationTableName(partySlug)
     await supabase.from(tableName).update({ status: "confirmed" }).eq("andrewID", andrewID)
     return { success: true, message: "Registration confirmed successfully" }
   } catch (error) {
@@ -573,7 +574,7 @@ export async function verifyQRCode(partySlug: string, qrData: string) {
 
   try {
     const data = JSON.parse(qrData)
-    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const tableName = registrationTableName(partySlug)
 
     const { data: registration, error } = await supabase
       .from(tableName)
@@ -664,7 +665,7 @@ const partySchema = z.object({
   locationSecret: z.boolean(),
   enableDatingPool: z.boolean().optional().default(false),
   enableScheduler: z.boolean().optional().default(false),
-  schedule: z.string().min(1)
+  schedule: z.string().optional().default(""),
 })
 
 export async function addPromoCode(partySlug: string, code: string): Promise<{ success: boolean; message?: string; promoCodes?: string[] }> {
@@ -810,8 +811,8 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
         enable_dating_pool: validatedData.enableDatingPool ?? false,
         promo_code: [],
         announcements: [],
-        enable_schedule: validatedData.enableScheduler,
-        schedule: schedule,
+        // enable_schedule: validatedData.enableScheduler,
+        // schedule: schedule,
       })
       .select()
       .single()
@@ -827,7 +828,7 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
 
     // Create the registration table for this party
     const { error: fnError } = await supabase.rpc("create_party_registration_table", {
-      party_slug: slug.replace(/-/g, "_"), // Replace hyphens with underscores for valid table names
+      party_slug: registrationTableSuffix(slug),
     })
 
     if (fnError) {
@@ -969,7 +970,7 @@ export async function addRegistration(
   partySlug: string,
   registration: Omit<Registration, "id" | "createdAt">,
 ): Promise<Registration> {
-  const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+  const tableName = registrationTableName(partySlug)
 
   // Convert camelCase to snake_case for database
   const dbRegistration = {
@@ -1000,7 +1001,7 @@ export async function addRegistration(
 
 export async function getCheckedInCount(partySlug: string): Promise<{ checkedInCount: number; maxCapacity: number }> {
   try {
-    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const tableName = registrationTableName(partySlug)
 
     // Get checked-in count
     const { count: checkedInCount, error: countError } = await supabase
@@ -1039,7 +1040,7 @@ export async function checkInGuest(
   partySlug: string,
   name: string
 ): Promise<void> {
-  const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+  const tableName = registrationTableName(partySlug)
 
   const { data, error: fetchError } = await supabase
   .from(tableName)
@@ -1124,7 +1125,7 @@ export async function updateOrgLimits(partySlug: string, limits: Record<string, 
 
     // Store the limits in a separate table or in party metadata
     // For this example, we'll use a separate table called org_limits
-    const tableName = `org_limits_${partySlug.replace(/-/g, "_")}`
+    const tableName = orgLimitsTableName(partySlug)
 
     // Check if the table exists, create it if not
     const { error: tableCheckError } = await supabase.rpc("exec_sql", {
@@ -1302,7 +1303,7 @@ export async function updateRegistrationEntry(
 
   try {
     const validated = updateRegistrationSchema.parse(payload)
-    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const tableName = registrationTableName(partySlug)
     const { error } = await supabase
       .from(tableName)
       .update({
@@ -1370,7 +1371,7 @@ export async function confirmAttendance(
 
   try {
     // Update the registration status to confirmed
-    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const tableName = registrationTableName(partySlug)
     const { data: registration, error: fetchError } = await supabase
       .from(tableName)
       .select("*")
@@ -1432,7 +1433,15 @@ export async function confirmAttendance(
     }
 
     // Send email to the user using EmailJS
-    const emailTo = `${andrewID}@andrew.cmu.edu`
+    let emailTo = `${andrewID}@andrew.cmu.edu`
+    if (partySlug === "cmu-tcl-x-cmu-lambdas-x-pitt-asa-x-pitt-akdphi") {
+      const org = String(registration.organization || "").toLowerCase()
+      if (org.includes("pitt")) {
+        emailTo = `${andrewID}@pitt.edu`
+      } else if (org.includes("cmu")) {
+        emailTo = `${andrewID}@andrew.cmu.edu`
+      }
+    }
     const confirmationLink = `https://cm-isomer.vercel.app/party/${partySlug}/ticket?token=${token}`
 
     const emailResult = await sendEmail({
@@ -1467,7 +1476,7 @@ export async function confirmAttendance(
 // Add this new server action to get a ticket by token
 export async function getTicketByToken(partySlug: string, token: string) {
   try {
-    const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+    const tableName = registrationTableName(partySlug)
 
     // Get the registration with the matching token
     const { data, error } = await supabase

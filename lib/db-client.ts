@@ -1,4 +1,5 @@
 import { supabase } from "./supabase"
+import { registrationTableName } from "@/lib/table-names"
 
 export type Registration = {
   id: number
@@ -35,7 +36,7 @@ async function checkTableExists(partySlug?: string): Promise<boolean> {
   try {
     // If partySlug is provided, check the party-specific table
     if (partySlug) {
-      const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+      const tableName = registrationTableName(partySlug)
       const { error } = await supabase.from(tableName).select("id").limit(1)
       return !error
     }
@@ -57,7 +58,7 @@ export async function getAllRegistrations(partySlug?: string): Promise<Registrat
     return []
   }
 
-  const tableName = partySlug ? `registrations_${partySlug.replace(/-/g, "_")}` : "registrations"
+  const tableName = partySlug ? registrationTableName(partySlug) : "registrations"
   const { data, error } = await supabase.from(tableName).select("*").order("created_at", { ascending: false })
 
   if (error) {
@@ -79,7 +80,7 @@ export async function addRegistration(
     throw new Error("Table does not exist. Please run the setup SQL script in Supabase.")
   }
 
-  const tableName = `registrations_${partySlug.replace(/-/g, "_")}`
+  const tableName = registrationTableName(partySlug)
 
   // Convert camelCase to snake_case for database
   const dbRegistration = {
@@ -112,7 +113,7 @@ export async function getRegistrationByAndrewID(andrewID: string, partySlug?: st
     throw new Error("Table does not exist. Please run the setup SQL script in Supabase.")
   }
 
-  const tableName = partySlug ? `registrations_${partySlug.replace(/-/g, "_")}` : "registrations"
+  const tableName = partySlug ? registrationTableName(partySlug) : "registrations"
   const { data, error } = await supabase.from(tableName).select("*").eq("andrew_id", andrewID).single()
 
   if (error) {
@@ -134,7 +135,7 @@ export async function getRegistrationCountByOrg(organization: string, partySlug?
     return 0
   }
 
-  const tableName = partySlug ? `registrations_${partySlug.replace(/-/g, "_")}` : "registrations"
+  const tableName = partySlug ? registrationTableName(partySlug) : "registrations"
   const { count, error } = await supabase
     .from(tableName)
     .select("*", { count: "exact", head: true })
@@ -157,7 +158,7 @@ export async function removeRegistration(id: number, partySlug?: string) {
     throw new Error("Table does not exist. Please run the setup SQL script in Supabase.")
   }
 
-  const tableName = partySlug ? `registrations_${partySlug.replace(/-/g, "_")}` : "registrations"
+  const tableName = partySlug ? registrationTableName(partySlug) : "registrations"
   const { error } = await supabase.from(tableName).delete().eq("id", id)
 
   if (error) {
@@ -174,7 +175,7 @@ export async function updateRegistrationStatus(andrewID: string, status: string,
     throw new Error("Table does not exist. Please run the setup SQL script in Supabase.")
   }
 
-  const tableName = partySlug ? `registrations_${partySlug.replace(/-/g, "_")}` : "registrations"
+  const tableName = partySlug ? registrationTableName(partySlug) : "registrations"
   const { error } = await supabase.from(tableName).update({ status }).eq("andrew_id", andrewID)
 
   if (error) {
@@ -182,4 +183,3 @@ export async function updateRegistrationStatus(andrewID: string, status: string,
     throw error
   }
 }
-

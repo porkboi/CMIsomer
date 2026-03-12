@@ -277,6 +277,12 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
   const [newPromo, setNewPromo] = useState<string>("")
   const [allowWaitlist, setAllowWaitlist] = useState<boolean>(party.allow_waitlist)
   const [loadingMessage, setLoadingMessage] = useState<string | null>(null)
+  const [emailSendStatus, setEmailSendStatus] = useState<{
+    state: "loading" | "success" | "error"
+    message: string
+    regId: number
+    andrewId: string
+  } | null>(null)
   const { toast } = useToast()
 
   const withLoading = useCallback(async <T,>(message: string, action: () => Promise<T>) => {
@@ -585,6 +591,50 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
       toast({ title: "Error", description: "Failed to update entry", variant: "destructive" })
     }
   }
+
+  const sendConfirmationEmail = useCallback(
+    async (regId: number, andrewId: string) => {
+      setEmailSendStatus({
+        state: "loading",
+        message: "Sending confirmation email...",
+        regId,
+        andrewId,
+      })
+
+      const result = await confirmAttendance(partySlug, regId, andrewId)
+      const message = result?.message || "Email update completed"
+      const emailFailed =
+        !result?.success ||
+        /issue sending the email/i.test(message) ||
+        /failed to send/i.test(message)
+
+      if (result?.success) {
+        fetchData()
+      }
+
+      if (emailFailed) {
+        setEmailSendStatus({
+          state: "error",
+          message,
+          regId,
+          andrewId,
+        })
+        return
+      }
+
+      setEmailSendStatus({
+        state: "success",
+        message,
+        regId,
+        andrewId,
+      })
+
+      window.setTimeout(() => {
+        setEmailSendStatus(null)
+      }, 1400)
+    },
+    [partySlug, fetchData],
+  )
 
   // Memoized derived data
   const confirmedRegistrations = useMemo(() => registrations.filter((reg) => reg.status === "confirmed"), [registrations]);
@@ -970,15 +1020,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
                           size="sm"
                           variant="outline"
                           onClick={async () => {
-                            const result = await withLoading("Confirming attendee...", () =>
-                              confirmAttendance(partySlug, reg.id, reg.andrew_id),
-                            )
-                            if (result.success) {
-                              toast({ title: "Success", description: result.message, variant: "default" })
-                              handleRefresh()
-                            } else {
-                              toast({ title: "Error", description: result.message, variant: "destructive" })
-                            }
+                            await sendConfirmationEmail(reg.id, reg.andrew_id)
                           }}
                           className="bg-green-900/20 hover:bg-green-900/40"
                           aria-label="Confirm entry"
@@ -1042,15 +1084,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
                         size="sm"
                         variant="outline"
                         onClick={async () => {
-                          const result = await withLoading("Confirming attendee...", () =>
-                            confirmAttendance(partySlug, reg.id, reg.andrew_id),
-                          )
-                          if (result.success) {
-                            toast({ title: "Success", description: result.message, variant: "default" })
-                            handleRefresh()
-                          } else {
-                            toast({ title: "Error", description: result.message, variant: "destructive" })
-                          }
+                          await sendConfirmationEmail(reg.id, reg.andrew_id)
                         }}
                         className="bg-green-900/20 hover:bg-green-900/40"
                         aria-label="Confirm entry"
@@ -1206,6 +1240,59 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
       />
 
       <Toaster />
+
+      {emailSendStatus && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+          <Card className="w-full max-w-sm bg-zinc-950 border-zinc-800">
+            <CardContent className="flex flex-col items-center gap-3 p-6 text-center">
+              {emailSendStatus.state === "loading" && (
+                <div className="flex items-center gap-3 text-purple-300">
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                  <span className="text-sm">Working...</span>
+                </div>
+              )}
+              {emailSendStatus.state === "success" && (
+                <div className="flex items-center gap-3 text-green-400">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-green-900/40">
+                    <Check className="h-5 w-5 animate-bounce" />
+                  </span>
+                  <span className="text-sm font-semibold">Email sent</span>
+                </div>
+              )}
+              {emailSendStatus.state === "error" && (
+                <div className="flex items-center gap-3 text-red-400">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-red-900/40">
+                    <X className="h-5 w-5 animate-pulse" />
+                  </span>
+                  <span className="text-sm font-semibold">Email failed</span>
+                </div>
+              )}
+              <p className="text-sm text-white">{emailSendStatus.message}</p>
+              {emailSendStatus.state === "error" && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      sendConfirmationEmail(emailSendStatus.regId, emailSendStatus.andrewId)
+                    }
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Resend email
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEmailSendStatus(null)}
+                    className="bg-zinc-900 border-zinc-700"
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {loadingMessage && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">

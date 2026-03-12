@@ -187,7 +187,7 @@ export function CreatePartyForm() {
           </div>
 
           <div>
-            <label className="text-sm font-medium">Organizations</label>
+            <label className="text-sm font-medium">Organizations: This affects the email routing so please indicate Pitt/CMU Org</label>
             <Input
               {...register("organizations", {
                 required: "Organizations are required",

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import { registrationTableName } from "@/lib/table-names";
 
 interface TicketQRProps {
   partySlug: string;
@@ -37,7 +38,7 @@ export default function TicketQR({
       requestInFlightRef.current = true;
 
       try {
-        const tableName = `registrations_${partySlug.replace(/-/g, "_")}`;
+        const tableName = registrationTableName(partySlug);
         const { data, error } = await supabase
           .from(tableName)
           .select("*")
