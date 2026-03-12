@@ -85,6 +85,7 @@ const bucketRegistrationsByHour = (regs: Registration[]) => {
     const bucketStart = Math.floor(ts / bucketMs) * bucketMs
     buckets[bucketStart] = (buckets[bucketStart] || 0) + 1
   })
+  
 
   const sortedBuckets = Object.entries(buckets)
     .map(([bucketStart, count]) => ({
