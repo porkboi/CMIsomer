@@ -19,6 +19,33 @@ import bcrypt from "bcrypt"
 import { kMaxLength } from "buffer"
 
 const REFERRAL_DISCOUNT_PARTY_SLUG = "cmu-tcl-x-cmu-lambdas-x-pitt-asa-x-pitt-akdphi"
+const ANDREW_ID_PROMO_SET = new Set([
+  "jasonshi",
+  "rbustama",
+  "brianpar",
+  "yichenma",
+  "wesleyzh",
+  "tianzez",
+  "yuehanh",
+  "jaydenl",
+  "zhanminl",
+  "ruijianj",
+  "kmawalkar",
+  "justinku",
+  "joonpyol",
+  "chenggus",
+  "adrianl2",
+  "zhuoyunz",
+  "zhengqiz",
+  "siruid",
+  "henryle2",
+  "jonasq",
+  "songyij",
+  "myoun",
+  "eugenehw",
+  "pchivatx",
+  "yimings2",
+])
 
 // Define the registration schema
 const registrationSchema = z.object({
@@ -34,7 +61,7 @@ const registrationSchema = z.object({
   promoCode: z.string().optional(),
   price: z.number().optional(), // optional client-provided final price (trusted only after promo redeem)
   appliedPromoCode: z.string().nullable().optional(),
-  referredAndrewID: z.string().optional(),
+  appliedAndrewIDCode: z.string().nullable().optional(),
 })
 
 const datingEntrySchema = z.object({
@@ -467,52 +494,6 @@ async function getCurrentTierForParty(partySlug: string): Promise<{ name: string
   }
 }
 
-export async function validateReferralAndrewID(
-  partySlug: string,
-  referredAndrewID: string,
-  registrantAndrewID?: string,
-): Promise<{ valid: boolean; name?: string; message?: string }> {
-  try {
-    if (partySlug !== REFERRAL_DISCOUNT_PARTY_SLUG) {
-      return { valid: false, message: "Referral discount is not enabled for this party." }
-    }
-
-    const normalizedReferral = referredAndrewID.trim().toLowerCase()
-    const normalizedRegistrant = String(registrantAndrewID || "").trim().toLowerCase()
-
-    if (!normalizedReferral) {
-      return { valid: false, message: "Enter an AndrewID first." }
-    }
-
-    if (normalizedRegistrant && normalizedRegistrant === normalizedReferral) {
-      return { valid: false, message: "You cannot use your own AndrewID for this discount." }
-    }
-
-    const tableName = registrationTableName(partySlug)
-    const { data, error } = await supabase
-      .from(tableName)
-      .select("name,andrew_id,status")
-      .eq("status", "confirmed")
-      .ilike("andrew_id", normalizedReferral)
-      .limit(1)
-
-    if (error) {
-      console.error("Error validating referral AndrewID:", error)
-      return { valid: false, message: "Unable to validate AndrewID right now." }
-    }
-
-    const match = data?.[0]
-    if (!match || !match.name || !String(match.name).trim()) {
-      return { valid: false, message: "No confirmed attendee found for that AndrewID." }
-    }
-
-    return { valid: true, name: match.name }
-  } catch (error) {
-    console.error("validateReferralAndrewID error:", error)
-    return { valid: false, message: "Unable to validate AndrewID right now." }
-  }
-}
-
 // Submit a new registration with QR code
 export async function submitRegistration(partySlug: string, formData: z.infer<typeof registrationSchema>) {
   try {
@@ -541,23 +522,14 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
     let price = currentTier.price || party.ticket_price
     let tierName = currentTier.name || "Standard"
 
-    const normalizedRegistrant = validatedData.andrewID.trim().toLowerCase()
-    const normalizedReferral = validatedData.referredAndrewID?.trim().toLowerCase()
-    const shouldCheckReferral =
+    const normalizedAndrewIdCode = validatedData.appliedAndrewIDCode?.trim().toLowerCase()
+    const shouldApplyAndrewIdPromo =
       partySlug === REFERRAL_DISCOUNT_PARTY_SLUG &&
-      !!normalizedReferral &&
-      normalizedReferral.length > 0 &&
-      normalizedReferral !== normalizedRegistrant
+      !!normalizedAndrewIdCode &&
+      ANDREW_ID_PROMO_SET.has(normalizedAndrewIdCode)
 
-    if (shouldCheckReferral) {
-      const referralValidation = await validateReferralAndrewID(
-        partySlug,
-        normalizedReferral,
-        normalizedRegistrant,
-      )
-      if (referralValidation.valid) {
-        price = Math.max(0, price - 1)
-      }
+    if (shouldApplyAndrewIdPromo) {
+      price = Math.max(0, price - 1)
     }
 
     if (validatedData.appliedPromoCode) {

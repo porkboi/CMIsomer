@@ -34,7 +34,6 @@ import {
   redeemPromoCode,
   submitDatingEntry,
   getTimeslotBreakdown,
-  validateReferralAndrewID,
 } from "@/lib/actions";
 import { Party } from "@/lib/types";
 import { Switch } from "@/components/ui/switch";
@@ -55,6 +54,36 @@ type TimeslotBreakdown = {
 const TIMESLOT_CAPACITY = 20;
 const REFERRAL_DISCOUNT_PARTY_SLUG =
   "cmu-tcl-x-cmu-lambdas-x-pitt-asa-x-pitt-akdphi";
+const ANDREW_ID_PROMO_IDS: string[] = [
+  "jasonshi",
+  "rbustama",
+  "brianpar",
+  "yichenma",
+  "wesleyzh",
+  "tianzez",
+  "yuehanh",
+  "jaydenl",
+  "zhanminl",
+  "ruijianj",
+  "kmawalkar",
+  "justinku",
+  "joonpyol",
+  "chenggus",
+  "adrianl2",
+  "zhuoyunz",
+  "zhengqiz",
+  "siruid",
+  "henryle2",
+  "jonasq",
+  "songyij",
+  "myoun",
+  "eugenehw",
+  "pchivatx",
+  "yimings2",
+];
+const ANDREW_ID_PROMO_SET = new Set(
+  ANDREW_ID_PROMO_IDS.map((id) => id.toLowerCase())
+);
 
 export function MiniPieChart({ data }: { data: any[] }) {
   const COLORS = ["#ef4444", "#f97316", "#22c55e"];
@@ -92,13 +121,10 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
   const isMobile = useIsMobile();
 
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
+  const [appliedAndrewIDCode, setAppliedAndrewIDCode] = useState<string | null>(
+    null
+  );
   const [applyingPromo, setApplyingPromo] = useState(false);
-  const [referralLookupLoading, setReferralLookupLoading] = useState(false);
-  const [referralDiscountApplied, setReferralDiscountApplied] = useState(false);
-  const [displayPriceAdjustment, setDisplayPriceAdjustment] = useState(0);
-  const [validatedReferralAndrewID, setValidatedReferralAndrewID] = useState<
-    string | null
-  >(null);
   const datingPoolEnabled = party.enable_dating_pool ?? false;
   const datingPoolLocked = party.dating_pool_locked ?? false;
   const seekingOptions = ["Women", "Men", "Non-binary", "Open to anyone"];
@@ -108,14 +134,14 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
       priceTiers.length > 0
         ? priceTiers[currentTierIndex]?.price || 0
         : party.ticket_price;
-    const adjusted = Math.max(0, base + displayPriceAdjustment);
+    const adjusted = Math.max(0, base - (appliedAndrewIDCode ? 1 : 0));
     return appliedPromoCode ? 0 : adjusted;
   }, [
     priceTiers,
     currentTierIndex,
     party.ticket_price,
     appliedPromoCode,
-    displayPriceAdjustment,
+    appliedAndrewIDCode,
   ]);
 
   const formSchema = useMemo(
@@ -140,15 +166,6 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
           })
           .refine((val) => !val.includes("@"), {
             message: "Andrew/Pitt ID, not your email.",
-          }),
-        referredAndrewID: z
-          .string()
-          .optional()
-          .refine((val) => !val || !val.includes(" "), {
-            message: "Andrew/Pitt ID cannot contain spaces.",
-          })
-          .refine((val) => !val || !val.includes("@"), {
-            message: "Andrew/Pitt ID, not an email.",
           }),
         paymentMethod:
           currentTierPrice > 0
@@ -205,7 +222,6 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
       name: "",
       age: "",
       andrewID: "",
-      referredAndrewID: "",
       promoCode: "",
       joinDatingPool: false,
       genderIdentity: "",
@@ -456,10 +472,10 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
         // include the final price and applied promo for server-side record
         price: currentTierPrice,
         appliedPromoCode: appliedPromoCode ?? null,
-        referredAndrewID:
+        appliedAndrewIDCode:
           referralFeatureEnabled
-            ? values.referredAndrewID?.trim() || undefined
-            : undefined,
+            ? appliedAndrewIDCode ?? null
+            : null,
       };
 
       const result = await submitRegistration(partySlug, submissionData);
@@ -494,9 +510,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
           variant: "default",
         });
         form.reset();
-        setReferralDiscountApplied(false);
-        setDisplayPriceAdjustment(0);
-        setValidatedReferralAndrewID(null);
+        setAppliedAndrewIDCode(null);
       } else {
         toast({
           title: "Registration failed",
@@ -557,6 +571,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
   const renderTierCard = (tier: any, index: number) => {
     const { isCurrent, isPast } = getTicketTierStatus(index);
     const { status, className } = getAvailabilityStatus(isCurrent, isPast);
+    const displayedPrice = isCurrent ? currentTierPrice : tier.price;
 
     return (
       <Card
@@ -588,7 +603,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
           <div className="flex justify-between items-center">
             <div>
               <p className="text-2xl font-bold text-white">
-                {formatPrice(tier.price)}
+                {formatPrice(displayedPrice)}
               </p>
             </div>
             <div className={`px-3 py-1 rounded-full text-sm ${className}`}>
@@ -722,9 +737,6 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                       className="bg-zinc-900 border-zinc-800"
                       onChange={(e) => {
                         field.onChange(e);
-                        setReferralDiscountApplied(false);
-                        setDisplayPriceAdjustment(0);
-                        setValidatedReferralAndrewID(null);
                       }}
                     />
                   </FormControl>
@@ -732,110 +744,6 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                 </FormItem>
               )}
             />
-
-            {referralFeatureEnabled && (
-              <FormField
-                control={form.control}
-                name="referredAndrewID"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Andrew/Pitt ID of Someone Already Going (Optional)
-                    </FormLabel>
-                    <div className="flex gap-2 items-center">
-                      <FormControl className="flex-1">
-                        <Input
-                          placeholder="friendid"
-                          {...field}
-                          className="bg-zinc-900 border-zinc-800"
-                          disabled={referralLookupLoading}
-                          onChange={(e) => {
-                            field.onChange(e);
-                            setReferralDiscountApplied(false);
-                            setDisplayPriceAdjustment(0);
-                            setValidatedReferralAndrewID(null);
-                          }}
-                        />
-                      </FormControl>
-                      <Button
-                        type="button"
-                        onClick={async () => {
-                          const referralID = form
-                            .getValues("referredAndrewID")
-                            ?.trim();
-                          const registrantID = form.getValues("andrewID")?.trim();
-
-                          if (!referralID) {
-                            toast({
-                              title: "No AndrewID",
-                              description:
-                                "Enter an AndrewID to check referral discount.",
-                              variant: "destructive",
-                            });
-                            return;
-                          }
-
-                          setReferralLookupLoading(true);
-                          try {
-                            const res = await validateReferralAndrewID(
-                              partySlug,
-                              referralID,
-                              registrantID
-                            );
-                            if (!res.valid) {
-                              setReferralDiscountApplied(false);
-                              setDisplayPriceAdjustment(0);
-                              setValidatedReferralAndrewID(null);
-                              toast({
-                                title: "No match",
-                                description:
-                                  res.message ||
-                                  "No attendee found with that AndrewID.",
-                                variant: "destructive",
-                              });
-                              return;
-                            }
-
-                            setReferralDiscountApplied(true);
-                            setDisplayPriceAdjustment(-1);
-                            setValidatedReferralAndrewID(referralID.toLowerCase());
-                            toast({
-                              title: "Discount applied",
-                              description:
-                                "Referral verified. Your ticket price is reduced by $1.",
-                            });
-                          } catch (_error) {
-                            setReferralDiscountApplied(false);
-                            setDisplayPriceAdjustment(0);
-                            setValidatedReferralAndrewID(null);
-                            toast({
-                              title: "Error",
-                              description:
-                                "Unable to validate referral AndrewID right now.",
-                              variant: "destructive",
-                            });
-                          } finally {
-                            setReferralLookupLoading(false);
-                          }
-                        }}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                        disabled={referralLookupLoading}
-                      >
-                        {referralLookupLoading ? "Checking…" : "Check"}
-                      </Button>
-                    </div>
-                    <FormDescription>
-                      If this AndrewID is found in the party registration
-                      database, your price is reduced by $1.
-                      {referralDiscountApplied &&
-                        validatedReferralAndrewID &&
-                        ` Discount active via ${validatedReferralAndrewID}.`}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
 
             <FormField
               control={form.control}
@@ -849,7 +757,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                         placeholder="Enter promo code"
                         {...field}
                         className="bg-zinc-900 border-zinc-800"
-                        disabled={!!appliedPromoCode || applyingPromo}
+                        disabled={!!appliedPromoCode || !!appliedAndrewIDCode || applyingPromo}
                       />
                     </FormControl>
 
@@ -868,19 +776,36 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                         setApplyingPromo(true);
                         try {
                           const res = await redeemPromoCode(partySlug, String(code).trim())
-                          if (!res.success) {
+                          if (res.success) {
+                            setAppliedPromoCode(code);
+                            setAppliedAndrewIDCode(null);
                             toast({
-                              title: "Invalid promo",
-                              description: "Code not valid",
-                              variant: "destructive",
+                              title: "Promo applied",
+                              description: "Ticket set to $0",
+                              variant: "default",
                             });
                             return;
                           }
-                          setAppliedPromoCode(code);
+
+                          const normalizedCode = String(code).trim().toLowerCase();
+                          if (
+                            referralFeatureEnabled &&
+                            ANDREW_ID_PROMO_SET.has(normalizedCode)
+                          ) {
+                            setAppliedPromoCode(null);
+                            setAppliedAndrewIDCode(normalizedCode);
+                            toast({
+                              title: "AndrewID discount applied",
+                              description: "Ticket reduced by $1",
+                              variant: "default",
+                            });
+                            return;
+                          }
+
                           toast({
-                            title: "Promo applied",
-                            description: "Ticket set to $0",
-                            variant: "default",
+                            title: "Invalid promo",
+                            description: "Code not valid",
+                            variant: "destructive",
                           });
                         } catch (err) {
                           toast({
@@ -893,27 +818,33 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                         }
                       }}
                       className={`px-3 py-2 rounded ${
-                        appliedPromoCode ? "bg-green-700 hover:bg-green-800" : "bg-indigo-600 hover:bg-indigo-700"
+                        appliedPromoCode || appliedAndrewIDCode
+                          ? "bg-green-700 hover:bg-green-800"
+                          : "bg-indigo-600 hover:bg-indigo-700"
                       } text-white`}
-                      disabled={applyingPromo || !!appliedPromoCode}
+                      disabled={applyingPromo || !!appliedPromoCode || !!appliedAndrewIDCode}
                     >
-                      {applyingPromo ? "Applying…" : appliedPromoCode ? "Applied" : "Apply"}
+                      {applyingPromo ? "Applying…" : appliedPromoCode || appliedAndrewIDCode ? "Applied" : "Apply"}
                     </Button>
                   </div>
 
                   <div className="mt-2 flex items-center gap-3">
                     <div className="min-w-[140px] h-10 px-3 flex items-center justify-center bg-gradient-to-r from-zinc-900 to-zinc-950 border border-zinc-700 rounded font-mono text-white text-lg tracking-widest">
-                      {appliedPromoCode ?? <span className="text-zinc-500">{field.value || "—"}</span>}
+                      {(appliedPromoCode || appliedAndrewIDCode) ?? <span className="text-zinc-500">{field.value || "—"}</span>}
                     </div>
 
-                    {appliedPromoCode && (
+                    {(appliedPromoCode || appliedAndrewIDCode) && (
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => {
                           setAppliedPromoCode(null);
+                          setAppliedAndrewIDCode(null);
                           form.setValue("promoCode", "");
-                          toast({ title: "Promo removed", description: "Standard pricing restored" });
+                          toast({
+                            title: "Code removed",
+                            description: "Standard pricing restored",
+                          });
                         }}
                         className="h-10 px-3 bg-zinc-900 border-zinc-700 text-white"
                       >
@@ -923,7 +854,9 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                   </div>
 
                   <FormDescription>
-                    Have a promo code? Enter it and click Apply to redeem.
+                    Enter a promo code and click Apply. For{" "}
+                    {REFERRAL_DISCOUNT_PARTY_SLUG}, supported AndrewIDs in the
+                    allowlist also apply a $1 discount.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
