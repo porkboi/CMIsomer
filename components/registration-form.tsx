@@ -85,8 +85,6 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
   const [currentTierCap, setCurrentTierCap] = useState(0);
   const [priceTiers, setPriceTiers] = useState<any[]>([]);
   const [currentTierIndex, setCurrentTierIndex] = useState(0);
-  const [displayTierIndex, setDisplayTierIndex] = useState(0);
-  const [displayTierCap, setDisplayTierCap] = useState(0);
   const [timeslotBreakdown, setTimeslotBreakdown] = useState<
     Record<string, TimeslotBreakdown>
   >({});
@@ -105,30 +103,16 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
   const datingPoolLocked = party.dating_pool_locked ?? false;
   const seekingOptions = ["Women", "Men", "Non-binary", "Open to anyone"];
 
-  const getCumulativeTierCap = (tiers: any[], tierIndex: number) => {
-    if (!tiers.length) return 0;
-    let cumulative = 0;
-    for (let i = 0; i <= tierIndex && i < tiers.length; i++) {
-      cumulative += tiers[i].capacity;
-    }
-    return cumulative;
-  };
-
-  const setDisplayToCurrentTier = (tiers: any[], tierIndex: number) => {
-    setDisplayTierIndex(tierIndex);
-    setDisplayTierCap(getCumulativeTierCap(tiers, tierIndex));
-  };
-
   const currentTierPrice = useMemo(() => {
     const base =
       priceTiers.length > 0
-        ? priceTiers[displayTierIndex]?.price || 0
+        ? priceTiers[currentTierIndex]?.price || 0
         : party.ticket_price;
     const adjusted = Math.max(0, base + displayPriceAdjustment);
     return appliedPromoCode ? 0 : adjusted;
   }, [
     priceTiers,
-    displayTierIndex,
+    currentTierIndex,
     party.ticket_price,
     appliedPromoCode,
     displayPriceAdjustment,
@@ -274,7 +258,6 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
 
         setCurrentTierCap(cumulativeCapacity);
         setCurrentTierIndex(currentIndex);
-        setDisplayToCurrentTier(tiers, currentIndex);
       } catch (error) {
         console.error("Error fetching price tiers:", error);
       }
@@ -282,7 +265,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
 
     fetchRegistrationCount();
     fetchPriceTiers();
-  }, [partySlug, registrationCount, referralDiscountApplied, referralFeatureEnabled]);
+  }, [partySlug, registrationCount]);
 
   useEffect(() => {
     if (!party.enableSchedule) return;
@@ -514,7 +497,6 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
         setReferralDiscountApplied(false);
         setDisplayPriceAdjustment(0);
         setValidatedReferralAndrewID(null);
-        setDisplayToCurrentTier(priceTiers, currentTierIndex);
       } else {
         toast({
           title: "Registration failed",
@@ -535,15 +517,15 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
 
   // Ticket helper functions
   const getTicketTierStatus = (tierIndex: number) => {
-    const isCurrent = tierIndex === displayTierIndex;
-    const isPast = tierIndex < displayTierIndex;
-    const isFuture = tierIndex > displayTierIndex;
+    const isCurrent = tierIndex === currentTierIndex;
+    const isPast = tierIndex < currentTierIndex;
+    const isFuture = tierIndex > currentTierIndex;
 
     return { isCurrent, isPast, isFuture };
   };
 
   const getAvailabilityStatus = (isCurrent: boolean, isPast: boolean) => {
-    const spotsRemaining = displayTierCap - registrationCount;
+    const spotsRemaining = currentTierCap - registrationCount;
     const isSoldOut = spotsRemaining <= 0;
 
     if (isPast)
@@ -743,7 +725,6 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                         setReferralDiscountApplied(false);
                         setDisplayPriceAdjustment(0);
                         setValidatedReferralAndrewID(null);
-                        setDisplayToCurrentTier(priceTiers, currentTierIndex);
                       }}
                     />
                   </FormControl>
@@ -773,7 +754,6 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                             setReferralDiscountApplied(false);
                             setDisplayPriceAdjustment(0);
                             setValidatedReferralAndrewID(null);
-                            setDisplayToCurrentTier(priceTiers, currentTierIndex);
                           }}
                         />
                       </FormControl>
@@ -806,7 +786,6 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                               setReferralDiscountApplied(false);
                               setDisplayPriceAdjustment(0);
                               setValidatedReferralAndrewID(null);
-                              setDisplayToCurrentTier(priceTiers, currentTierIndex);
                               toast({
                                 title: "No match",
                                 description:
@@ -829,7 +808,6 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                             setReferralDiscountApplied(false);
                             setDisplayPriceAdjustment(0);
                             setValidatedReferralAndrewID(null);
-                            setDisplayToCurrentTier(priceTiers, currentTierIndex);
                             toast({
                               title: "Error",
                               description:
