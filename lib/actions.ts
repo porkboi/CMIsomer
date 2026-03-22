@@ -18,6 +18,8 @@ import { sendEmail } from "./email"
 import bcrypt from "bcrypt"
 import { kMaxLength } from "buffer"
 
+const REFERRAL_DISCOUNT_PARTY_SLUG = "cmu-tcl-x-cmu-lambdas-x-pitt-asa-x-pitt-akdphi"
+
 // Define the registration schema
 const registrationSchema = z.object({
   name: z.string().min(2),
@@ -32,6 +34,7 @@ const registrationSchema = z.object({
   promoCode: z.string().optional(),
   price: z.number().optional(), // optional client-provided final price (trusted only after promo redeem)
   appliedPromoCode: z.string().nullable().optional(),
+  referredAndrewID: z.string().optional(),
 })
 
 const datingEntrySchema = z.object({
@@ -426,6 +429,90 @@ export async function getTicketTierInfo(partySlug: string) {
   }
 }
 
+async function getCurrentTierForParty(partySlug: string): Promise<{ name: string; price: number; index: number; tiers: PriceTier[] }> {
+  const priceTiers = await getPriceTiers(partySlug)
+  const registrations = await getRegistrations(partySlug)
+  const confirmedCount = registrations.filter((reg) => reg.status === "confirmed").length
+
+  if (priceTiers.length === 0) {
+    const { data: party } = await supabase
+      .from("parties")
+      .select("ticket_price")
+      .eq("slug", partySlug)
+      .single()
+
+    return {
+      name: "Standard",
+      price: party?.ticket_price ?? 0,
+      index: 0,
+      tiers: [],
+    }
+  }
+
+  let cumulativeCapacity = 0
+  let currentTierIndex = 0
+  for (let i = 0; i < priceTiers.length; i++) {
+    cumulativeCapacity += priceTiers[i].capacity
+    if (confirmedCount < cumulativeCapacity) {
+      currentTierIndex = i
+      break
+    }
+  }
+
+  return {
+    name: priceTiers[currentTierIndex]?.name || "Standard",
+    price: priceTiers[currentTierIndex]?.price ?? 0,
+    index: currentTierIndex,
+    tiers: priceTiers,
+  }
+}
+
+export async function validateReferralAndrewID(
+  partySlug: string,
+  referredAndrewID: string,
+  registrantAndrewID?: string,
+): Promise<{ valid: boolean; name?: string; message?: string }> {
+  try {
+    if (partySlug !== REFERRAL_DISCOUNT_PARTY_SLUG) {
+      return { valid: false, message: "Referral discount is not enabled for this party." }
+    }
+
+    const normalizedReferral = referredAndrewID.trim().toLowerCase()
+    const normalizedRegistrant = String(registrantAndrewID || "").trim().toLowerCase()
+
+    if (!normalizedReferral) {
+      return { valid: false, message: "Enter an AndrewID first." }
+    }
+
+    if (normalizedRegistrant && normalizedRegistrant === normalizedReferral) {
+      return { valid: false, message: "You cannot use your own AndrewID for this discount." }
+    }
+
+    const tableName = registrationTableName(partySlug)
+    const { data, error } = await supabase
+      .from(tableName)
+      .select("name,andrew_id,status")
+      .eq("status", "confirmed")
+      .ilike("andrew_id", normalizedReferral)
+      .limit(1)
+
+    if (error) {
+      console.error("Error validating referral AndrewID:", error)
+      return { valid: false, message: "Unable to validate AndrewID right now." }
+    }
+
+    const match = data?.[0]
+    if (!match || !match.name || !String(match.name).trim()) {
+      return { valid: false, message: "No confirmed attendee found for that AndrewID." }
+    }
+
+    return { valid: true, name: match.name }
+  } catch (error) {
+    console.error("validateReferralAndrewID error:", error)
+    return { valid: false, message: "Unable to validate AndrewID right now." }
+  }
+}
+
 // Submit a new registration with QR code
 export async function submitRegistration(partySlug: string, formData: z.infer<typeof registrationSchema>) {
   try {
@@ -449,14 +536,33 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
     const registrations = await getRegistrations(partySlug)
     const confirmedCount = registrations.filter((reg) => reg.status === "confirmed").length
 
-    // Determine price (allow client override when promo was applied client-side)
-    let price = party.ticket_price
-    let tierName = "Standard"
+    // Determine price from current tier, then apply referral discount and promo override.
+    const currentTier = await getCurrentTierForParty(partySlug)
+    let price = currentTier.price || party.ticket_price
+    let tierName = currentTier.name || "Standard"
 
-    if (typeof validatedData.price === "number") {
-      // Accept explicit price override from client when promo was redeemed server-side via redeemPromoCode
-      price = validatedData.price
-      tierName = validatedData.appliedPromoCode ? "Promo" : tierName
+    const normalizedRegistrant = validatedData.andrewID.trim().toLowerCase()
+    const normalizedReferral = validatedData.referredAndrewID?.trim().toLowerCase()
+    const shouldCheckReferral =
+      partySlug === REFERRAL_DISCOUNT_PARTY_SLUG &&
+      !!normalizedReferral &&
+      normalizedReferral.length > 0 &&
+      normalizedReferral !== normalizedRegistrant
+
+    if (shouldCheckReferral) {
+      const referralValidation = await validateReferralAndrewID(
+        partySlug,
+        normalizedReferral,
+        normalizedRegistrant,
+      )
+      if (referralValidation.valid) {
+        price = Math.max(0, price - 1)
+      }
+    }
+
+    if (validatedData.appliedPromoCode) {
+      price = 0
+      tierName = "Promo"
     }
 
     // Generate QR code

@@ -28,7 +28,14 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { submitRegistration, getPriceTiers, redeemPromoCode, submitDatingEntry, getTimeslotBreakdown } from "@/lib/actions";
+import {
+  submitRegistration,
+  getPriceTiers,
+  redeemPromoCode,
+  submitDatingEntry,
+  getTimeslotBreakdown,
+  validateReferralAndrewID,
+} from "@/lib/actions";
 import { Party } from "@/lib/types";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,6 +53,8 @@ type TimeslotBreakdown = {
 };
 
 const TIMESLOT_CAPACITY = 20;
+const REFERRAL_DISCOUNT_PARTY_SLUG =
+  "cmu-tcl-x-cmu-lambdas-x-pitt-asa-x-pitt-akdphi";
 
 export function MiniPieChart({ data }: { data: any[] }) {
   const COLORS = ["#ef4444", "#f97316", "#22c55e"];
@@ -69,11 +78,15 @@ export function MiniPieChart({ data }: { data: any[] }) {
 }
 
 export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
+  const referralFeatureEnabled =
+    partySlug === REFERRAL_DISCOUNT_PARTY_SLUG;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationCount, setRegistrationCount] = useState(0);
   const [currentTierCap, setCurrentTierCap] = useState(0);
   const [priceTiers, setPriceTiers] = useState<any[]>([]);
   const [currentTierIndex, setCurrentTierIndex] = useState(0);
+  const [displayTierIndex, setDisplayTierIndex] = useState(0);
+  const [displayTierCap, setDisplayTierCap] = useState(0);
   const [timeslotBreakdown, setTimeslotBreakdown] = useState<
     Record<string, TimeslotBreakdown>
   >({});
@@ -82,17 +95,44 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
 
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
   const [applyingPromo, setApplyingPromo] = useState(false);
+  const [referralLookupLoading, setReferralLookupLoading] = useState(false);
+  const [referralDiscountApplied, setReferralDiscountApplied] = useState(false);
+  const [displayPriceAdjustment, setDisplayPriceAdjustment] = useState(0);
+  const [validatedReferralAndrewID, setValidatedReferralAndrewID] = useState<
+    string | null
+  >(null);
   const datingPoolEnabled = party.enable_dating_pool ?? false;
   const datingPoolLocked = party.dating_pool_locked ?? false;
   const seekingOptions = ["Women", "Men", "Non-binary", "Open to anyone"];
 
+  const getCumulativeTierCap = (tiers: any[], tierIndex: number) => {
+    if (!tiers.length) return 0;
+    let cumulative = 0;
+    for (let i = 0; i <= tierIndex && i < tiers.length; i++) {
+      cumulative += tiers[i].capacity;
+    }
+    return cumulative;
+  };
+
+  const setDisplayToCurrentTier = (tiers: any[], tierIndex: number) => {
+    setDisplayTierIndex(tierIndex);
+    setDisplayTierCap(getCumulativeTierCap(tiers, tierIndex));
+  };
+
   const currentTierPrice = useMemo(() => {
     const base =
       priceTiers.length > 0
-        ? priceTiers[currentTierIndex]?.price || 0
+        ? priceTiers[displayTierIndex]?.price || 0
         : party.ticket_price;
-    return appliedPromoCode ? 0 : base;
-  }, [priceTiers, currentTierIndex, party.ticket_price, appliedPromoCode]);
+    const adjusted = Math.max(0, base + displayPriceAdjustment);
+    return appliedPromoCode ? 0 : adjusted;
+  }, [
+    priceTiers,
+    displayTierIndex,
+    party.ticket_price,
+    appliedPromoCode,
+    displayPriceAdjustment,
+  ]);
 
   const formSchema = useMemo(
     () =>
@@ -116,6 +156,15 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
           })
           .refine((val) => !val.includes("@"), {
             message: "Andrew/Pitt ID, not your email.",
+          }),
+        referredAndrewID: z
+          .string()
+          .optional()
+          .refine((val) => !val || !val.includes(" "), {
+            message: "Andrew/Pitt ID cannot contain spaces.",
+          })
+          .refine((val) => !val || !val.includes("@"), {
+            message: "Andrew/Pitt ID, not an email.",
           }),
         paymentMethod:
           currentTierPrice > 0
@@ -163,12 +212,16 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
       }),
     [currentTierPrice, party.organizations]
   );
-  const form = useForm<z.infer<typeof formSchema>>({
+  type RegistrationFormInput = z.input<typeof formSchema>;
+  type RegistrationFormOutput = z.output<typeof formSchema>;
+
+  const form = useForm<RegistrationFormInput, unknown, RegistrationFormOutput>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       age: "",
       andrewID: "",
+      referredAndrewID: "",
       promoCode: "",
       joinDatingPool: false,
       genderIdentity: "",
@@ -221,6 +274,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
 
         setCurrentTierCap(cumulativeCapacity);
         setCurrentTierIndex(currentIndex);
+        setDisplayToCurrentTier(tiers, currentIndex);
       } catch (error) {
         console.error("Error fetching price tiers:", error);
       }
@@ -228,7 +282,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
 
     fetchRegistrationCount();
     fetchPriceTiers();
-  }, [partySlug, registrationCount]);
+  }, [partySlug, registrationCount, referralDiscountApplied, referralFeatureEnabled]);
 
   useEffect(() => {
     if (!party.enableSchedule) return;
@@ -401,7 +455,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
     />
   );
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: RegistrationFormOutput) {
     setIsSubmitting(true);
 
     try {
@@ -419,6 +473,10 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
         // include the final price and applied promo for server-side record
         price: currentTierPrice,
         appliedPromoCode: appliedPromoCode ?? null,
+        referredAndrewID:
+          referralFeatureEnabled
+            ? values.referredAndrewID?.trim() || undefined
+            : undefined,
       };
 
       const result = await submitRegistration(partySlug, submissionData);
@@ -453,6 +511,10 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
           variant: "default",
         });
         form.reset();
+        setReferralDiscountApplied(false);
+        setDisplayPriceAdjustment(0);
+        setValidatedReferralAndrewID(null);
+        setDisplayToCurrentTier(priceTiers, currentTierIndex);
       } else {
         toast({
           title: "Registration failed",
@@ -473,15 +535,15 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
 
   // Ticket helper functions
   const getTicketTierStatus = (tierIndex: number) => {
-    const isCurrent = tierIndex === currentTierIndex;
-    const isPast = tierIndex < currentTierIndex;
-    const isFuture = tierIndex > currentTierIndex;
+    const isCurrent = tierIndex === displayTierIndex;
+    const isPast = tierIndex < displayTierIndex;
+    const isFuture = tierIndex > displayTierIndex;
 
     return { isCurrent, isPast, isFuture };
   };
 
   const getAvailabilityStatus = (isCurrent: boolean, isPast: boolean) => {
-    const spotsRemaining = currentTierCap - registrationCount;
+    const spotsRemaining = displayTierCap - registrationCount;
     const isSoldOut = spotsRemaining <= 0;
 
     if (isPast)
@@ -676,12 +738,126 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                       placeholder="jdoe"
                       {...field}
                       className="bg-zinc-900 border-zinc-800"
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setReferralDiscountApplied(false);
+                        setDisplayPriceAdjustment(0);
+                        setValidatedReferralAndrewID(null);
+                        setDisplayToCurrentTier(priceTiers, currentTierIndex);
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {referralFeatureEnabled && (
+              <FormField
+                control={form.control}
+                name="referredAndrewID"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Andrew/Pitt ID of Someone Already Going (Optional)
+                    </FormLabel>
+                    <div className="flex gap-2 items-center">
+                      <FormControl className="flex-1">
+                        <Input
+                          placeholder="friendid"
+                          {...field}
+                          className="bg-zinc-900 border-zinc-800"
+                          disabled={referralLookupLoading}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            setReferralDiscountApplied(false);
+                            setDisplayPriceAdjustment(0);
+                            setValidatedReferralAndrewID(null);
+                            setDisplayToCurrentTier(priceTiers, currentTierIndex);
+                          }}
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        onClick={async () => {
+                          const referralID = form
+                            .getValues("referredAndrewID")
+                            ?.trim();
+                          const registrantID = form.getValues("andrewID")?.trim();
+
+                          if (!referralID) {
+                            toast({
+                              title: "No AndrewID",
+                              description:
+                                "Enter an AndrewID to check referral discount.",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+
+                          setReferralLookupLoading(true);
+                          try {
+                            const res = await validateReferralAndrewID(
+                              partySlug,
+                              referralID,
+                              registrantID
+                            );
+                            if (!res.valid) {
+                              setReferralDiscountApplied(false);
+                              setDisplayPriceAdjustment(0);
+                              setValidatedReferralAndrewID(null);
+                              setDisplayToCurrentTier(priceTiers, currentTierIndex);
+                              toast({
+                                title: "No match",
+                                description:
+                                  res.message ||
+                                  "No attendee found with that AndrewID.",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+
+                            setReferralDiscountApplied(true);
+                            setDisplayPriceAdjustment(-1);
+                            setValidatedReferralAndrewID(referralID.toLowerCase());
+                            toast({
+                              title: "Discount applied",
+                              description:
+                                "Referral verified. Your ticket price is reduced by $1.",
+                            });
+                          } catch (_error) {
+                            setReferralDiscountApplied(false);
+                            setDisplayPriceAdjustment(0);
+                            setValidatedReferralAndrewID(null);
+                            setDisplayToCurrentTier(priceTiers, currentTierIndex);
+                            toast({
+                              title: "Error",
+                              description:
+                                "Unable to validate referral AndrewID right now.",
+                              variant: "destructive",
+                            });
+                          } finally {
+                            setReferralLookupLoading(false);
+                          }
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        disabled={referralLookupLoading}
+                      >
+                        {referralLookupLoading ? "Checking…" : "Check"}
+                      </Button>
+                    </div>
+                    <FormDescription>
+                      If this AndrewID is found in the party registration
+                      database, your price is reduced by $1.
+                      {referralDiscountApplied &&
+                        validatedReferralAndrewID &&
+                        ` Discount active via ${validatedReferralAndrewID}.`}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
