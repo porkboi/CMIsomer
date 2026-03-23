@@ -16,12 +16,14 @@ const TAB_VALUES = {
 } as const;
 
 const STYLES = {
-  CONTAINER: "min-h-screen bg-zinc-900 text-white",
-  INNER_CONTAINER: "container bg-zinc-800 mx-auto px-4 py-8",
+  CONTAINER: "relative z-10",
+  INNER_CONTAINER: "mx-auto w-full max-w-7xl px-4 pb-12 pt-10 sm:px-6 lg:px-8",
   TABS: "mt-8",
-  TABS_LIST: "grid w-full grid-cols-2 bg-zinc-900",
-  TABS_TRIGGER: "text-white",
-  TABS_CONTENT: "bg-zinc-800 mt-6",
+  TABS_LIST:
+    "site-panel grid w-full grid-cols-2 rounded-2xl border border-white/10 bg-white/[0.03] p-1",
+  TABS_TRIGGER:
+    "rounded-xl text-white/75 data-[state=active]:bg-white data-[state=active]:text-zinc-950",
+  TABS_CONTENT: "mt-6 rounded-2xl border border-white/10 bg-transparent",
 } as const;
 
 const LOADING_MESSAGES = {
@@ -50,13 +52,17 @@ interface DashboardTabProps extends BaseTabProps {
     orgAllocation: any[]
     priceTiers: any[]
     orgLimits: Record<string, number>
+    timeslotSelections: {
+      confirmed: Record<string, number>
+      pending: Record<string, number>
+    }
   };
 }
 
 // Utility Functions
 const createLoadingSpinner = (message: string = LOADING_MESSAGES.DEFAULT) => (
-  <div className="flex items-center justify-center p-8">
-    <div className="text-zinc-400">{message}</div>
+  <div className="site-panel flex items-center justify-center rounded-2xl p-8">
+    <div className="text-white/65">{message}</div>
   </div>
 );
 
@@ -159,6 +165,7 @@ async function fetchDashboardData(slug: string) {
       orgAllocation: [],
       priceTiers: [],
       orgLimits: {},
+      timeslotSelections: { confirmed: {}, pending: {} },
     };
   }
 }

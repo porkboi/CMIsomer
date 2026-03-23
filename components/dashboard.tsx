@@ -124,13 +124,13 @@ const RegistrationRow = ({ reg, actions, columns = 8, colorClass = "" }: Registr
     <div>{reg.andrew_id}</div>
     <div>{reg.age}</div>
     <div>
-      <Badge variant="outline" className="bg-zinc-900 border-zinc-700">
+      <Badge variant="outline" className="bg-white/[0.05] border-white/20">
         {reg.organization}
       </Badge>
     </div>
     <div>
       {reg.tierName ? (
-        <Badge className="bg-purple-900/50 text-purple-300 border-purple-700">
+        <Badge className="bg-purple-900/50 text-[rgba(245,196,110,0.92)] border-purple-700">
           {reg.tierName} (${reg.tierPrice || reg.price})
         </Badge>
       ) : (
@@ -163,23 +163,23 @@ const EditEntryModal = ({ isOpen, registration, organizations, schedule, onClose
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <Card className="w-full max-w-xl bg-zinc-950 border-zinc-800">
+      <Card className="w-full max-w-xl site-panel border-white/10 bg-[rgba(10,14,22,0.78)]">
         <CardHeader>
           <CardTitle className="text-white">Edit Entry</CardTitle>
-          <CardDescription className="text-zinc-400">Update registration details</CardDescription>
+          <CardDescription className="text-white/55">Update registration details</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="Name"
-            className="bg-zinc-900 border-zinc-800"
+            className="border-white/12 bg-white/[0.05]"
           />
           <Input
             value={form.andrew_id}
             onChange={(e) => setForm({ ...form, andrew_id: e.target.value })}
             placeholder="Andrew ID"
-            className="bg-zinc-900 border-zinc-800"
+            className="border-white/12 bg-white/[0.05]"
           />
           <div className="grid grid-cols-2 gap-3">
             <Input
@@ -188,7 +188,7 @@ const EditEntryModal = ({ isOpen, registration, organizations, schedule, onClose
               value={form.age}
               onChange={(e) => setForm({ ...form, age: Number.parseInt(e.target.value || "18", 10) })}
               placeholder="Age"
-              className="bg-zinc-900 border-zinc-800"
+              className="border-white/12 bg-white/[0.05]"
             />
             <Input
               type="number"
@@ -196,13 +196,13 @@ const EditEntryModal = ({ isOpen, registration, organizations, schedule, onClose
               value={form.price}
               onChange={(e) => setForm({ ...form, price: Number.parseInt(e.target.value || "0", 10) })}
               placeholder="Price"
-              className="bg-zinc-900 border-zinc-800"
+              className="border-white/12 bg-white/[0.05]"
             />
           </div>
           <select
             value={form.organization}
             onChange={(e) => setForm({ ...form, organization: e.target.value })}
-            className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white"
+            className="w-full rounded-md border border-white/12 bg-white/[0.05] px-3 py-2 text-sm text-white"
           >
             {organizations.map((org) => (
               <option key={org} value={org}>
@@ -214,7 +214,7 @@ const EditEntryModal = ({ isOpen, registration, organizations, schedule, onClose
             <select
               value={form.payment_method}
               onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
-              className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white"
+              className="w-full rounded-md border border-white/12 bg-white/[0.05] px-3 py-2 text-sm text-white"
             >
               <option value="venmo">venmo</option>
               <option value="zelle">zelle</option>
@@ -224,7 +224,7 @@ const EditEntryModal = ({ isOpen, registration, organizations, schedule, onClose
               onChange={(e) =>
                 setForm({ ...form, status: e.target.value as Registration["status"] })
               }
-              className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white"
+              className="w-full rounded-md border border-white/12 bg-white/[0.05] px-3 py-2 text-sm text-white"
             >
               <option value="confirmed">confirmed</option>
               <option value="pending">pending</option>
@@ -233,7 +233,7 @@ const EditEntryModal = ({ isOpen, registration, organizations, schedule, onClose
             <select
               value={form.timeslot || ""}
               onChange={(e) => setForm({ ...form, timeslot: e.target.value })}
-              className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white"
+              className="w-full rounded-md border border-white/12 bg-white/[0.05] px-3 py-2 text-sm text-white"
             >
               <option value="">No timeslot</option>
               {schedule.map((slot) => (
@@ -245,10 +245,10 @@ const EditEntryModal = ({ isOpen, registration, organizations, schedule, onClose
           </div>
         </CardContent>
         <div className="flex justify-end gap-2 p-6 pt-0">
-          <Button variant="outline" onClick={onClose} className="bg-zinc-900 border-zinc-800">
+          <Button variant="outline" onClick={onClose} className="border-white/12 bg-white/[0.05]">
             Cancel
           </Button>
-          <Button variant="outline" onClick={() => onSave(form)} className="bg-zinc-900 border-zinc-800">
+          <Button variant="outline" onClick={() => onSave(form)} className="border-white/12 bg-white/[0.05]">
             Save
           </Button>
         </div>
@@ -705,13 +705,26 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
         ]
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
+      <div className="site-panel relative overflow-hidden rounded-[1.5rem] border-white/12 p-5 sm:p-6">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(118,214,198,0.22)_0%,transparent_70%)] animate-pulse" />
+        <p className="text-xs uppercase tracking-[0.24em] text-[rgba(245,196,110,0.9)]">
+          Admin Control Surface
+        </p>
+        <h2 className="mt-2 font-[family:var(--font-brand)] text-3xl tracking-[0.12em] text-white sm:text-4xl">
+          {party.name} Dashboard
+        </h2>
+        <p className="mt-2 text-sm text-white/60">
+          Manage confirmations, pricing, capacity, and live operations in one place.
+        </p>
+      </div>
+
       <div className="flex flex-wrap gap-2 justify-between items-center">
-        <div className="flex gap-2">          <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing} className="bg-zinc-900 border-zinc-800">
+        <div className="flex gap-2">          <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing} className="border-white/12 bg-white/[0.05]">
             <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
           </Button>
-          <Button variant="outline" onClick={() => setShowScanner(true)} className="bg-zinc-900 border-zinc-800">
+          <Button variant="outline" onClick={() => setShowScanner(true)} className="border-white/12 bg-white/[0.05]">
             <Scan className="mr-2 h-4 w-4" />
             Scan QR Code
           </Button>
@@ -719,7 +732,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="bg-zinc-900 border-zinc-800"
+            className="border-white/12 bg-white/[0.05]"
             onClick = {() => setShowPartyModal(true)}
           >
             <Pencil className="mr-2 h-4 w-4" />
@@ -729,7 +742,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
           <Button
             variant="outline"
             onClick={() => setShowMaxCapacityModal(true)}
-            className="bg-zinc-900 border-zinc-800"
+            className="border-white/12 bg-white/[0.05]"
           >
             <Users2 className="mr-2 h-4 w-4" />
             Max Capacity
@@ -737,12 +750,12 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
           <Button
             variant="outline"
             onClick={() => setShowPriceTiersModal(true)}
-            className="bg-zinc-900 border-zinc-800"
+            className="border-white/12 bg-white/[0.05]"
           >
             <DollarSign className="mr-2 h-4 w-4" />
             Price Tiers
           </Button>
-          <Button variant="outline" onClick={() => setShowOrgLimitsModal(true)} className="bg-zinc-900 border-zinc-800">
+          <Button variant="outline" onClick={() => setShowOrgLimitsModal(true)} className="border-white/12 bg-white/[0.05]">
             <Settings className="mr-2 h-4 w-4" />
             Organization Limits
           </Button>
@@ -750,52 +763,52 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-zinc-950 border-zinc-800">
+        <Card className="site-panel border-white/10 bg-[rgba(10,14,22,0.78)]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-white">Total Registrations</CardTitle>
-            <Users className="h-4 w-4 text-purple-500" />
+            <Users className="h-4 w-4 text-[rgba(245,196,110,0.92)]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">{registrations.length}</div>
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-white/55">
               {confirmedRegistrations.length} confirmed, {waitlistedRegistrations.length} waitlisted,{" "}
               {pendingRegistrations.length} pending
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-950 border-zinc-800">
+        <Card className="site-panel border-white/10 bg-[rgba(10,14,22,0.78)]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-white">Checked In</CardTitle>
             <UserCheck className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">{checkedIn.length}</div>
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-white/55">
               {Math.round(checkedIn.length/confirmedRegistrations.length)*100}% of confirmed
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-950 border-zinc-800">
+        <Card className="site-panel border-white/10 bg-[rgba(10,14,22,0.78)]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-white">Spots Remaining</CardTitle>
             <Users className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">{maxCapacity - confirmedRegistrations.length}</div>
-            <p className="text-xs text-zinc-400">Out of {maxCapacity} total capacity</p>
+            <p className="text-xs text-white/55">Out of {maxCapacity} total capacity</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-950 border-zinc-800">
+        <Card className="site-panel border-white/10 bg-[rgba(10,14,22,0.78)]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-white">Total Money Received</CardTitle>
             <DollarSign className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">${totalMoney}</div>
-            <p className="text-xs text-zinc-400">Venmo: ${venmoMoney} | Zelle: ${zelleMoney}</p>
+            <p className="text-xs text-white/55">Venmo: ${venmoMoney} | Zelle: ${zelleMoney}</p>
           </CardContent>
         </Card>
       </div>
@@ -804,11 +817,11 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
         <button
           type="button"
           onClick={handleGeneratePromo}
-          className="px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white"
+          className="px-3 py-1 rounded bg-[linear-gradient(135deg,rgba(244,162,97,0.96),rgba(46,124,116,0.96))] hover:opacity-95 text-white"
         >
           Generate Promo
         </button>
-        <div className="w-28 h-10 bg-zinc-900 text-white flex items-center justify-center rounded border border-zinc-700 font-mono">
+        <div className="w-28 h-10 bg-white/[0.05] text-white flex items-center justify-center rounded border border-white/20 font-mono">
             {newPromo || "—"}
         </div>
       </div>
@@ -818,16 +831,16 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
           type="button"
           onClick={handleCloseWaitlist}
           disabled={!allowWaitlist}
-          className="px-3 py-1 rounded bg-red-600 hover:bg-amber-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1 rounded bg-[linear-gradient(135deg,rgba(181,67,67,0.95),rgba(122,37,37,0.95))] hover:opacity-95 text-white disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Close Waitlist
         </button>
-        <div className="w-28 h-10 bg-zinc-900 text-white flex items-center justify-center rounded border border-zinc-700 font-mono">
+        <div className="w-28 h-10 bg-white/[0.05] text-white flex items-center justify-center rounded border border-white/20 font-mono">
           {allowWaitlist ? "Open" : "Closed"}
         </div>
       </div>
 
-      <Card className="bg-zinc-950 border-zinc-800">
+      <Card className="site-panel border-white/10 bg-[rgba(10,14,22,0.78)]">
         <CardHeader>
           <CardTitle className="text-white">Organization Allocation</CardTitle>
           <CardDescription className="text-white">Distribution of registrations by organization</CardDescription>
@@ -874,7 +887,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
         </CardContent>
       </Card>
 
-      <Card className="bg-zinc-950 border-zinc-800">
+      <Card className="site-panel border-white/10 bg-[rgba(10,14,22,0.78)]">
         <CardHeader>
           <CardTitle className="text-white">Registrations Over Time</CardTitle>
           <CardDescription className="text-white">Cumulative total registrations</CardDescription>
@@ -922,7 +935,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
       </Card>
 
       {party.enableSchedule && timeslotData.length > 0 && (
-        <Card className="bg-zinc-950 border-zinc-800">
+        <Card className="site-panel border-white/10 bg-[rgba(10,14,22,0.78)]">
           <CardHeader>
             <CardTitle className="text-white">Timeslot Selection</CardTitle>
             <CardDescription className="text-white">Confirmed vs pending selections per slot</CardDescription>
@@ -964,17 +977,17 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
           placeholder="Search by name or Andrew ID..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm bg-zinc-900 border-zinc-800"
+          className="max-w-sm border-white/12 bg-white/[0.05]"
         />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="bg-zinc-900 border-zinc-800">
+            <Button variant="outline" className="border-white/12 bg-white/[0.05]">
               <Filter className="mr-2 h-4 w-4" />
               Filter Organizations
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 bg-zinc-900 border-zinc-800">
+          <DropdownMenuContent className="w-56 border-white/12 bg-white/[0.05]">
             {organizations.map((org) => (
               <DropdownMenuCheckboxItem
                 key={org}
@@ -991,14 +1004,14 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
       </div>
 
       <Tabs defaultValue="confirmed" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-zinc-900">
+        <TabsList className="grid w-full grid-cols-3 bg-white/[0.05]">
           <TabsTrigger value="confirmed">Confirmed ({filteredConfirmed.length})</TabsTrigger>
           <TabsTrigger value="pending">Pending ({filteredPending.length})</TabsTrigger>
           <TabsTrigger value="waitlist">Waitlist ({filteredWaitlist.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="confirmed" className="mt-4">
-          <div className="rounded-md border border-zinc-800 bg-zinc-950">
-            <div className="grid grid-cols-8 gap-4 p-4 font-medium text-zinc-400 border-b border-zinc-800">
+          <div className="rounded-md border border-white/12 bg-[rgba(10,14,22,0.78)]">
+            <div className="grid grid-cols-8 gap-4 p-4 font-medium text-white/55 border-b border-white/12">
               <div>Name</div>
               <div>Andrew ID</div>
               <div>Age</div>
@@ -1008,7 +1021,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
               <div>Timeslot</div>
               <div>Actions</div>
             </div>
-            <div className="divide-y divide-zinc-800">
+            <div className="divide-y divide-white/10">
               {filteredConfirmed.length > 0 ? (
                 filteredConfirmed.map((reg) => (
                   <RegistrationRow
@@ -1023,7 +1036,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
                           onClick={async () => {
                             await sendConfirmationEmail(reg.id, reg.andrew_id)
                           }}
-                          className="bg-green-900/20 hover:bg-green-900/40"
+                          className="bg-[rgba(46,124,116,0.28)] hover:bg-[rgba(46,124,116,0.42)]"
                           aria-label="Confirm entry"
                           title="Confirm"
                         >
@@ -1035,7 +1048,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
                         size="sm"
                         variant="outline"
                         onClick={() => handleEditEntry(reg)}
-                        className="bg-zinc-900/50 hover:bg-zinc-800/70"
+            className="bg-white/[0.08] hover:bg-white/[0.15]"
                         aria-label="Edit entry"
                         title="Edit"
                       >
@@ -1056,14 +1069,14 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
                   />
                 ))
               ) : (
-                <div className="p-4 text-center text-zinc-500">No confirmed registrations found</div>
+                <div className="p-4 text-center text-white/45">No confirmed registrations found</div>
               )}
             </div>
           </div>
         </TabsContent>
         <TabsContent value="pending" className="mt-4">
-          <div className="rounded-md border border-zinc-800 bg-zinc-950">
-            <div className="grid grid-cols-8 gap-4 p-4 font-medium text-zinc-400 border-b border-zinc-800">
+          <div className="rounded-md border border-white/12 bg-[rgba(10,14,22,0.78)]">
+            <div className="grid grid-cols-8 gap-4 p-4 font-medium text-white/55 border-b border-white/12">
               <div>Name</div>
               <div>Andrew ID</div>
               <div>Age</div>
@@ -1073,7 +1086,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
               <div>Timeslot</div>
               <div>Actions</div>
             </div>
-            <div className="divide-y divide-zinc-800">
+            <div className="divide-y divide-white/10">
               {filteredPending.length > 0 ? (
                 filteredPending.map((reg) => (
                   <RegistrationRow
@@ -1087,7 +1100,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
                         onClick={async () => {
                           await sendConfirmationEmail(reg.id, reg.andrew_id)
                         }}
-                        className="bg-green-900/20 hover:bg-green-900/40"
+                        className="bg-[rgba(46,124,116,0.28)] hover:bg-[rgba(46,124,116,0.42)]"
                         aria-label="Confirm entry"
                         title="Confirm"
                       >
@@ -1098,7 +1111,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
                         size="sm"
                         variant="outline"
                         onClick={() => handleEditEntry(reg)}
-                        className="bg-zinc-900/50 hover:bg-zinc-800/70"
+            className="bg-white/[0.08] hover:bg-white/[0.15]"
                         aria-label="Edit entry"
                         title="Edit"
                       >
@@ -1119,14 +1132,14 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
                   />
                 ))
               ) : (
-                <div className="p-4 text-center text-zinc-500">No pending registrations found</div>
+                <div className="p-4 text-center text-white/45">No pending registrations found</div>
               )}
             </div>
           </div>
         </TabsContent>
         <TabsContent value="waitlist" className="mt-4">
-          <div className="rounded-md border border-zinc-800 bg-zinc-950">
-            <div className="grid grid-cols-8 gap-4 p-4 font-medium text-zinc-400 border-b border-zinc-800">
+          <div className="rounded-md border border-white/12 bg-[rgba(10,14,22,0.78)]">
+            <div className="grid grid-cols-8 gap-4 p-4 font-medium text-white/55 border-b border-white/12">
               <div>Name</div>
               <div>Andrew ID</div>
               <div>Age</div>
@@ -1136,21 +1149,21 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
               <div>Timeslot</div>
               <div>Actions</div>
             </div>
-            <div className="divide-y divide-zinc-800">
+            <div className="divide-y divide-white/10">
               {filteredWaitlist.length > 0 ? (
                 filteredWaitlist.map((reg) => (
                   <RegistrationRow
                     key={reg.id}
                     reg={reg}
                     columns={8}
-                    colorClass="text-zinc-400 bg-zinc-900/20"
+                    colorClass="text-white/55 bg-white/[0.05]/20"
                     actions={[
                       <Button
                         key="promote"
                         size="sm"
                         variant="outline"
                         onClick={() => handlePromoteFromWaitlist(reg.andrew_id)}
-                        className="bg-yellow-900/30 hover:bg-yellow-900/50"
+                        className="bg-[rgba(244,162,97,0.28)] hover:bg-[rgba(244,162,97,0.42)]"
                         aria-label="Promote entry"
                         title="Promote"
                       >
@@ -1161,7 +1174,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
                         size="sm"
                         variant="outline"
                         onClick={() => handleEditEntry(reg)}
-                        className="bg-zinc-900/50 hover:bg-zinc-800/70"
+            className="bg-white/[0.08] hover:bg-white/[0.15]"
                         aria-label="Edit entry"
                         title="Edit"
                       >
@@ -1182,7 +1195,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
                   />
                 ))
               ) : (
-                <div className="p-4 text-center text-zinc-500">No waitlisted registrations found</div>
+                <div className="p-4 text-center text-white/45">No waitlisted registrations found</div>
               )}
             </div>
           </div>
@@ -1244,10 +1257,10 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
 
       {emailSendStatus && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
-          <Card className="w-full max-w-sm bg-zinc-950 border-zinc-800">
+          <Card className="w-full max-w-sm site-panel border-white/10 bg-[rgba(10,14,22,0.78)]">
             <CardContent className="flex flex-col items-center gap-3 p-6 text-center">
               {emailSendStatus.state === "loading" && (
-                <div className="flex items-center gap-3 text-purple-300">
+                <div className="flex items-center gap-3 text-[rgba(245,196,110,0.92)]">
                   <RefreshCw className="h-5 w-5 animate-spin" />
                   <span className="text-sm">Working...</span>
                 </div>
@@ -1284,7 +1297,7 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
                     size="sm"
                     variant="outline"
                     onClick={() => setEmailSendStatus(null)}
-                    className="bg-zinc-900 border-zinc-700"
+                    className="bg-white/[0.05] border-white/20"
                   >
                     Dismiss
                   </Button>
@@ -1297,9 +1310,9 @@ export function Dashboard({ party, partySlug, initialData }: DashboardProps) {
 
       {loadingMessage && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
-          <Card className="w-full max-w-sm bg-zinc-950 border-zinc-800">
+          <Card className="w-full max-w-sm site-panel border-white/10 bg-[rgba(10,14,22,0.78)]">
             <CardContent className="flex items-center gap-3 p-6">
-              <RefreshCw className="h-5 w-5 animate-spin text-purple-400" />
+              <RefreshCw className="h-5 w-5 animate-spin text-[rgba(245,196,110,0.92)]" />
               <p className="text-sm text-white">{loadingMessage}</p>
             </CardContent>
           </Card>

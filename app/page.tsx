@@ -1,26 +1,67 @@
-import React from "react";
+import Link from "next/link"
+import { ArrowRight, CalendarRange, Sparkles, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card"
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center p-4">
-      <Card className="bg-zinc-900 text-center max-w-md w-full shadow-xl rounded-2xl p-6 space-y-6">
-        <h1 className="text-3xl font-bold">CMIsomer 🎉</h1>
-        <p className="text-zinc-400">Plan your next event in just a few clicks.</p>
-        <div className="flex flex-col gap-4">
-          <a href="/create">
-            <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-2xl py-2 px-4 shadow">
-              Create New Party
+    <div className="relative z-10 mx-auto min-h-[calc(100vh-11rem)] w-full max-w-7xl px-4 pb-10 pt-10 sm:px-6 lg:px-8">
+      <div className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
+        <Card className="site-panel rounded-[2rem] p-8 text-white sm:p-10">
+          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-xs uppercase tracking-[0.24em] text-[rgba(245,196,110,0.9)]">
+            <Sparkles className="h-3.5 w-3.5" />
+            Event Control Room
+          </p>
+          <h1 className="font-[family:var(--font-brand)] text-5xl tracking-[0.12em] sm:text-6xl">
+            CMIsomer
+          </h1>
+          <p className="mt-5 max-w-xl text-base leading-8 text-white/70 sm:text-lg">
+            Launch events, manage registrations, and operate check-in flows with
+            an interface built to stay calm under peak demand.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button
+              asChild
+              className="rounded-full border border-[rgba(245,196,110,0.4)] bg-[linear-gradient(135deg,rgba(244,162,97,0.96),rgba(235,117,74,0.96))] px-6 text-zinc-950 hover:opacity-95"
+            >
+              <Link href="/create">
+                Start Creating
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
-          </a>
-          <a href="/about">
-            <Button className="w-full bg-zinc-700 hover:bg-zinc-600 text-white rounded-2xl py-2 px-4 shadow">
-              Learn More About Us
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-full border-white/15 bg-white/[0.04] px-6 text-white hover:bg-white/[0.09]"
+            >
+              <Link href="/about">About CMIsomer</Link>
             </Button>
-          </a>
+          </div>
+        </Card>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+          <Card className="site-panel rounded-[1.6rem] p-6 text-white">
+            <div className="mb-3 inline-flex rounded-xl bg-white/[0.08] p-2 text-[rgba(118,214,198,0.88)]">
+              <Users className="h-5 w-5" />
+            </div>
+            <h2 className="text-lg font-semibold">Organizer-Ready</h2>
+            <p className="mt-2 text-sm leading-7 text-white/65">
+              Build and publish party pages in minutes with controls for pricing,
+              capacity, and organization limits.
+            </p>
+          </Card>
+          <Card className="site-panel rounded-[1.6rem] p-6 text-white">
+            <div className="mb-3 inline-flex rounded-xl bg-white/[0.08] p-2 text-[rgba(245,196,110,0.88)]">
+              <CalendarRange className="h-5 w-5" />
+            </div>
+            <h2 className="text-lg font-semibold">Fast Event Ops</h2>
+            <p className="mt-2 text-sm leading-7 text-white/65">
+              Handle real-time registration updates, confirmations, and entrance
+              workflows from one coherent dashboard.
+            </p>
+          </Card>
         </div>
-      </Card>
+      </div>
     </div>
-  );
+  )
 }

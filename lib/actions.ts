@@ -2,13 +2,6 @@
 
 import { z } from "zod"
 import QRCode from "qrcode"
-import {
-  // getAllRegistrations,
-  // addRegistration,
-  getRegistrationByAndrewID,
-  // removeRegistration,
-  // updateRegistrationStatus,
-} from "./db-client"
 import { isAuthenticated } from "./auth"
 import { createSlug } from "@/lib/utils"
 import { orgLimitsTableName, registrationTableName, registrationTableSuffix } from "@/lib/table-names"
@@ -16,7 +9,6 @@ import { supabase } from "@/lib/supabase"
 import type { PriceTier } from "@/components/price-tiers-modal"
 import { sendEmail } from "./email"
 import bcrypt from "bcrypt"
-import { kMaxLength } from "buffer"
 
 const REFERRAL_DISCOUNT_PARTY_SLUG = "cmu-tcl-x-cmu-lambdas-x-pitt-asa-x-pitt-akdphi"
 const ANDREW_ID_PROMO_SET = new Set([
@@ -497,10 +489,7 @@ async function getCurrentTierForParty(partySlug: string): Promise<{ name: string
 // Submit a new registration with QR code
 export async function submitRegistration(partySlug: string, formData: z.infer<typeof registrationSchema>) {
   try {
-    console.log("Form data received:", formData) // Add this line for debugging
-
     const validatedData = registrationSchema.parse(formData)
-    console.log("Validation passed:", validatedData) // Add this line for debugging
 
     // Get party details
     const { data: party } = await supabase
@@ -1456,21 +1445,15 @@ export async function confirmAttendance(
       .eq("id", id)
       .single()
 
-    console.log("here")
-
     if (fetchError) {
       console.error("Error fetching registration:", fetchError)
       return { success: false, message: "Fetch Error" }
     }
 
-    console.log("here2")
-
     if (!registration) {
       console.error("Error fetching registration:", fetchError)
       return { success: false, message: "Registration not found" }
     }
-
-    console.log("here3")
 
     // Update status to confirmed
     const { error: updateError } = await supabase

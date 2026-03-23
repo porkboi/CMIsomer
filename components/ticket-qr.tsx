@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { registrationTableName } from "@/lib/table-names";
@@ -46,7 +46,7 @@ export default function TicketQR({
           .single();
 
         if (error) {
-          console.log("Error fetching ticket:", error);
+          console.error("Error fetching ticket:", error);
           return;
         }
 

@@ -421,7 +421,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
       name="paymentConfirmed"
       render={({ field }) => (
         <FormItem className="space-y-3">
-          <FormLabel>Have you Venmo/Zelle'd?</FormLabel>
+          <FormLabel>Have you paid via Venmo/Zelle?</FormLabel>
           <FormControl>
             <RadioGroup
               onValueChange={field.onChange}
@@ -518,7 +518,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -543,9 +543,9 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
     const isSoldOut = spotsRemaining <= 0;
 
     if (isPast)
-      return { status: "Closed", className: "bg-zinc-800 text-zinc-400" };
+      return { status: "Closed", className: "bg-white/[0.05] text-white/55" };
     if (!isCurrent)
-      return { status: "Coming Soon", className: "bg-zinc-800 text-zinc-400" };
+      return { status: "Coming Soon", className: "bg-white/[0.05] text-white/55" };
 
     if (isSoldOut)
       return { status: "Sold Out", className: "bg-red-900/50 text-red-300" };
@@ -576,26 +576,26 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
     return (
       <Card
         key={tier.id}
-        className={`bg-zinc-950 border-zinc-800 transition-all ${
+        className={`site-panel border-white/10 bg-[rgba(10,14,22,0.78)] transition-all ${
           isCurrent ? "ring-2 ring-primary scale-105 z-10" : ""
         } ${isPast ? "opacity-60" : ""}`}
       >
-        <CardHeader className={`${isCurrent ? "bg-primary/10" : ""}`}>
+        <CardHeader className={`${isCurrent ? "bg-white/[0.08]" : ""}`}>
           <CardTitle className="text-white flex items-center gap-2">
             <Ticket className="h-4 w-4" />
             {tier.name}
             {isCurrent && (
-              <span className="ml-auto text-xs bg-primary text-white px-2 py-1 rounded-full">
+              <span className="ml-auto text-xs bg-[rgba(245,196,110,0.92)] text-zinc-950 px-2 py-1 rounded-full">
                 Current
               </span>
             )}
             {isPast && (
-              <span className="ml-auto text-xs bg-zinc-700 text-zinc-300 px-2 py-1 rounded-full">
+              <span className="ml-auto rounded-full bg-white/[0.08] px-2 py-1 text-xs text-white/65">
                 Sold Out
               </span>
             )}
           </CardTitle>
-          <CardDescription className="text-zinc-400">
+          <CardDescription className="text-white/55">
             {getTierDescription(isCurrent, isPast)}
           </CardDescription>
         </CardHeader>
@@ -635,13 +635,13 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
     const { status, className } = getStatusConfig();
 
     return (
-      <Card className="bg-zinc-950 border-zinc-800 md:col-span-3">
+      <Card className="site-panel border-white/10 bg-[rgba(10,14,22,0.78)] md:col-span-3">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <Ticket className="h-4 w-4" />
             Ticket Information
           </CardTitle>
-          <CardDescription className="text-zinc-400">
+          <CardDescription className="text-white/55">
             {isSoldOut
               ? "Sold out - join the waitlist"
               : `${spotsRemaining} spots remaining`}
@@ -654,7 +654,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
               <p className="text-2xl font-bold text-white">
                 {formatPrice(party.ticket_price)}
               </p>
-              <p className="text-xs text-zinc-400">Standard admission</p>
+              <p className="text-xs text-white/55">Standard admission</p>
             </div>
             <div className={`px-3 py-1 rounded-full text-sm ${className}`}>
               {status}
@@ -666,16 +666,17 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
   };
 
   return (
-    <div className="bg-zinc-800 space-y-6">
+    <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
         {priceTiers.length > 0
           ? priceTiers.map((tier, index) => renderTierCard(tier, index))
           : renderFallbackTicketCard()}
       </div>
 
-      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6 shadow-lg">
+      <div className="site-panel relative overflow-hidden rounded-[1.5rem] border-white/12 p-6 shadow-lg">
+        <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(118,214,198,0.2)_0%,transparent_70%)]" />
         <div className="mb-6 flex items-center gap-2">
-          <PartyPopper className="h-5 w-5 text-pink-500" />
+          <PartyPopper className="h-5 w-5 text-[rgba(245,196,110,0.92)] animate-pulse" />
           <h2 className="text-xl font-semibold">Party Registration</h2>
         </div>
 
@@ -697,7 +698,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                       <Input
                         placeholder="John Doe"
                         {...field}
-                        className="bg-zinc-900 border-zinc-800"
+                        className="border-white/12 bg-white/[0.05]"
                       />
                     </FormControl>
                     <FormMessage />
@@ -715,7 +716,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                       <Input
                         placeholder="18"
                         {...field}
-                        className="bg-zinc-900 border-zinc-800"
+                        className="border-white/12 bg-white/[0.05]"
                       />
                     </FormControl>
                     <FormMessage />
@@ -734,7 +735,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                     <Input
                       placeholder="jdoe"
                       {...field}
-                      className="bg-zinc-900 border-zinc-800"
+                      className="border-white/12 bg-white/[0.05]"
                       onChange={(e) => {
                         field.onChange(e);
                       }}
@@ -756,7 +757,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                       <Input
                         placeholder="Enter promo code"
                         {...field}
-                        className="bg-zinc-900 border-zinc-800"
+                        className="border-white/12 bg-white/[0.05]"
                         disabled={!!appliedPromoCode || !!appliedAndrewIDCode || applyingPromo}
                       />
                     </FormControl>
@@ -807,7 +808,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                             description: "Code not valid",
                             variant: "destructive",
                           });
-                        } catch (err) {
+                        } catch {
                           toast({
                             title: "Error",
                             description: "Unable to apply promo",
@@ -829,8 +830,8 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                   </div>
 
                   <div className="mt-2 flex items-center gap-3">
-                    <div className="min-w-[140px] h-10 px-3 flex items-center justify-center bg-gradient-to-r from-zinc-900 to-zinc-950 border border-zinc-700 rounded font-mono text-white text-lg tracking-widest">
-                      {(appliedPromoCode || appliedAndrewIDCode) ?? <span className="text-zinc-500">{field.value || "—"}</span>}
+                    <div className="flex h-10 min-w-[140px] items-center justify-center rounded border border-white/20 bg-white/[0.05] px-3 font-mono text-lg tracking-widest text-white">
+                      {(appliedPromoCode || appliedAndrewIDCode) ?? <span className="text-white/40">{field.value || "—"}</span>}
                     </div>
 
                     {(appliedPromoCode || appliedAndrewIDCode) && (
@@ -846,7 +847,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                             description: "Standard pricing restored",
                           });
                         }}
-                        className="h-10 px-3 bg-zinc-900 border-zinc-700 text-white"
+                        className="h-10 border-white/20 bg-white/[0.05] px-3 text-white"
                       >
                         Remove
                       </Button>
@@ -994,11 +995,11 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
             )}
 
             {datingPoolEnabled && (
-              <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-4">
+              <div className="rounded-lg border border-white/12 bg-white/[0.04] p-4 space-y-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="font-semibold">Join the matchmaking pool</p>
-                    <p className="text-sm text-zinc-400">
+                    <p className="text-sm text-white/55">
                       Opt in to be paired based on your preferences. Closes 1 hour before the event.
                     </p>
                     {datingPoolLocked && (
@@ -1036,7 +1037,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                             <Input
                               placeholder="Woman, man, non-binary..."
                               {...field}
-                              className="bg-zinc-900 border-zinc-800"
+                              className="border-white/12 bg-white/[0.05]"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1054,7 +1055,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                             <Input
                               placeholder="she/her, he/him, they/them"
                               {...field}
-                              className="bg-zinc-900 border-zinc-800"
+                              className="border-white/12 bg-white/[0.05]"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1074,7 +1075,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                               return (
                                 <label
                                   key={option}
-                                  className="flex items-center gap-2 rounded border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm"
+                                  className="flex items-center gap-2 rounded border border-white/12 bg-white/[0.05] px-3 py-2 text-sm"
                                 >
                                   <Checkbox
                                     checked={selected}
@@ -1105,7 +1106,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                           <FormControl>
                             <Textarea
                               placeholder="e.g., Chill vibes, open to meeting someone serious."
-                              className="bg-zinc-900 border-zinc-800"
+                              className="border-white/12 bg-white/[0.05]"
                               {...field}
                             />
                           </FormControl>
@@ -1123,7 +1124,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                           <FormControl>
                             <Textarea
                               placeholder="Two sentences to help us match you."
-                              className="bg-zinc-900 border-zinc-800"
+                              className="border-white/12 bg-white/[0.05]"
                               {...field}
                             />
                           </FormControl>
@@ -1137,7 +1138,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                       name="allowPublicIntro"
                       render={({ field }) => (
                         <FormItem className="md:col-span-2">
-                          <div className="flex items-center justify-between rounded border border-zinc-800 bg-zinc-950 px-3 py-2">
+                          <div className="flex items-center justify-between rounded border border-white/12 bg-white/[0.05] px-3 py-2">
                             <div>
                               <FormLabel>Let us intro you publicly?</FormLabel>
                               <FormDescription>
@@ -1159,7 +1160,7 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
             <Button
               type="submit"
               disabled={isSubmitting || !party.allow_waitlist}
-              className={`w-full bg-linear-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 ${
+              className={`w-full bg-linear-to-r from-[rgba(244,162,97,0.96)] to-[rgba(46,124,116,0.96)] hover:opacity-95 ${
                 !party.allow_waitlist ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
