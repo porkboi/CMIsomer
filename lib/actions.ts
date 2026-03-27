@@ -456,9 +456,14 @@ export async function getTicketTierInfo(partySlug: string) {
   }
 }
 
+function getPartyLookupSlug(partySlug: string): string {
+  return partySlug.length > 64 ? registrationTableSuffix(partySlug) : partySlug
+}
+
 async function getCurrentTierForParty(partySlug: string): Promise<{ name: string; price: number; index: number; tiers: PriceTier[] }> {
   const priceTiers = await getPriceTiers(partySlug)
-  const registrations = await getRegistrations(partySlug)
+  const lookupSlug = getPartyLookupSlug(partySlug)
+  const registrations = await getRegistrations(lookupSlug)
   const confirmedCount = registrations.filter((reg) => reg.status === "confirmed").length
 
   if (priceTiers.length === 0) {
@@ -519,7 +524,7 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
 
     // Determine price from current tier, then apply referral discount and promo override.
     const currentTier = await getCurrentTierForParty(partySlug)
-    let price = currentTier.price || party.ticket_price
+    let price = formData.price || party.ticket_price
     let tierName = currentTier.name || "Standard"
 
     const normalizedAndrewIdCode = validatedData.appliedAndrewIDCode?.trim().toLowerCase()
