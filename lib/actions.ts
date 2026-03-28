@@ -457,7 +457,7 @@ export async function getTicketTierInfo(partySlug: string) {
 }
 
 function getPartyLookupSlug(partySlug: string): string {
-  return partySlug.length > 64 ? registrationTableSuffix(partySlug) : partySlug
+  return partySlug.length > 64 ? registrationTableName(partySlug) : partySlug
 }
 
 async function getCurrentTierForParty(partySlug: string): Promise<{ name: string; price: number; index: number; tiers: PriceTier[] }> {
@@ -903,7 +903,7 @@ export async function createParty(formData: z.infer<typeof partySchema>) {
 
     // Create the registration table for this party
     const { error: fnError } = await supabase.rpc("create_party_registration_table", {
-      party_slug: registrationTableSuffix(slug),
+      party_slug: registrationTableName(slug),
     })
 
     if (fnError) {
