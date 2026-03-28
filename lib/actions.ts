@@ -524,18 +524,10 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
 
     // Determine price from current tier, then apply referral discount and promo override.
     const currentTier = await getCurrentTierForParty(partySlug)
-    let price = formData.price || party.ticket_price
+    let price = validatedData.price || party.ticket_price
     let tierName = currentTier.name || "Standard"
 
     const normalizedAndrewIdCode = validatedData.appliedAndrewIDCode?.trim().toLowerCase()
-    const shouldApplyAndrewIdPromo =
-      partySlug === REFERRAL_DISCOUNT_PARTY_SLUG &&
-      !!normalizedAndrewIdCode &&
-      ANDREW_ID_PROMO_SET.has(normalizedAndrewIdCode)
-
-    if (shouldApplyAndrewIdPromo) {
-      price = Math.max(0, price - 1)
-    }
 
     if (validatedData.appliedPromoCode) {
       price = 0
