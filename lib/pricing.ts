@@ -26,6 +26,15 @@ export const ANDREW_ID_PROMO_IDS = [
   "eugenehw",
   "pchivatx",
   "yimings2",
+  "albertq",
+  "yuhaoxie",
+  "jinwooc",
+  "xuefengm",
+  "albertp2",
+  "jeehol",
+  "botaoche",
+  "lucascho",
+  "sqshu",
 ] as const
 
 export const ANDREW_ID_PROMO_SET = new Set(ANDREW_ID_PROMO_IDS.map((id) => id.toLowerCase()))
