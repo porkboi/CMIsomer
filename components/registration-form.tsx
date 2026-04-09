@@ -40,6 +40,12 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PieChart, Pie, Cell } from "recharts";
+import {
+  ANDREW_ID_PROMO_SET,
+  REFERRAL_DISCOUNT_PARTY_SLUG,
+  applyAndrewIdDiscount,
+  getAndrewIdDiscount,
+} from "@/lib/pricing";
 
 interface RegistrationFormProps {
   party: Party;
@@ -52,39 +58,6 @@ type TimeslotBreakdown = {
 };
 
 const TIMESLOT_CAPACITY = 20;
-const REFERRAL_DISCOUNT_PARTY_SLUG =
-  "cmu-tcl-x-cmu-lambdas-x-pitt-asa-x-pitt-akdphi";
-const ANDREW_ID_PROMO_IDS: string[] = [
-  "jasonshi",
-  "rbustama",
-  "brianpar",
-  "yichenma",
-  "wesleyzh",
-  "tianzez",
-  "yuehanh",
-  "jaydenl",
-  "zhanminl",
-  "ruijianj",
-  "kmawalkar",
-  "justinku",
-  "joonpyol",
-  "chenggus",
-  "adrianl2",
-  "zhuoyunz",
-  "zhengqiz",
-  "siruid",
-  "henryle2",
-  "jonasq",
-  "songyij",
-  "myoun",
-  "eugenehw",
-  "pchivatx",
-  "yimings2",
-];
-const ANDREW_ID_PROMO_SET = new Set(
-  ANDREW_ID_PROMO_IDS.map((id) => id.toLowerCase())
-);
-
 export function MiniPieChart({ data }: { data: any[] }) {
   const COLORS = ["#ef4444", "#f97316", "#22c55e"];
 
@@ -134,9 +107,12 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
       priceTiers.length > 0
         ? priceTiers[currentTierIndex]?.price || 0
         : party.ticket_price;
-    const adjusted = Math.max(0, base - (appliedAndrewIDCode ? 1 : 0));
+    const adjusted = appliedAndrewIDCode
+      ? applyAndrewIdDiscount(partySlug, base)
+      : base;
     return appliedPromoCode ? 0 : adjusted;
   }, [
+    partySlug,
     priceTiers,
     currentTierIndex,
     party.ticket_price,
@@ -792,11 +768,19 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                             referralFeatureEnabled &&
                             ANDREW_ID_PROMO_SET.has(normalizedCode)
                           ) {
+                            const basePrice =
+                              priceTiers.length > 0
+                                ? priceTiers[currentTierIndex]?.price || 0
+                                : party.ticket_price;
+                            const discountAmount = getAndrewIdDiscount(
+                              partySlug,
+                              basePrice
+                            );
                             setAppliedPromoCode(null);
                             setAppliedAndrewIDCode(normalizedCode);
                             toast({
                               title: "AndrewID discount applied",
-                              description: "Ticket reduced by $1",
+                              description: `Ticket reduced by $${discountAmount}`,
                               variant: "default",
                             });
                             return;
@@ -856,7 +840,8 @@ export function RegistrationForm({ party, partySlug }: RegistrationFormProps) {
                   <FormDescription>
                     Enter a promo code and click Apply. For{" "}
                     {REFERRAL_DISCOUNT_PARTY_SLUG}, supported AndrewIDs in the
-                    allowlist also apply a $1 discount.
+                    allowlist apply a $5 discount on the $17 tier and a $1
+                    discount otherwise.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

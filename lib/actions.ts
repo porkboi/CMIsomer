@@ -17,35 +17,11 @@ import type { PriceTier } from "@/components/price-tiers-modal"
 import { sendEmail } from "./email"
 import bcrypt from "bcrypt"
 import { kMaxLength } from "buffer"
-
-const REFERRAL_DISCOUNT_PARTY_SLUG = "cmu-tcl-x-cmu-lambdas-x-pitt-asa-x-pitt-akdphi"
-const ANDREW_ID_PROMO_SET = new Set([
-  "jasonshi",
-  "rbustama",
-  "brianpar",
-  "yichenma",
-  "wesleyzh",
-  "tianzez",
-  "yuehanh",
-  "jaydenl",
-  "zhanminl",
-  "ruijianj",
-  "kmawalkar",
-  "justinku",
-  "joonpyol",
-  "chenggus",
-  "adrianl2",
-  "zhuoyunz",
-  "zhengqiz",
-  "siruid",
-  "henryle2",
-  "jonasq",
-  "songyij",
-  "myoun",
-  "eugenehw",
-  "pchivatx",
-  "yimings2",
-])
+import {
+  ANDREW_ID_PROMO_SET,
+  REFERRAL_DISCOUNT_PARTY_SLUG,
+  applyAndrewIdDiscount,
+} from "@/lib/pricing"
 
 // Define the registration schema
 const registrationSchema = z.object({
@@ -524,7 +500,7 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
 
     // Determine price from current tier, then apply referral discount and promo override.
     const currentTier = await getCurrentTierForParty(partySlug)
-    let price = validatedData.price || party.ticket_price
+    let price = currentTier.price ?? validatedData.price ?? party.ticket_price
     let tierName = currentTier.name || "Standard"
 
     const normalizedAndrewIdCode = validatedData.appliedAndrewIDCode?.trim().toLowerCase()
@@ -532,6 +508,12 @@ export async function submitRegistration(partySlug: string, formData: z.infer<ty
     if (validatedData.appliedPromoCode) {
       price = 0
       tierName = "Promo"
+    } else if (
+      partySlug === REFERRAL_DISCOUNT_PARTY_SLUG &&
+      normalizedAndrewIdCode &&
+      ANDREW_ID_PROMO_SET.has(normalizedAndrewIdCode)
+    ) {
+      price = applyAndrewIdDiscount(partySlug, price)
     }
 
     // Generate QR code
